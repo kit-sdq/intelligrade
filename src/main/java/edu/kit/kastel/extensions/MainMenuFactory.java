@@ -8,6 +8,7 @@ import com.intellij.ui.content.ContentFactory;
 import edu.kit.kastel.extensions.guis.DebugMenuContent;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
@@ -21,6 +22,7 @@ public class MainMenuFactory implements ToolWindowFactory {
   private final DebugMenuContent generatedMenu = new DebugMenuContent();
   private final JPasswordField pwdInput = generatedMenu.getInputPwd();
   private final JTextField usernameField = generatedMenu.getInputUsername();
+  private final JLabel loggedInLabel = generatedMenu.getLoggedInLabel();
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {

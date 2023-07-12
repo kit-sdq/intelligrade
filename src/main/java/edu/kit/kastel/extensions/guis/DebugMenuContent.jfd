@@ -8,15 +8,35 @@ new FormModel {
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 			"$layoutConstraints": "fillx,insets 0,hidemode 3,align left top,gap 0 0"
-			"$columnConstraints": "[86,fill][grow,fill]"
-			"$rowConstraints": "[top][top][top]"
+			"$columnConstraints": "[90,fill][grow,fill]"
+			"$rowConstraints": "[][][top][top][top]"
 		} ) {
 			name: "this"
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "label3"
+				"text": new FormMessage( null, "DebugMenuContent.label3.text" )
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 0"
+			} )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "loggedInLabel"
+				"text": new FormMessage( null, "DebugMenuContent.loggedInLabel.text" )
+				auxiliary() {
+					"JavaCodeGenerator.variableGetter": true
+				}
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 1 0"
+			} )
+			add( new FormComponent( "javax.swing.JSeparator" ) {
+				name: "separator1"
+			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+				"value": "cell 0 1 2 1"
+			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "label1"
 				"text": new FormMessage( null, "labelUnameField" )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 0,alignx left,growx 0"
+				"value": "cell 0 2,alignx left,growx 0"
 			} )
 			add( new FormComponent( "javax.swing.JTextField" ) {
 				name: "InputUsername"
@@ -24,13 +44,13 @@ new FormModel {
 					"JavaCodeGenerator.variableGetter": true
 				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 1 0,growx"
+				"value": "cell 1 2,growx"
 			} )
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "label2"
 				"text": new FormMessage( null, "LabelPwdField" )
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 1,alignx left,growx 0"
+				"value": "cell 0 3,alignx left,growx 0"
 			} )
 			add( new FormComponent( "javax.swing.JPasswordField" ) {
 				name: "inputPwd"
@@ -38,7 +58,7 @@ new FormModel {
 					"JavaCodeGenerator.variableGetter": true
 				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 1 1,growx"
+				"value": "cell 1 3,growx"
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "btnLogin"
@@ -47,7 +67,7 @@ new FormModel {
 					"JavaCodeGenerator.variableGetter": true
 				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-				"value": "cell 0 2 2 1"
+				"value": "cell 0 4 2 1"
 			} )
 		}, new FormLayoutConstraints( null ) {
 			"location": new java.awt.Point( 0, 0 )
