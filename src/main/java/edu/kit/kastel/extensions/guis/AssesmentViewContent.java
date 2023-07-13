@@ -5,6 +5,7 @@
 package edu.kit.kastel.extensions.guis;
 
 import java.awt.*;
+import java.awt.event.*;
 import java.util.*;
 import javax.swing.*;
 import com.intellij.openapi.ui.*;
@@ -20,6 +21,14 @@ public class AssesmentViewContent extends JPanel {
     initComponents();
   }
 
+  public TextFieldWithBrowseButton getGradingConfigPathInput() {
+    return gradingConfigPathInput;
+  }
+
+  public TextFieldWithBrowseButton getAutograderConfigPathInput() {
+    return autograderConfigPathInput;
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - Clemens
@@ -32,6 +41,11 @@ public class AssesmentViewContent extends JPanel {
     comboBox2 = new ComboBox();
     label3 = new JLabel();
     comboBox3 = new ComboBox();
+    label5 = new JLabel();
+    gradingConfigPathInput = new TextFieldWithBrowseButton();
+    label6 = new JLabel();
+    autograderConfigPathInput = new TextFieldWithBrowseButton();
+    separator1 = new JSeparator();
     GradingPanel = new JPanel();
     panel1 = new JPanel();
     label4 = new JLabel();
@@ -39,13 +53,12 @@ public class AssesmentViewContent extends JPanel {
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing
-    . border. EmptyBorder( 0, 0, 0, 0) , "JFor\u006dDesi\u0067ner \u0045valu\u0061tion", javax. swing. border. TitledBorder
-    . CENTER, javax. swing. border. TitledBorder. BOTTOM, new java .awt .Font ("Dia\u006cog" ,java .
-    awt .Font .BOLD ,12 ), java. awt. Color. red) , getBorder( )) )
-    ;  addPropertyChangeListener (new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e
-    ) {if ("bord\u0065r" .equals (e .getPropertyName () )) throw new RuntimeException( ); }} )
-    ;
+    setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(new javax.swing.
+    border.EmptyBorder(0,0,0,0), "JF\u006frmD\u0065sig\u006eer \u0045val\u0075ati\u006fn",javax.swing.border.TitledBorder.CENTER
+    ,javax.swing.border.TitledBorder.BOTTOM,new java.awt.Font("Dia\u006cog",java.awt.Font
+    .BOLD,12),java.awt.Color.red), getBorder())); addPropertyChangeListener(
+    new java.beans.PropertyChangeListener(){@Override public void propertyChange(java.beans.PropertyChangeEvent e){if("\u0062ord\u0065r"
+    .equals(e.getPropertyName()))throw new RuntimeException();}});
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -56,12 +69,15 @@ public class AssesmentViewContent extends JPanel {
         AssessmentPanel.setLayout(new MigLayout(
           "fillx,insets 0,hidemode 3,align left top,gap 5 5",
           // columns
-          "[80:80,fill]" +
-          "[grow,fill]",
+          "[80:115,fill]" +
+          "[151,grow,fill]",
           // rows
           "[]" +
           "[]" +
-          "[]"));
+          "[]" +
+          "[30]" +
+          "[35:30]" +
+          "[10:10]"));
 
         //---- label1 ----
         label1.setText(bundle.getString("AssesmentViewContent.label1.text"));
@@ -77,6 +93,17 @@ public class AssesmentViewContent extends JPanel {
         label3.setText(bundle.getString("AssesmentViewContent.label3.text"));
         AssessmentPanel.add(label3, "cell 0 2,alignx right,growx 0");
         AssessmentPanel.add(comboBox3, "cell 1 2");
+
+        //---- label5 ----
+        label5.setText("Grading config");
+        AssessmentPanel.add(label5, "cell 0 3,alignx right,growx 0");
+        AssessmentPanel.add(gradingConfigPathInput, "cell 1 3");
+
+        //---- label6 ----
+        label6.setText("Autograder config");
+        AssessmentPanel.add(label6, "cell 0 4");
+        AssessmentPanel.add(autograderConfigPathInput, "cell 1 4");
+        AssessmentPanel.add(separator1, "cell 0 5 2 1");
       }
       tabbedPane1.addTab("Assessment", AssessmentPanel);
 
@@ -132,6 +159,11 @@ public class AssesmentViewContent extends JPanel {
   private ComboBox comboBox2;
   private JLabel label3;
   private ComboBox comboBox3;
+  private JLabel label5;
+  private TextFieldWithBrowseButton gradingConfigPathInput;
+  private JLabel label6;
+  private TextFieldWithBrowseButton autograderConfigPathInput;
+  private JSeparator separator1;
   private JPanel GradingPanel;
   private JPanel panel1;
   private JLabel label4;

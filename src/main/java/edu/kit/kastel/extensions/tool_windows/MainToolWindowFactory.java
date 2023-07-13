@@ -1,6 +1,10 @@
 package edu.kit.kastel.extensions.tool_windows;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
@@ -16,6 +20,8 @@ public class MainToolWindowFactory implements ToolWindowFactory {
   //set up automated GUI and generate necessary bindings
   private final JPanel contentPanel = new JPanel();
   private final AssesmentViewContent generatedMenu = new AssesmentViewContent();
+  private final TextFieldWithBrowseButton gradingConfigInput = generatedMenu.getGradingConfigPathInput();
+  private final TextFieldWithBrowseButton autograderConfigInput = generatedMenu.getAutograderConfigPathInput();
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -28,6 +34,29 @@ public class MainToolWindowFactory implements ToolWindowFactory {
             null,
             false
     );
+
+    addListeners();
+
     toolWindow.getContentManager().addContent(content);
+  }
+
+  private void addListeners() {
+    gradingConfigInput.addBrowseFolderListener(
+            new TextBrowseFolderListener(new FileChooserDescriptor(
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false)
+            ));
+    autograderConfigInput.addBrowseFolderListener(new TextBrowseFolderListener(new FileChooserDescriptor(
+            true,
+            false,
+            false,
+            false,
+            false,
+            false)
+    ));
   }
 }
