@@ -177,4 +177,8 @@ gradle-app.setting
 
 # End of https://www.toptal.com/developers/gitignore/api/gradle
 
+# example project that is opened by the test IntelliJ instance
 exampleProject/
+
+# the settings file created by the PlubIn. Explicitly exclude this because it contains secrets
+build/idea-sandbox/config/options/IntelliGradeSettings.xml

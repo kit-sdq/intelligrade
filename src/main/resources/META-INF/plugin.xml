@@ -12,7 +12,13 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="edu.kit.kastel.extensions.MainMenuFactory" id="IntelliGrade"/>
+        <applicationConfigurable
+                parentId="tools"
+                instance="edu.kit.kastel.extensions.ArtemisSettings"
+                id="edu.kit.kastel.extensions.ArtemisSettings"
+                displayName="IntelliGrade Settings"/>
+        <applicationService
+                serviceImplementation="edu.kit.kastel.extensions.ArtemisSettingsState"/>
     </extensions>
 
     <actions>

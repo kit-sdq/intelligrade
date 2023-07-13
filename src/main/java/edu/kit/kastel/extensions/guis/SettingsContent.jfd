@@ -78,7 +78,7 @@ new FormModel {
 			} )
 			add( new FormComponent( "javax.swing.JButton" ) {
 				name: "btnLogin"
-				"text": "log in"
+				"text": new FormMessage( null, "DebugMenuContent.btnLogin.text" )
 				auxiliary() {
 					"JavaCodeGenerator.variableGetter": true
 				}

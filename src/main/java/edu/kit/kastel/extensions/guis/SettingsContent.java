@@ -1,5 +1,5 @@
 /*
- * Created by JFormDesigner on Thu Jul 13 00:33:53 CEST 2023
+ * Created by JFormDesigner on Thu Jul 13 23:52:04 CEST 2023
  */
 
 package edu.kit.kastel.extensions.guis;
@@ -12,21 +12,9 @@ import net.miginfocom.swing.*;
 /**
  * @author clemens
  */
-public class DebugMenuContent extends JPanel {
-  public DebugMenuContent() {
+public class SettingsContent extends JPanel {
+  public SettingsContent() {
     initComponents();
-  }
-
-  public JButton getBtnLogin() {
-    return btnLogin;
-  }
-
-  public JTextField getInputUsername() {
-    return InputUsername;
-  }
-
-  public JPasswordField getInputPwd() {
-    return inputPwd;
   }
 
   public JLabel getLoggedInLabel() {
@@ -37,6 +25,17 @@ public class DebugMenuContent extends JPanel {
     return artemisUrlInput;
   }
 
+  public JTextField getInputUsername() {
+    return InputUsername;
+  }
+
+  public JPasswordField getInputPwd() {
+    return inputPwd;
+  }
+
+  public JButton getBtnLogin() {
+    return btnLogin;
+  }
 
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
@@ -54,13 +53,12 @@ public class DebugMenuContent extends JPanel {
     btnLogin = new JButton();
 
     //======== this ========
-    setBorder ( new javax . swing. border .CompoundBorder ( new javax . swing. border .TitledBorder ( new javax
-    . swing. border .EmptyBorder ( 0, 0 ,0 , 0) ,  "JF\u006frmDesi\u0067ner Ev\u0061luatio\u006e" , javax. swing
-    .border . TitledBorder. CENTER ,javax . swing. border .TitledBorder . BOTTOM, new java. awt .
-    Font ( "Dialo\u0067", java .awt . Font. BOLD ,12 ) ,java . awt. Color .red
-    ) , getBorder () ) );  addPropertyChangeListener( new java. beans .PropertyChangeListener ( ){ @Override
-    public void propertyChange (java . beans. PropertyChangeEvent e) { if( "borde\u0072" .equals ( e. getPropertyName (
-    ) ) )throw new RuntimeException( ) ;} } );
+    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing. border.
+    EmptyBorder( 0, 0, 0, 0) , "JF\u006frmD\u0065sig\u006eer \u0045val\u0075ati\u006fn", javax. swing. border. TitledBorder. CENTER, javax. swing
+    . border. TitledBorder. BOTTOM, new java .awt .Font ("Dia\u006cog" ,java .awt .Font .BOLD ,12 ),
+    java. awt. Color. red) , getBorder( )) );  addPropertyChangeListener (new java. beans. PropertyChangeListener( )
+    { @Override public void propertyChange (java .beans .PropertyChangeEvent e) {if ("\u0062ord\u0065r" .equals (e .getPropertyName () ))
+    throw new RuntimeException( ); }} );
     setLayout(new MigLayout(
       "fillx,insets 0,hidemode 3,align left top,gap 0 0",
       // columns
@@ -103,7 +101,7 @@ public class DebugMenuContent extends JPanel {
     add(inputPwd, "cell 1 4,growx");
 
     //---- btnLogin ----
-    btnLogin.setText("log in");
+    btnLogin.setText(bundle.getString("DebugMenuContent.btnLogin.text"));
     add(btnLogin, "cell 0 5 2 1");
     // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
   }
