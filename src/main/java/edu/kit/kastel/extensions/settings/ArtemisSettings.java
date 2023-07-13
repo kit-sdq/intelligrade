@@ -1,4 +1,4 @@
-package edu.kit.kastel.extensions;
+package edu.kit.kastel.extensions.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;

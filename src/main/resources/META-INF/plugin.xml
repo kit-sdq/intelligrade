@@ -14,11 +14,13 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationConfigurable
                 parentId="tools"
-                instance="edu.kit.kastel.extensions.ArtemisSettings"
-                id="edu.kit.kastel.extensions.ArtemisSettings"
+                instance="edu.kit.kastel.extensions.settings.ArtemisSettings"
+                id="edu.kit.kastel.extensions.settings.ArtemisSettings"
                 displayName="IntelliGrade Settings"/>
         <applicationService
-                serviceImplementation="edu.kit.kastel.extensions.ArtemisSettingsState"/>
+                serviceImplementation="edu.kit.kastel.extensions.settings.ArtemisSettingsState"/>
+        <toolWindow id="Grading" secondary="true" anchor="right"
+                    factoryClass="edu.kit.kastel.extensions.tool_windows.MainToolWindowFactory"/>
     </extensions>
 
     <actions>
