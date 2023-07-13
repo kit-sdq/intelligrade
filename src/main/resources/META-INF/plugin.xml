@@ -4,7 +4,7 @@
     <vendor email="git@cdaut.de" url="https://github.com/kit-sdq/programming-lecture-eclipse-artemis">SDQ</vendor>
 
     <description><![CDATA[
-    This is a PlugIn to enable automatic grading of <a href="https://github.com/ls1intum/Artemis">Artemis </a> based programming exercises.
+    This is a PlugIn to enable automatic grading of <a href="https://github.com/ls1intum/Artemis">Artemis</a> based programming exercises.
     ]]></description>
 
     <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html

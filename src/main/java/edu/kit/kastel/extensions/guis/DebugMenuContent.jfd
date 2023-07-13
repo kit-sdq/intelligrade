@@ -21,6 +21,7 @@ new FormModel {
 			add( new FormComponent( "javax.swing.JLabel" ) {
 				name: "loggedInLabel"
 				"text": new FormMessage( null, "DebugMenuContent.loggedInLabel.text" )
+				"foreground": sfield java.awt.Color red
 				auxiliary() {
 					"JavaCodeGenerator.variableGetter": true
 				}
@@ -39,8 +40,11 @@ new FormModel {
 				"value": "cell 0 2"
 			} )
 			add( new FormComponent( "javax.swing.JTextField" ) {
-				name: "textField1"
-				"text": new FormMessage( null, "DebugMenuContent.textField1.text" )
+				name: "artemisUrlInput"
+				"text": new FormMessage( null, "DebugMenuContent.artemisUrlInput.text" )
+				auxiliary() {
+					"JavaCodeGenerator.variableGetter": true
+				}
 			}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 				"value": "cell 1 2"
 			} )

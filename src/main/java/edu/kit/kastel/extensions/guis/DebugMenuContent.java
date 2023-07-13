@@ -4,6 +4,7 @@
 
 package edu.kit.kastel.extensions.guis;
 
+import java.awt.*;
 import java.util.*;
 import javax.swing.*;
 import net.miginfocom.swing.*;
@@ -32,6 +33,10 @@ public class DebugMenuContent extends JPanel {
     return loggedInLabel;
   }
 
+  public JTextField getArtemisUrlInput() {
+    return artemisUrlInput;
+  }
+
 
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
@@ -41,7 +46,7 @@ public class DebugMenuContent extends JPanel {
     loggedInLabel = new JLabel();
     separator1 = new JSeparator();
     label4 = new JLabel();
-    textField1 = new JTextField();
+    artemisUrlInput = new JTextField();
     label1 = new JLabel();
     InputUsername = new JTextField();
     label2 = new JLabel();
@@ -49,13 +54,13 @@ public class DebugMenuContent extends JPanel {
     btnLogin = new JButton();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax
-    . swing. border. EmptyBorder( 0, 0, 0, 0) , "JFor\u006dDesi\u0067ner \u0045valu\u0061tion", javax. swing
-    . border. TitledBorder. CENTER, javax. swing. border. TitledBorder. BOTTOM, new java .awt .
-    Font ("Dia\u006cog" ,java .awt .Font .BOLD ,12 ), java. awt. Color. red
-    ) , getBorder( )) );  addPropertyChangeListener (new java. beans. PropertyChangeListener( ){ @Override
-    public void propertyChange (java .beans .PropertyChangeEvent e) {if ("bord\u0065r" .equals (e .getPropertyName (
-    ) )) throw new RuntimeException( ); }} );
+    setBorder ( new javax . swing. border .CompoundBorder ( new javax . swing. border .TitledBorder ( new javax
+    . swing. border .EmptyBorder ( 0, 0 ,0 , 0) ,  "JF\u006frmDesi\u0067ner Ev\u0061luatio\u006e" , javax. swing
+    .border . TitledBorder. CENTER ,javax . swing. border .TitledBorder . BOTTOM, new java. awt .
+    Font ( "Dialo\u0067", java .awt . Font. BOLD ,12 ) ,java . awt. Color .red
+    ) , getBorder () ) );  addPropertyChangeListener( new java. beans .PropertyChangeListener ( ){ @Override
+    public void propertyChange (java . beans. PropertyChangeEvent e) { if( "borde\u0072" .equals ( e. getPropertyName (
+    ) ) )throw new RuntimeException( ) ;} } );
     setLayout(new MigLayout(
       "fillx,insets 0,hidemode 3,align left top,gap 0 0",
       // columns
@@ -75,6 +80,7 @@ public class DebugMenuContent extends JPanel {
 
     //---- loggedInLabel ----
     loggedInLabel.setText(bundle.getString("DebugMenuContent.loggedInLabel.text"));
+    loggedInLabel.setForeground(Color.red);
     add(loggedInLabel, "cell 1 0");
     add(separator1, "cell 0 1 2 1");
 
@@ -82,9 +88,9 @@ public class DebugMenuContent extends JPanel {
     label4.setText(bundle.getString("DebugMenuContent.label4.text"));
     add(label4, "cell 0 2");
 
-    //---- textField1 ----
-    textField1.setText(bundle.getString("DebugMenuContent.textField1.text"));
-    add(textField1, "cell 1 2");
+    //---- artemisUrlInput ----
+    artemisUrlInput.setText(bundle.getString("DebugMenuContent.artemisUrlInput.text"));
+    add(artemisUrlInput, "cell 1 2");
 
     //---- label1 ----
     label1.setText(bundle.getString("labelUnameField"));
@@ -108,7 +114,7 @@ public class DebugMenuContent extends JPanel {
   private JLabel loggedInLabel;
   private JSeparator separator1;
   private JLabel label4;
-  private JTextField textField1;
+  private JTextField artemisUrlInput;
   private JLabel label1;
   private JTextField InputUsername;
   private JLabel label2;
