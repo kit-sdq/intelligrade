@@ -1,4 +1,4 @@
-JFDML JFormDesigner: "8.1.0.0.283" Java: "11.0.12" encoding: "UTF-8"
+JFDML JFormDesigner: "8.1.0.0.283" Java: "17.0.7" encoding: "UTF-8"
 
 new FormModel {
 	"i18n.bundleName": "guiStrings"
@@ -7,7 +7,7 @@ new FormModel {
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class javax.swing.BoxLayout ) ) {
 			name: "this"
-			add( new FormContainer( "javax.swing.JTabbedPane", new FormLayoutManager( class javax.swing.JTabbedPane ) ) {
+			add( new FormContainer( "com.intellij.ui.components.JBTabbedPane", new FormLayoutManager( class javax.swing.JTabbedPane ) ) {
 				name: "tabbedPane1"
 				add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 					"$layoutConstraints": "fillx,insets 0,hidemode 3,align left top,gap 5 5"
@@ -21,7 +21,7 @@ new FormModel {
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "pad 0,cell 0 0,alignx right,growx 0"
 					} )
-					add( new FormComponent( "javax.swing.JComboBox" ) {
+					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
 						name: "comboBox1"
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 1 0"
@@ -32,7 +32,7 @@ new FormModel {
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 0 1,alignx right,growx 0"
 					} )
-					add( new FormComponent( "javax.swing.JComboBox" ) {
+					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
 						name: "comboBox2"
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 1 1"
@@ -43,7 +43,7 @@ new FormModel {
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 0 2,alignx right,growx 0"
 					} )
-					add( new FormComponent( "javax.swing.JComboBox" ) {
+					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
 						name: "comboBox3"
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 1 2"
@@ -73,9 +73,9 @@ new FormModel {
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 0 0 2 1"
 					} )
-					add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+					add( new FormContainer( "com.intellij.ui.components.JBScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
 						name: "scrollPane1"
-						add( new FormComponent( "javax.swing.JTable" ) {
+						add( new FormComponent( "com.intellij.ui.table.JBTable" ) {
 							name: "testResultsTable"
 						} )
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {

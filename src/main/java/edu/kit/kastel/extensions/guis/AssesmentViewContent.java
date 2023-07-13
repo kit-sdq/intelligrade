@@ -7,6 +7,9 @@ package edu.kit.kastel.extensions.guis;
 import java.awt.*;
 import java.util.*;
 import javax.swing.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.ui.components.*;
+import com.intellij.ui.table.*;
 import net.miginfocom.swing.*;
 
 /**
@@ -21,29 +24,28 @@ public class AssesmentViewContent extends JPanel {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - Clemens
     ResourceBundle bundle = ResourceBundle.getBundle("guiStrings");
-    tabbedPane1 = new JTabbedPane();
+    tabbedPane1 = new JBTabbedPane();
     AssessmentPanel = new JPanel();
     label1 = new JLabel();
-    comboBox1 = new JComboBox();
+    comboBox1 = new ComboBox();
     label2 = new JLabel();
-    comboBox2 = new JComboBox();
+    comboBox2 = new ComboBox();
     label3 = new JLabel();
-    comboBox3 = new JComboBox();
+    comboBox3 = new ComboBox();
     GradingPanel = new JPanel();
     panel1 = new JPanel();
     label4 = new JLabel();
-    scrollPane1 = new JScrollPane();
-    testResultsTable = new JTable();
+    scrollPane1 = new JBScrollPane();
+    testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (
-    new javax. swing. border. EmptyBorder( 0, 0, 0, 0) , "JF\u006frmDesi\u0067ner Ev\u0061luatio\u006e"
-    , javax. swing. border. TitledBorder. CENTER, javax. swing. border. TitledBorder. BOTTOM
-    , new java .awt .Font ("Dialo\u0067" ,java .awt .Font .BOLD ,12 )
-    , java. awt. Color. red) , getBorder( )) );  addPropertyChangeListener (
-    new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e
-    ) {if ("borde\u0072" .equals (e .getPropertyName () )) throw new RuntimeException( )
-    ; }} );
+    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing
+    . border. EmptyBorder( 0, 0, 0, 0) , "JFor\u006dDesi\u0067ner \u0045valu\u0061tion", javax. swing. border. TitledBorder
+    . CENTER, javax. swing. border. TitledBorder. BOTTOM, new java .awt .Font ("Dia\u006cog" ,java .
+    awt .Font .BOLD ,12 ), java. awt. Color. red) , getBorder( )) )
+    ;  addPropertyChangeListener (new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e
+    ) {if ("bord\u0065r" .equals (e .getPropertyName () )) throw new RuntimeException( ); }} )
+    ;
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -122,18 +124,18 @@ public class AssesmentViewContent extends JPanel {
 
   // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
   // Generated using JFormDesigner Evaluation license - Clemens
-  private JTabbedPane tabbedPane1;
+  private JBTabbedPane tabbedPane1;
   private JPanel AssessmentPanel;
   private JLabel label1;
-  private JComboBox comboBox1;
+  private ComboBox comboBox1;
   private JLabel label2;
-  private JComboBox comboBox2;
+  private ComboBox comboBox2;
   private JLabel label3;
-  private JComboBox comboBox3;
+  private ComboBox comboBox3;
   private JPanel GradingPanel;
   private JPanel panel1;
   private JLabel label4;
-  private JScrollPane scrollPane1;
-  private JTable testResultsTable;
+  private JBScrollPane scrollPane1;
+  private JBTable testResultsTable;
   // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

@@ -133,7 +133,7 @@ public class ArtemisSettings implements Configurable {
             new String(pwdInput.getPassword())
     );
 
-    //try logging in and display error iff error ocurred
+    //try logging in and display error iff error occurred
     try {
       artemisInstance.login();
     } catch (ArtemisClientException e) {
