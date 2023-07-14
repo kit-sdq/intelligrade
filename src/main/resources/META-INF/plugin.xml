@@ -19,7 +19,7 @@
                 displayName="IntelliGrade Settings"/>
         <applicationService
                 serviceImplementation="edu.kit.kastel.extensions.settings.ArtemisSettingsState"/>
-        <toolWindow id="Grading" secondary="true" anchor="right"
+        <toolWindow id="Grading" secondary="true" anchor="right" icon="AllIcons.Actions.Lightning"
                     factoryClass="edu.kit.kastel.extensions.tool_windows.MainToolWindowFactory"/>
     </extensions>
 
