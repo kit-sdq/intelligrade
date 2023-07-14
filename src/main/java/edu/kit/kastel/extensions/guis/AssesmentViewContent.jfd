@@ -213,7 +213,7 @@ new FormModel {
 					"$columnConstraints": "[fill][fill]"
 					"$rowConstraints": "[36][grow]"
 				} ) {
-					name: "panel1"
+					name: "TestResultsPanel"
 					add( new FormComponent( "javax.swing.JLabel" ) {
 						name: "label4"
 						"text": new FormMessage( null, "AssesmentViewContent.label4.text" )
@@ -230,7 +230,7 @@ new FormModel {
 						"value": "cell 0 1 2 1,growy"
 					} )
 				}, new FormLayoutConstraints( null ) {
-					"title": new FormMessage( null, "AssesmentViewContent.panel1.tab.title" )
+					"title": new FormMessage( null, "AssesmentViewContent.TestResultsPanel.tab.title" )
 				} )
 			} )
 		}, new FormLayoutConstraints( null ) {

@@ -27,3 +27,13 @@ patchPluginXml {
 test {
     useJUnitPlatform()
 }
+
+tasks {
+    runIde {
+        autoReloadPlugins = true
+    }
+
+    buildSearchableOptions {
+        enabled = false
+    }
+}

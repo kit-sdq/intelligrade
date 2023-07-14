@@ -85,9 +85,9 @@ public class ArtemisSettings implements Configurable {
     ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
     //check if all three parameters are equal
     String password = new String(pwdInput.getPassword());
-    boolean modified = !password.equals(settings.artemisPassword);
-    modified |= !usernameField.getText().equals(settings.username);
-    modified |= !artemisUrlField.getText().equals(settings.artemisInstanceUrl);
+    boolean modified = !password.equals(settings.getArtemisPassword());
+    modified |= !usernameField.getText().equals(settings.getUsername());
+    modified |= !artemisUrlField.getText().equals(settings.getArtemisInstanceUrl());
     return modified;
   }
 
@@ -101,9 +101,9 @@ public class ArtemisSettings implements Configurable {
   public void apply() throws ConfigurationException {
     //store all settings persistently
     ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
-    settings.artemisInstanceUrl = artemisUrlField.getText();
-    settings.username = usernameField.getText();
-    settings.artemisPassword = new String(pwdInput.getPassword());
+    settings.setArtemisInstanceUrl(artemisUrlField.getText());
+    settings.setUsername(usernameField.getText());
+    settings.setArtemisPassword(new String(pwdInput.getPassword()));
   }
 
   /**
@@ -113,9 +113,9 @@ public class ArtemisSettings implements Configurable {
   @Override
   public void reset() {
     ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
-    artemisUrlField.setText(settings.artemisInstanceUrl);
-    usernameField.setText(settings.username);
-    pwdInput.setText(settings.artemisPassword);
+    artemisUrlField.setText(settings.getArtemisInstanceUrl());
+    usernameField.setText(settings.getUsername());
+    pwdInput.setText(settings.getArtemisPassword());
 
     setLabelOnLoginSuccess();
   }
@@ -137,6 +137,8 @@ public class ArtemisSettings implements Configurable {
     try {
       artemisInstance.login();
     } catch (ArtemisClientException e) {
+      loggedInLabel.setText("false");
+      loggedInLabel.setForeground(JBColor.RED);
       JOptionPane.showMessageDialog(contentPanel, e.getMessage(), LOGIN_ERROR_DIALOG_TITLE, JOptionPane.ERROR_MESSAGE);
     }
 

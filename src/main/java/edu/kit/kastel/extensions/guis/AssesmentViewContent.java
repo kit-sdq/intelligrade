@@ -67,19 +67,17 @@ public class AssesmentViewContent extends JPanel {
     button6 = new JButton();
     button7 = new JButton();
     GradingPanel = new JPanel();
-    panel1 = new JPanel();
+    TestResultsPanel = new JPanel();
     label4 = new JLabel();
     scrollPane1 = new JBScrollPane();
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(new javax
-    .swing.border.EmptyBorder(0,0,0,0), "JF\u006frmDesi\u0067ner Ev\u0061luatio\u006e",javax.swing
-    .border.TitledBorder.CENTER,javax.swing.border.TitledBorder.BOTTOM,new java.awt.
-    Font("Dialo\u0067",java.awt.Font.BOLD,12),java.awt.Color.red
-    ), getBorder())); addPropertyChangeListener(new java.beans.PropertyChangeListener(){@Override
-    public void propertyChange(java.beans.PropertyChangeEvent e){if("borde\u0072".equals(e.getPropertyName(
-    )))throw new RuntimeException();}});
+    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing. border. EmptyBorder( 0
+    , 0, 0, 0) , "JF\u006frmD\u0065sig\u006eer \u0045val\u0075ati\u006fn", javax. swing. border. TitledBorder. CENTER, javax. swing. border. TitledBorder. BOTTOM
+    , new java .awt .Font ("Dia\u006cog" ,java .awt .Font .BOLD ,12 ), java. awt. Color. red) ,
+     getBorder( )) );  addPropertyChangeListener (new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e
+    ) {if ("\u0062ord\u0065r" .equals (e .getPropertyName () )) throw new RuntimeException( ); }} );
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -253,9 +251,9 @@ public class AssesmentViewContent extends JPanel {
       }
       tabbedPane1.addTab(bundle.getString("AssesmentViewContent.GradingPanel.tab.title"), GradingPanel);
 
-      //======== panel1 ========
+      //======== TestResultsPanel ========
       {
-        panel1.setLayout(new MigLayout(
+        TestResultsPanel.setLayout(new MigLayout(
           "fillx,hidemode 3,align left top",
           // columns
           "[fill]" +
@@ -267,15 +265,15 @@ public class AssesmentViewContent extends JPanel {
         //---- label4 ----
         label4.setText(bundle.getString("AssesmentViewContent.label4.text"));
         label4.setFont(label4.getFont().deriveFont(label4.getFont().getStyle() | Font.BOLD));
-        panel1.add(label4, "cell 0 0 2 1");
+        TestResultsPanel.add(label4, "cell 0 0 2 1");
 
         //======== scrollPane1 ========
         {
           scrollPane1.setViewportView(testResultsTable);
         }
-        panel1.add(scrollPane1, "cell 0 1 2 1,growy");
+        TestResultsPanel.add(scrollPane1, "cell 0 1 2 1,growy");
       }
-      tabbedPane1.addTab(bundle.getString("AssesmentViewContent.panel1.tab.title"), panel1);
+      tabbedPane1.addTab(bundle.getString("AssesmentViewContent.TestResultsPanel.tab.title"), TestResultsPanel);
     }
     add(tabbedPane1);
     // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
@@ -315,7 +313,7 @@ public class AssesmentViewContent extends JPanel {
   private JButton button6;
   private JButton button7;
   private JPanel GradingPanel;
-  private JPanel panel1;
+  private JPanel TestResultsPanel;
   private JLabel label4;
   private JBScrollPane scrollPane1;
   private JBTable testResultsTable;
