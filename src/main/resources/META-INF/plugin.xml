@@ -21,6 +21,8 @@
                 serviceImplementation="edu.kit.kastel.extensions.settings.ArtemisSettingsState"/>
         <toolWindow id="Grading" secondary="true" anchor="right" icon="AllIcons.Actions.Lightning"
                     factoryClass="edu.kit.kastel.extensions.tool_windows.MainToolWindowFactory"/>
+        <notificationGroup id="IntelliGrade Notifications"
+                           displayType="BALLOON"/>
     </extensions>
 
     <applicationListeners>
