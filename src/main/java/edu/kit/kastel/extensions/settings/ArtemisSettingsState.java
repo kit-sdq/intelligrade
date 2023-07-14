@@ -70,11 +70,19 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
     this.username = username;
   }
 
+  /**
+   * Get the password for the Artemis instance from the IDEs CredentialStore
+   * @return the Password stored under the key {@value PASSWORD_STORE_KEY}
+   */
   public String getArtemisPassword() {
     CredentialAttributes credentialAttributes = createCredentialAttributes(PASSWORD_STORE_KEY);
     return PasswordSafe.getInstance().getPassword(credentialAttributes);
   }
 
+  /**
+   * Store the provided Password securely into the IDEs Credential Store under the key {@value PASSWORD_STORE_KEY}
+   * @param artemisPassword the password to be stored
+   */
   public void setArtemisPassword(String artemisPassword) {
     CredentialAttributes credentialAttributes = createCredentialAttributes(PASSWORD_STORE_KEY);
     Credentials credentials = new Credentials(username, artemisPassword);
