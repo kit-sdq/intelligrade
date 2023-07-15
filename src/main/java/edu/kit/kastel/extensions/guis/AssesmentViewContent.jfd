@@ -23,7 +23,11 @@ new FormModel {
 						"value": "pad 0,cell 0 0,alignx right,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
-						name: "comboBox1"
+						name: "coursesDropdown"
+						auxiliary() {
+							"JavaCodeGenerator.typeParameters": "Displayable<Course>"
+							"JavaCodeGenerator.variableGetter": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 1 0"
 					} )
@@ -34,7 +38,11 @@ new FormModel {
 						"value": "cell 0 1,alignx right,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
-						name: "comboBox2"
+						name: "examsDropdown"
+						auxiliary() {
+							"JavaCodeGenerator.typeParameters": "Displayable<Exam>"
+							"JavaCodeGenerator.variableGetter": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 1 1"
 					} )
@@ -45,7 +53,11 @@ new FormModel {
 						"value": "cell 0 2,alignx right,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
-						name: "comboBox3"
+						name: "exercisesDropdown"
+						auxiliary() {
+							"JavaCodeGenerator.typeParameters": "Displayable<Exercise>"
+							"JavaCodeGenerator.variableGetter": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 1 2"
 					} )

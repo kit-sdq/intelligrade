@@ -5,14 +5,16 @@
 package edu.kit.kastel.extensions.guis;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import com.intellij.openapi.ui.*;
 import com.intellij.ui.components.*;
 import com.intellij.ui.table.*;
-import com.jgoodies.forms.factories.*;
+import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
+import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
+import edu.kit.kastel.sdq.artemis4j.api.artemis.exam.Exam;
+import edu.kit.kastel.wrappers.Displayable;
 import net.miginfocom.swing.*;
 
 /**
@@ -31,6 +33,18 @@ public class AssesmentViewContent extends JPanel {
     return autograderConfigPathInput;
   }
 
+  public ComboBox<Displayable<Course>> getCoursesDropdown() {
+    return coursesDropdown;
+  }
+
+  public ComboBox<Displayable<Exam>> getExamsDropdown() {
+    return examsDropdown;
+  }
+
+  public ComboBox<Displayable<Exercise>> getExercisesDropdown() {
+    return exercisesDropdown;
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - Clemens
@@ -38,11 +52,11 @@ public class AssesmentViewContent extends JPanel {
     tabbedPane1 = new JBTabbedPane();
     AssessmentPanel = new JPanel();
     label1 = new JLabel();
-    comboBox1 = new ComboBox();
+    coursesDropdown = new ComboBox<>();
     label2 = new JLabel();
-    comboBox2 = new ComboBox();
+    examsDropdown = new ComboBox<>();
     label3 = new JLabel();
-    comboBox3 = new ComboBox();
+    exercisesDropdown = new ComboBox<>();
     label5 = new JLabel();
     gradingConfigPathInput = new TextFieldWithBrowseButton();
     label6 = new JLabel();
@@ -73,11 +87,13 @@ public class AssesmentViewContent extends JPanel {
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing. border. EmptyBorder( 0
-    , 0, 0, 0) , "JF\u006frmD\u0065sig\u006eer \u0045val\u0075ati\u006fn", javax. swing. border. TitledBorder. CENTER, javax. swing. border. TitledBorder. BOTTOM
-    , new java .awt .Font ("Dia\u006cog" ,java .awt .Font .BOLD ,12 ), java. awt. Color. red) ,
-     getBorder( )) );  addPropertyChangeListener (new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e
-    ) {if ("\u0062ord\u0065r" .equals (e .getPropertyName () )) throw new RuntimeException( ); }} );
+    setBorder ( new javax . swing. border .CompoundBorder ( new javax . swing. border .TitledBorder ( new javax .
+    swing. border .EmptyBorder ( 0, 0 ,0 , 0) ,  "JFor\u006dDesi\u0067ner \u0045valu\u0061tion" , javax. swing .border
+    . TitledBorder. CENTER ,javax . swing. border .TitledBorder . BOTTOM, new java. awt .Font ( "Dia\u006cog"
+    , java .awt . Font. BOLD ,12 ) ,java . awt. Color .red ) , getBorder
+    () ) );  addPropertyChangeListener( new java. beans .PropertyChangeListener ( ){ @Override public void propertyChange (java
+    . beans. PropertyChangeEvent e) { if( "bord\u0065r" .equals ( e. getPropertyName () ) )throw new RuntimeException
+    ( ) ;} } );
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -105,17 +121,17 @@ public class AssesmentViewContent extends JPanel {
         //---- label1 ----
         label1.setText(bundle.getString("AssesmentViewContent.label1.text"));
         AssessmentPanel.add(label1, "pad 0,cell 0 0,alignx right,growx 0");
-        AssessmentPanel.add(comboBox1, "cell 1 0");
+        AssessmentPanel.add(coursesDropdown, "cell 1 0");
 
         //---- label2 ----
         label2.setText(bundle.getString("AssesmentViewContent.label2.text"));
         AssessmentPanel.add(label2, "cell 0 1,alignx right,growx 0");
-        AssessmentPanel.add(comboBox2, "cell 1 1");
+        AssessmentPanel.add(examsDropdown, "cell 1 1");
 
         //---- label3 ----
         label3.setText(bundle.getString("AssesmentViewContent.label3.text"));
         AssessmentPanel.add(label3, "cell 0 2,alignx right,growx 0");
-        AssessmentPanel.add(comboBox3, "cell 1 2");
+        AssessmentPanel.add(exercisesDropdown, "cell 1 2");
 
         //---- label5 ----
         label5.setText("Grading config");
@@ -284,11 +300,11 @@ public class AssesmentViewContent extends JPanel {
   private JBTabbedPane tabbedPane1;
   private JPanel AssessmentPanel;
   private JLabel label1;
-  private ComboBox comboBox1;
+  private ComboBox<Displayable<Course>> coursesDropdown;
   private JLabel label2;
-  private ComboBox comboBox2;
+  private ComboBox<Displayable<Exam>> examsDropdown;
   private JLabel label3;
-  private ComboBox comboBox3;
+  private ComboBox<Displayable<Exercise>> exercisesDropdown;
   private JLabel label5;
   private TextFieldWithBrowseButton gradingConfigPathInput;
   private JLabel label6;
