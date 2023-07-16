@@ -14,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,8 @@ public class ArtemisSettings implements Configurable {
   private final JTextField usernameField = generatedMenu.getInputUsername();
   private final JLabel loggedInLabel = generatedMenu.getLoggedInLabel();
   private final JTextField artemisUrlField = generatedMenu.getArtemisUrlInput();
+
+  private final JSpinner numColsSpinner = generatedMenu.getNumColsSlider();
 
   /**
    * Returns the visible name of the configurable component.
@@ -90,6 +93,7 @@ public class ArtemisSettings implements Configurable {
     boolean modified = !password.equals(settings.getArtemisPassword());
     modified |= !usernameField.getText().equals(settings.getUsername());
     modified |= !artemisUrlField.getText().equals(settings.getArtemisInstanceUrl());
+    modified |= !numColsSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
     return modified;
   }
 
@@ -106,6 +110,7 @@ public class ArtemisSettings implements Configurable {
     settings.setArtemisInstanceUrl(artemisUrlField.getText());
     settings.setUsername(usernameField.getText());
     settings.setArtemisPassword(new String(pwdInput.getPassword()));
+    settings.setColumnsPerRatingGroup(Integer.parseInt(numColsSpinner.getValue().toString()));
   }
 
   /**
@@ -118,6 +123,7 @@ public class ArtemisSettings implements Configurable {
     artemisUrlField.setText(settings.getArtemisInstanceUrl());
     usernameField.setText(settings.getUsername());
     pwdInput.setText(settings.getArtemisPassword());
+    numColsSpinner.setValue(settings.getColumnsPerRatingGroup());
 
     setLabelOnLoginSuccess();
   }

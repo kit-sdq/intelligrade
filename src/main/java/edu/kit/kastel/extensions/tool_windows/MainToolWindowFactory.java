@@ -101,7 +101,7 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     gradingConfigInput.setText(settings.getSelectedGradingConfigPath());
 
     //parse config on exercise select
-    exerciseComboBox.addItemListener(new ExerciseSelectedListener());
+    exerciseComboBox.addItemListener(new ExerciseSelectedListener(generatedMenu));
   }
 
   private void populateDropdowns() throws ArtemisClientException {

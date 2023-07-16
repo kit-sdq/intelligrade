@@ -29,6 +29,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   private String username = "";
   private String artemisInstanceUrl = "https://artemis.praktomat.cs.kit.edu";
   private @Nullable String selectedGradingConfigPath;
+  private int columnsPerRatingGroup = 2;
 
 
   public static ArtemisSettingsState getInstance() {
@@ -111,6 +112,14 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   public @Nullable String getSelectedGradingConfigPath() {
     return selectedGradingConfigPath;
+  }
+
+  public int getColumnsPerRatingGroup() {
+    return columnsPerRatingGroup;
+  }
+
+  public void setColumnsPerRatingGroup(int columnsPerRatingGroup) {
+    this.columnsPerRatingGroup = columnsPerRatingGroup;
   }
 
   public void setSelectedGradingConfigPath(@Nullable String selectedGradingConfigPath) {

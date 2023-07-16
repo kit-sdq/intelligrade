@@ -7,6 +7,7 @@ package edu.kit.kastel.extensions.guis;
 import java.awt.*;
 import java.util.*;
 import javax.swing.*;
+import com.intellij.ui.*;
 import net.miginfocom.swing.*;
 
 /**
@@ -37,6 +38,14 @@ public class SettingsContent extends JPanel {
     return btnLogin;
   }
 
+  private void createUIComponents() {
+    // TODO: add custom component creation code here
+  }
+
+  public JSpinner getNumColsSlider() {
+    return numColsSlider;
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - Clemens
@@ -51,15 +60,17 @@ public class SettingsContent extends JPanel {
     label2 = new JLabel();
     inputPwd = new JPasswordField();
     btnLogin = new JButton();
+    separator2 = new JSeparator();
+    label5 = new JLabel();
+    numColsSlider = new JSpinner();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax
-    . swing. border. EmptyBorder( 0, 0, 0, 0) , "JFor\u006dDesi\u0067ner \u0045valu\u0061tion", javax. swing
-    . border. TitledBorder. CENTER, javax. swing. border. TitledBorder. BOTTOM, new java .awt .
-    Font ("Dia\u006cog" ,java .awt .Font .BOLD ,12 ), java. awt. Color. red
-    ) , getBorder( )) );  addPropertyChangeListener (new java. beans. PropertyChangeListener( ){ @Override
-    public void propertyChange (java .beans .PropertyChangeEvent e) {if ("bord\u0065r" .equals (e .getPropertyName (
-    ) )) throw new RuntimeException( ); }} );
+    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing.
+    border. EmptyBorder( 0, 0, 0, 0) , "JFor\u006dDesi\u0067ner \u0045valu\u0061tion", javax. swing. border. TitledBorder. CENTER
+    , javax. swing. border. TitledBorder. BOTTOM, new java .awt .Font ("Dia\u006cog" ,java .awt .Font
+    .BOLD ,12 ), java. awt. Color. red) , getBorder( )) );  addPropertyChangeListener (
+    new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e) {if ("bord\u0065r"
+    .equals (e .getPropertyName () )) throw new RuntimeException( ); }} );
     setLayout(new MigLayout(
       "fillx,insets 0,hidemode 3,align left top,gap 0 0",
       // columns
@@ -71,7 +82,9 @@ public class SettingsContent extends JPanel {
       "[]" +
       "[top]" +
       "[top]" +
-      "[top]"));
+      "[top]" +
+      "[]" +
+      "[]"));
 
     //---- label3 ----
     label3.setText(bundle.getString("DebugMenuContent.label3.text"));
@@ -104,6 +117,15 @@ public class SettingsContent extends JPanel {
     //---- btnLogin ----
     btnLogin.setText(bundle.getString("DebugMenuContent.btnLogin.text"));
     add(btnLogin, "cell 0 5 2 1");
+    add(separator2, "cell 0 6 2 1");
+
+    //---- label5 ----
+    label5.setText(bundle.getString("DebugMenuContent.label5.text"));
+    add(label5, "cell 0 7");
+
+    //---- numColsSlider ----
+    numColsSlider.setModel(new SpinnerNumberModel(2, 1, null, 1));
+    add(numColsSlider, "cell 1 7");
     // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
   }
 
@@ -119,5 +141,8 @@ public class SettingsContent extends JPanel {
   private JLabel label2;
   private JPasswordField inputPwd;
   private JButton btnLogin;
+  private JSeparator separator2;
+  private JLabel label5;
+  private JSpinner numColsSlider;
   // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

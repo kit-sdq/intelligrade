@@ -260,10 +260,27 @@ new FormModel {
 				} )
 				add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 					"$layoutConstraints": "fillx,hidemode 3,align left top"
-					"$columnConstraints": "[fill][fill]"
-					"$rowConstraints": "[][][]"
+					"$columnConstraints": "[fill]"
+					"$rowConstraints": "[grow]"
 				} ) {
 					name: "GradingPanel"
+					add( new FormContainer( "javax.swing.JScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
+						name: "scrollPane"
+						"border": new javax.swing.border.EmptyBorder( 0, 0, 0, 0 )
+						auxiliary() {
+							"JavaCodeGenerator.postCreateCode": "${field}.getVerticalScrollBar().setUnitIncrement(16);"
+						}
+						add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class javax.swing.BoxLayout ) {
+							"axis": 1
+						} ) {
+							name: "ratingGroupContainer"
+							auxiliary() {
+								"JavaCodeGenerator.variableGetter": true
+							}
+						} )
+					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
+						"value": "cell 0 0,growy"
+					} )
 				}, new FormLayoutConstraints( null ) {
 					"title": new FormMessage( null, "AssesmentViewContent.GradingPanel.tab.title" )
 				} )

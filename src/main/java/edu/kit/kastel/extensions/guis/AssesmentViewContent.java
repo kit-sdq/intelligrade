@@ -48,6 +48,10 @@ public class AssesmentViewContent extends JPanel {
     return autograderConfigPathInput;
   }
 
+  public JPanel getRatingGroupContainer() {
+    return ratingGroupContainer;
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - Clemens
@@ -84,18 +88,21 @@ public class AssesmentViewContent extends JPanel {
     button6 = new JButton();
     button7 = new JButton();
     GradingPanel = new JPanel();
+    scrollPane = new JScrollPane();
+    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+    ratingGroupContainer = new JPanel();
     TestResultsPanel = new JPanel();
     var label4 = new JLabel();
     var scrollPane1 = new JBScrollPane();
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing. border
-    . EmptyBorder( 0, 0, 0, 0) , "JF\u006frmDes\u0069gner \u0045valua\u0074ion", javax. swing. border. TitledBorder. CENTER, javax
-    . swing. border. TitledBorder. BOTTOM, new java .awt .Font ("D\u0069alog" ,java .awt .Font .BOLD ,
-    12 ), java. awt. Color. red) , getBorder( )) );  addPropertyChangeListener (new java. beans
-    . PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e) {if ("\u0062order" .equals (e .
-    getPropertyName () )) throw new RuntimeException( ); }} );
+    setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(new javax.swing.
+    border.EmptyBorder(0,0,0,0), "JF\u006frmDes\u0069gner \u0045valua\u0074ion",javax.swing.border.TitledBorder.CENTER
+    ,javax.swing.border.TitledBorder.BOTTOM,new java.awt.Font("D\u0069alog",java.awt.Font
+    .BOLD,12),java.awt.Color.red), getBorder())); addPropertyChangeListener(
+    new java.beans.PropertyChangeListener(){@Override public void propertyChange(java.beans.PropertyChangeEvent e){if("\u0062order"
+    .equals(e.getPropertyName()))throw new RuntimeException();}});
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -266,12 +273,21 @@ public class AssesmentViewContent extends JPanel {
         GradingPanel.setLayout(new MigLayout(
           "fillx,hidemode 3,align left top",
           // columns
-          "[fill]" +
           "[fill]",
           // rows
-          "[]" +
-          "[]" +
-          "[]"));
+          "[grow]"));
+
+        //======== scrollPane ========
+        {
+          scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+          //======== ratingGroupContainer ========
+          {
+            ratingGroupContainer.setLayout(new BoxLayout(ratingGroupContainer, BoxLayout.Y_AXIS));
+          }
+          scrollPane.setViewportView(ratingGroupContainer);
+        }
+        GradingPanel.add(scrollPane, "cell 0 0,growy");
       }
       tabbedPane1.addTab(bundle.getString("AssesmentViewContent.GradingPanel.tab.title"), GradingPanel);
 
@@ -323,6 +339,8 @@ public class AssesmentViewContent extends JPanel {
   private JButton button6;
   private JButton button7;
   private JPanel GradingPanel;
+  private JScrollPane scrollPane;
+  private JPanel ratingGroupContainer;
   private JPanel TestResultsPanel;
   private JBTable testResultsTable;
   // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
