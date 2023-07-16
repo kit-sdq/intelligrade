@@ -24,6 +24,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   private String username = "";
   private String artemisInstanceUrl = "https://artemis.praktomat.cs.kit.edu";
+  private String selectedGradingConfigPath = "";
 
 
   public static ArtemisSettingsState getInstance() {
@@ -72,6 +73,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   /**
    * Get the password for the Artemis instance from the IDEs CredentialStore
+   *
    * @return the Password stored under the key {@value PASSWORD_STORE_KEY}
    */
   public String getArtemisPassword() {
@@ -81,6 +83,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   /**
    * Store the provided Password securely into the IDEs Credential Store under the key {@value PASSWORD_STORE_KEY}
+   *
    * @param artemisPassword the password to be stored
    */
   public void setArtemisPassword(String artemisPassword) {
@@ -95,5 +98,13 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   public void setArtemisInstanceUrl(String artemisInstanceUrl) {
     this.artemisInstanceUrl = artemisInstanceUrl;
+  }
+
+  public String getSelectedGradingConfigPath() {
+    return selectedGradingConfigPath;
+  }
+
+  public void setSelectedGradingConfigPath(String selectedGradingConfigPath) {
+    this.selectedGradingConfigPath = selectedGradingConfigPath;
   }
 }

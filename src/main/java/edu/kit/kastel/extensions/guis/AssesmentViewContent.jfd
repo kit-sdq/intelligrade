@@ -8,19 +8,31 @@ new FormModel {
 	root: new FormRoot {
 		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class javax.swing.BoxLayout ) ) {
 			name: "this"
+			auxiliary() {
+				"JavaCodeGenerator.variableLocal": true
+			}
 			add( new FormContainer( "com.intellij.ui.components.JBTabbedPane", new FormLayoutManager( class javax.swing.JTabbedPane ) ) {
 				name: "tabbedPane1"
+				auxiliary() {
+					"JavaCodeGenerator.variableLocal": true
+				}
 				add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class net.miginfocom.swing.MigLayout ) {
 					"$layoutConstraints": "fillx,insets 0,hidemode 3,align left top,gap 5 5"
 					"$columnConstraints": "[80:115,fill][151,grow,fill]"
 					"$rowConstraints": "[][][][30][35:30][10:10][][][][]"
 				} ) {
 					name: "AssessmentPanel"
+					auxiliary() {
+						"JavaCodeGenerator.variableLocal": true
+					}
 					add( new FormComponent( "javax.swing.JLabel" ) {
 						name: "label1"
 						"text": new FormMessage( null, "AssesmentViewContent.label1.text" )
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-						"value": "pad 0,cell 0 0,alignx right,growx 0"
+						"value": "pad 0,cell 0 0,alignx label,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
 						name: "coursesDropdown"
@@ -34,8 +46,11 @@ new FormModel {
 					add( new FormComponent( "javax.swing.JLabel" ) {
 						name: "label2"
 						"text": new FormMessage( null, "AssesmentViewContent.label2.text" )
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-						"value": "cell 0 1,alignx right,growx 0"
+						"value": "cell 0 1,alignx label,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
 						name: "examsDropdown"
@@ -49,8 +64,11 @@ new FormModel {
 					add( new FormComponent( "javax.swing.JLabel" ) {
 						name: "label3"
 						"text": new FormMessage( null, "AssesmentViewContent.label3.text" )
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-						"value": "cell 0 2,alignx right,growx 0"
+						"value": "cell 0 2,alignx label,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
 						name: "exercisesDropdown"
@@ -64,11 +82,15 @@ new FormModel {
 					add( new FormComponent( "javax.swing.JLabel" ) {
 						name: "label5"
 						"text": "Grading config"
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-						"value": "cell 0 3,alignx right,growx 0"
+						"value": "cell 0 3,alignx label,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.TextFieldWithBrowseButton" ) {
 						name: "gradingConfigPathInput"
+						"editable": false
 						auxiliary() {
 							"JavaCodeGenerator.variableGetter": true
 						}
@@ -78,11 +100,15 @@ new FormModel {
 					add( new FormComponent( "javax.swing.JLabel" ) {
 						name: "label6"
 						"text": "Autograder config"
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-						"value": "cell 0 4"
+						"value": "cell 0 4,alignx label,growx 0"
 					} )
 					add( new FormComponent( "com.intellij.openapi.ui.TextFieldWithBrowseButton" ) {
 						name: "autograderConfigPathInput"
+						"editable": false
 						auxiliary() {
 							"JavaCodeGenerator.variableGetter": true
 						}
@@ -91,6 +117,9 @@ new FormModel {
 					} )
 					add( new FormComponent( "javax.swing.JSeparator" ) {
 						name: "separator1"
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 0 5 2 1"
 					} )
@@ -98,6 +127,9 @@ new FormModel {
 						name: "generalPanel"
 						"border": new javax.swing.border.CompoundBorder( new javax.swing.border.TitledBorder( new javax.swing.border.LineBorder( sfield java.awt.Color darkGray, 1, true ), "i18nKey=AssesmentViewContent.generalPanel.border" ), &EmptyBorder0 new javax.swing.border.EmptyBorder( 5, 5, 5, 5 ) )
 						"foreground": sfield java.awt.Color blue
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 						add( new FormComponent( "javax.swing.JButton" ) {
 							name: "btnGradingRound1"
 							"text": new FormMessage( null, "AssesmentViewContent.btnGradingRound1.text" )
@@ -129,6 +161,9 @@ new FormModel {
 					} ) {
 						name: "assessmentPanel"
 						"border": new javax.swing.border.CompoundBorder( new javax.swing.border.TitledBorder( new javax.swing.border.LineBorder( sfield java.awt.Color darkGray, 1, true ), "i18nKey=AssesmentViewContent.assessmentPanel.border" ), #EmptyBorder0 )
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 						add( new FormComponent( "javax.swing.JButton" ) {
 							name: "button1"
 							"text": new FormMessage( null, "AssesmentViewContent.button1.text" )
@@ -160,9 +195,15 @@ new FormModel {
 					} ) {
 						name: "panel5"
 						"border": new javax.swing.border.TitledBorder( new javax.swing.border.LineBorder( sfield java.awt.Color darkGray, 1, true ), "i18nKey=AssesmentViewContent.panel5.border" )
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 						add( new FormComponent( "javax.swing.JLabel" ) {
 							name: "label8"
 							"text": new FormMessage( null, "AssesmentViewContent.label8.text" )
+							auxiliary() {
+								"JavaCodeGenerator.variableLocal": true
+							}
 						} )
 						add( new FormComponent( "javax.swing.JLabel" ) {
 							name: "StatisticsContainer"
@@ -180,14 +221,20 @@ new FormModel {
 					} ) {
 						name: "panel3"
 						"border": new javax.swing.border.TitledBorder( new javax.swing.border.LineBorder( sfield java.awt.Color darkGray, 1, false ), "i18nKey=AssesmentViewContent.panel3.border" )
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 						add( new FormComponent( "javax.swing.JLabel" ) {
 							name: "label7"
 							"text": new FormMessage( null, "AssesmentViewContent.label7.text" )
+							auxiliary() {
+								"JavaCodeGenerator.variableLocal": true
+							}
 						}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
 							"hAlign": 4
 						} )
 						add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
-							name: "comboBox4"
+							name: "backlogSelector"
 						}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
 							"gridx": 1
 						} )
@@ -230,11 +277,17 @@ new FormModel {
 						name: "label4"
 						"text": new FormMessage( null, "AssesmentViewContent.label4.text" )
 						"font": new com.jformdesigner.model.SwingDerivedFont( null, 1, 0, false )
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 					}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 						"value": "cell 0 0 2 1"
 					} )
 					add( new FormContainer( "com.intellij.ui.components.JBScrollPane", new FormLayoutManager( class javax.swing.JScrollPane ) ) {
 						name: "scrollPane1"
+						auxiliary() {
+							"JavaCodeGenerator.variableLocal": true
+						}
 						add( new FormComponent( "com.intellij.ui.table.JBTable" ) {
 							name: "testResultsTable"
 						} )

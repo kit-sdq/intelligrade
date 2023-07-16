@@ -1,5 +1,5 @@
 /*
- * Created by JFormDesigner on Thu Jul 13 23:56:37 CEST 2023
+ * Created by JFormDesigner on Sun Jul 16 01:03:18 CEST 2023
  */
 
 package edu.kit.kastel.extensions.guis;
@@ -8,9 +8,12 @@ import java.awt.*;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
+
 import com.intellij.openapi.ui.*;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.*;
 import com.intellij.ui.table.*;
+import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.exam.Exam;
@@ -25,14 +28,6 @@ public class AssesmentViewContent extends JPanel {
     initComponents();
   }
 
-  public TextFieldWithBrowseButton getGradingConfigPathInput() {
-    return gradingConfigPathInput;
-  }
-
-  public TextFieldWithBrowseButton getAutograderConfigPathInput() {
-    return autograderConfigPathInput;
-  }
-
   public ComboBox<Displayable<Course>> getCoursesDropdown() {
     return coursesDropdown;
   }
@@ -45,55 +40,62 @@ public class AssesmentViewContent extends JPanel {
     return exercisesDropdown;
   }
 
+  public TextFieldWithBrowseButton getGradingConfigPathInput() {
+    return gradingConfigPathInput;
+  }
+
+  public TextFieldWithBrowseButton getAutograderConfigPathInput() {
+    return autograderConfigPathInput;
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - Clemens
     ResourceBundle bundle = ResourceBundle.getBundle("guiStrings");
-    tabbedPane1 = new JBTabbedPane();
-    AssessmentPanel = new JPanel();
-    label1 = new JLabel();
+    var tabbedPane1 = new JBTabbedPane();
+    var AssessmentPanel = new JPanel();
+    var label1 = new JLabel();
     coursesDropdown = new ComboBox<>();
-    label2 = new JLabel();
+    var label2 = new JLabel();
     examsDropdown = new ComboBox<>();
-    label3 = new JLabel();
+    var label3 = new JLabel();
     exercisesDropdown = new ComboBox<>();
-    label5 = new JLabel();
+    var label5 = new JLabel();
     gradingConfigPathInput = new TextFieldWithBrowseButton();
-    label6 = new JLabel();
+    var label6 = new JLabel();
     autograderConfigPathInput = new TextFieldWithBrowseButton();
-    separator1 = new JSeparator();
-    generalPanel = new JPanel();
+    var separator1 = new JSeparator();
+    var generalPanel = new JPanel();
     btnGradingRound1 = new JButton();
     btnGradingRound2 = new JButton();
     button5 = new JButton();
-    assessmentPanel = new JPanel();
+    var assessmentPanel = new JPanel();
     button1 = new JButton();
     button2 = new JButton();
     button3 = new JButton();
     button4 = new JButton();
-    panel5 = new JPanel();
-    label8 = new JLabel();
+    var panel5 = new JPanel();
+    var label8 = new JLabel();
     StatisticsContainer = new JLabel();
-    panel3 = new JPanel();
-    label7 = new JLabel();
-    comboBox4 = new ComboBox();
+    var panel3 = new JPanel();
+    var label7 = new JLabel();
+    backlogSelector = new ComboBox();
     panel4 = new JPanel();
     button6 = new JButton();
     button7 = new JButton();
     GradingPanel = new JPanel();
     TestResultsPanel = new JPanel();
-    label4 = new JLabel();
-    scrollPane1 = new JBScrollPane();
+    var label4 = new JLabel();
+    var scrollPane1 = new JBScrollPane();
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder ( new javax . swing. border .CompoundBorder ( new javax . swing. border .TitledBorder ( new javax .
-    swing. border .EmptyBorder ( 0, 0 ,0 , 0) ,  "JFor\u006dDesi\u0067ner \u0045valu\u0061tion" , javax. swing .border
-    . TitledBorder. CENTER ,javax . swing. border .TitledBorder . BOTTOM, new java. awt .Font ( "Dia\u006cog"
-    , java .awt . Font. BOLD ,12 ) ,java . awt. Color .red ) , getBorder
-    () ) );  addPropertyChangeListener( new java. beans .PropertyChangeListener ( ){ @Override public void propertyChange (java
-    . beans. PropertyChangeEvent e) { if( "bord\u0065r" .equals ( e. getPropertyName () ) )throw new RuntimeException
-    ( ) ;} } );
+    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing. border
+    . EmptyBorder( 0, 0, 0, 0) , "JF\u006frmDes\u0069gner \u0045valua\u0074ion", javax. swing. border. TitledBorder. CENTER, javax
+    . swing. border. TitledBorder. BOTTOM, new java .awt .Font ("D\u0069alog" ,java .awt .Font .BOLD ,
+    12 ), java. awt. Color. red) , getBorder( )) );  addPropertyChangeListener (new java. beans
+    . PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e) {if ("\u0062order" .equals (e .
+    getPropertyName () )) throw new RuntimeException( ); }} );
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -120,27 +122,33 @@ public class AssesmentViewContent extends JPanel {
 
         //---- label1 ----
         label1.setText(bundle.getString("AssesmentViewContent.label1.text"));
-        AssessmentPanel.add(label1, "pad 0,cell 0 0,alignx right,growx 0");
+        AssessmentPanel.add(label1, "pad 0,cell 0 0,alignx label,growx 0");
         AssessmentPanel.add(coursesDropdown, "cell 1 0");
 
         //---- label2 ----
         label2.setText(bundle.getString("AssesmentViewContent.label2.text"));
-        AssessmentPanel.add(label2, "cell 0 1,alignx right,growx 0");
+        AssessmentPanel.add(label2, "cell 0 1,alignx label,growx 0");
         AssessmentPanel.add(examsDropdown, "cell 1 1");
 
         //---- label3 ----
         label3.setText(bundle.getString("AssesmentViewContent.label3.text"));
-        AssessmentPanel.add(label3, "cell 0 2,alignx right,growx 0");
+        AssessmentPanel.add(label3, "cell 0 2,alignx label,growx 0");
         AssessmentPanel.add(exercisesDropdown, "cell 1 2");
 
         //---- label5 ----
         label5.setText("Grading config");
-        AssessmentPanel.add(label5, "cell 0 3,alignx right,growx 0");
+        AssessmentPanel.add(label5, "cell 0 3,alignx label,growx 0");
+
+        //---- gradingConfigPathInput ----
+        gradingConfigPathInput.setEditable(false);
         AssessmentPanel.add(gradingConfigPathInput, "cell 1 3");
 
         //---- label6 ----
         label6.setText("Autograder config");
-        AssessmentPanel.add(label6, "cell 0 4");
+        AssessmentPanel.add(label6, "cell 0 4,alignx label,growx 0");
+
+        //---- autograderConfigPathInput ----
+        autograderConfigPathInput.setEditable(false);
         AssessmentPanel.add(autograderConfigPathInput, "cell 1 4");
         AssessmentPanel.add(separator1, "cell 0 5 2 1");
 
@@ -229,7 +237,7 @@ public class AssesmentViewContent extends JPanel {
           panel3.add(label7, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
             GridBagConstraints.EAST, GridBagConstraints.VERTICAL,
             new Insets(0, 0, 5, 5), 0, 0));
-          panel3.add(comboBox4, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+          panel3.add(backlogSelector, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH,
             new Insets(0, 0, 5, 0), 0, 0));
 
@@ -297,41 +305,25 @@ public class AssesmentViewContent extends JPanel {
 
   // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
   // Generated using JFormDesigner Evaluation license - Clemens
-  private JBTabbedPane tabbedPane1;
-  private JPanel AssessmentPanel;
-  private JLabel label1;
   private ComboBox<Displayable<Course>> coursesDropdown;
-  private JLabel label2;
   private ComboBox<Displayable<Exam>> examsDropdown;
-  private JLabel label3;
   private ComboBox<Displayable<Exercise>> exercisesDropdown;
-  private JLabel label5;
   private TextFieldWithBrowseButton gradingConfigPathInput;
-  private JLabel label6;
   private TextFieldWithBrowseButton autograderConfigPathInput;
-  private JSeparator separator1;
-  private JPanel generalPanel;
   private JButton btnGradingRound1;
   private JButton btnGradingRound2;
   private JButton button5;
-  private JPanel assessmentPanel;
   private JButton button1;
   private JButton button2;
   private JButton button3;
   private JButton button4;
-  private JPanel panel5;
-  private JLabel label8;
   private JLabel StatisticsContainer;
-  private JPanel panel3;
-  private JLabel label7;
-  private ComboBox comboBox4;
+  private ComboBox backlogSelector;
   private JPanel panel4;
   private JButton button6;
   private JButton button7;
   private JPanel GradingPanel;
   private JPanel TestResultsPanel;
-  private JLabel label4;
-  private JBScrollPane scrollPane1;
   private JBTable testResultsTable;
   // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

@@ -1,8 +1,7 @@
 package edu.kit.kastel.extensions.tool_windows;
 
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
@@ -12,6 +11,8 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import edu.kit.kastel.extensions.guis.AssesmentViewContent;
+import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.listeners.GradingConfigSelectedListener;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
@@ -24,7 +25,11 @@ import edu.kit.kastel.wrappers.DisplayableExercise;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JPanel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.Element;
 import java.awt.GridLayout;
+import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,22 +71,18 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
   private void addListeners() {
     gradingConfigInput.addBrowseFolderListener(
-            new TextBrowseFolderListener(new FileChooserDescriptor(
-                    true,
-                    false,
-                    false,
-                    false,
-                    false,
-                    false)
-            ));
-    autograderConfigInput.addBrowseFolderListener(new TextBrowseFolderListener(new FileChooserDescriptor(
-            true,
-            false,
-            false,
-            false,
-            false,
-            false)
-    ));
+            new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json"))
+    );
+    autograderConfigInput.addBrowseFolderListener(
+            new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json"))
+    );
+
+    // why the heck would you add a listener for text change like this????
+    gradingConfigInput.getTextField().getDocument().addDocumentListener(new GradingConfigSelectedListener(gradingConfigInput));
+
+    //set config path saved in settings
+    ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
+    gradingConfigInput.setText(settings.getSelectedGradingConfigPath());
   }
 
   private void populateDropdowns() throws ArtemisClientException {
