@@ -11,6 +11,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import edu.kit.kastel.extensions.guis.AssesmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.listeners.ExerciseSelectedListener;
 import edu.kit.kastel.listeners.GradingConfigSelectedListener;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
@@ -54,6 +55,11 @@ public class MainToolWindowFactory implements ToolWindowFactory {
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     contentPanel.setLayout(new GridLayout());
 
+    //give up if logging in to Artemis failed
+    if (!ArtemisUtils.getArtemisClientInstance().isReady()) {
+      return;
+    }
+
     //add content to menu panel
     contentPanel.add(generatedMenu);
     Content content = ContentFactory.getInstance().createContent(
@@ -93,6 +99,9 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     //set config path saved in settings
     ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
     gradingConfigInput.setText(settings.getSelectedGradingConfigPath());
+
+    //parse config on exercise select
+    exerciseComboBox.addItemListener(new ExerciseSelectedListener());
   }
 
   private void populateDropdowns() throws ArtemisClientException {
