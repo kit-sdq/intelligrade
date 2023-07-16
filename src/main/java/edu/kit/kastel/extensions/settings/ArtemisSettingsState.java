@@ -13,6 +13,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This class persists all required data for the PlugIn.
+ * Secrets (such as the Artemis password) are handled by the IntelliJ secrets provider
+ */
 @State(
         name = "edu.kit.kastel.extensions.ArtemisSettingsState",
         storages = @Storage("IntelliGradeSettings.xml")
@@ -32,9 +36,13 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   }
 
   /**
-   * @return a component state. All properties, public and annotated fields are serialized.
-   * Only values which differ from the default (i.e. the value of newly instantiated class) are serialized.
-   * {@code null} value indicates that the returned state won't be stored, as a result previously stored state will be used.
+   * Gets the Settings state.
+   *
+   * @return a component state.
+   * All properties, public and annotated fields are serialized.
+   * Only values which differ from the default (i.e. the value of newly instantiated class)
+   * are serialized. {@code null} value indicates that the returned state won't be stored,
+   * as a result previously stored state will be used.
    * @see XmlSerializer
    */
   @Override
@@ -44,9 +52,9 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   /**
    * This method is called when a new component state is loaded.
-   * The method can and will be called several times if config files are externally changed while the IDE is running.
-   * <p>
-   * State object should be used directly, defensive copying is not required.
+   * The method can and will be called several times if config
+   * files are externally changed while the IDE is running.
+   * <p>State object should be used directly, defensive copying is not required.</p>
    *
    * @param state loaded component state
    * @see XmlSerializerUtil#copyBean(Object, Object)
@@ -72,7 +80,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   }
 
   /**
-   * Get the password for the Artemis instance from the IDEs CredentialStore
+   * Get the password for the Artemis instance from the IDEs CredentialStore.
    *
    * @return the Password stored under the key {@value PASSWORD_STORE_KEY}
    */
@@ -82,7 +90,8 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   }
 
   /**
-   * Store the provided Password securely into the IDEs Credential Store under the key {@value PASSWORD_STORE_KEY}
+   * Store the provided Password securely into the IDEs
+   * Credential Store under the key {@value PASSWORD_STORE_KEY}.
    *
    * @param artemisPassword the password to be stored
    */

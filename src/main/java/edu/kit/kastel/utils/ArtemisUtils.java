@@ -13,7 +13,10 @@ import edu.kit.kastel.sdq.artemis4j.client.RestClientManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
+/**
+ * Utility Class to handle Artemis related common tasks such as
+ * creating a new client and logging in or creating Error messages.
+ */
 public final class ArtemisUtils {
   private static final String LOGIN_ERROR_DIALOG_TITLE = "IntelliGrade Login error";
   public static final String GENERIC_ARTEMIS_ERROR_TITLE = "Artemis Error";
@@ -46,7 +49,9 @@ public final class ArtemisUtils {
         artemisInstance.login();
       } catch (ArtemisClientException clientException) {
         ArtemisUtils.displayLoginErrorBalloon(
-                String.format("%s. This will make the grading PlugIn unusable!%n", clientException.getMessage()),
+                String.format("%s. This will make the grading PlugIn unusable!%n",
+                        clientException.getMessage()
+                ),
                 new NotificationAction("Configure...") {
                   @Override
                   public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -60,6 +65,13 @@ public final class ArtemisUtils {
     return artemisClient;
   }
 
+  /**
+   * Display an error ballon that indicates a login error.
+   *
+   * @param msg The message to be displayed. Should describe the login error.
+   * @param fix A possible fix for the error. Should be non-null. A null value
+   *            is only allowed if a fix is provided in the message.
+   */
   public static void displayLoginErrorBalloon(String msg, @Nullable AnAction fix) {
     //create Balloon notification indicating error & fix
     Notification balloon = NotificationGroupManager.getInstance()
@@ -67,12 +79,19 @@ public final class ArtemisUtils {
             .createNotification(msg, NotificationType.ERROR)
             .setTitle(LOGIN_ERROR_DIALOG_TITLE);
     //add fix if available
-    if (fix != null) balloon.addAction(fix);
+    if (fix != null) {
+      balloon.addAction(fix);
+    }
 
     balloon.notify(null);
   }
 
-  public static void displayGenericErrorBalloon(String balloonContent){
+  /**
+   * Display an error balloon that indicates a generic error message.
+   *
+   * @param balloonContent The message to be displayed in the error balloon
+   */
+  public static void displayGenericErrorBalloon(String balloonContent) {
     NotificationGroupManager.getInstance()
             .getNotificationGroup("IntelliGrade Notifications")
             .createNotification(balloonContent, NotificationType.ERROR)

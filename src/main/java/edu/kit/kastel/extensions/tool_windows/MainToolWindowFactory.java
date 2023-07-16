@@ -1,6 +1,5 @@
 package edu.kit.kastel.extensions.tool_windows;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -22,30 +21,34 @@ import edu.kit.kastel.wrappers.Displayable;
 import edu.kit.kastel.wrappers.DisplayableCourse;
 import edu.kit.kastel.wrappers.DisplayableExam;
 import edu.kit.kastel.wrappers.DisplayableExercise;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Element;
 import java.awt.GridLayout;
-import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.JPanel;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * This class handles all logic for the main grading UI.
+ * It does not handle any other logic, that should be factored out.
+ */
 public class MainToolWindowFactory implements ToolWindowFactory {
 
-  private static final String EXAMS_FETCH_ERROR_FORMAT = "Unable to fetch Exams for course %s.";
-  private static final String EXERCISES_FETCH_ERROR_FORMAT = "Unable to fetch exercises for course %s.";
+  private static final String EXAMS_FETCH_ERROR_FORMAT =
+          "Unable to fetch Exams for course %s.";
+  private static final String EXERCISES_FETCH_ERROR_FORMAT =
+          "Unable to fetch exercises for course %s.";
 
   //set up automated GUI and generate necessary bindings
   private final JPanel contentPanel = new JPanel();
   private final AssesmentViewContent generatedMenu = new AssesmentViewContent();
-  private final TextFieldWithBrowseButton gradingConfigInput = generatedMenu.getGradingConfigPathInput();
-  private final TextFieldWithBrowseButton autograderConfigInput = generatedMenu.getAutograderConfigPathInput();
+  private final TextFieldWithBrowseButton gradingConfigInput =
+          generatedMenu.getGradingConfigPathInput();
+  private final TextFieldWithBrowseButton autograderConfigInput =
+          generatedMenu.getAutograderConfigPathInput();
   private final ComboBox<Displayable<Course>> coursesComboBox = generatedMenu.getCoursesDropdown();
   private final ComboBox<Displayable<Exam>> examsComboBox = generatedMenu.getExamsDropdown();
-  private final ComboBox<Displayable<Exercise>> exerciseComboBox = generatedMenu.getExercisesDropdown();
+  private final ComboBox<Displayable<Exercise>> exerciseComboBox =
+          generatedMenu.getExercisesDropdown();
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -71,14 +74,21 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
   private void addListeners() {
     gradingConfigInput.addBrowseFolderListener(
-            new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json"))
+            new TextBrowseFolderListener(FileChooserDescriptorFactory
+                    .createSingleFileDescriptor("json")
+            )
     );
     autograderConfigInput.addBrowseFolderListener(
-            new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json"))
+            new TextBrowseFolderListener(FileChooserDescriptorFactory
+                    .createSingleFileDescriptor("json")
+            )
     );
 
     // why the heck would you add a listener for text change like this????
-    gradingConfigInput.getTextField().getDocument().addDocumentListener(new GradingConfigSelectedListener(gradingConfigInput));
+    gradingConfigInput
+            .getTextField()
+            .getDocument()
+            .addDocumentListener(new GradingConfigSelectedListener(gradingConfigInput));
 
     //set config path saved in settings
     ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
@@ -87,7 +97,10 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
   private void populateDropdowns() throws ArtemisClientException {
     //add all courses to the courses dropdown
-    List<Course> courses = ArtemisUtils.getArtemisClientInstance().getCourseArtemisClient().getCoursesForAssessment();
+    List<Course> courses = ArtemisUtils
+            .getArtemisClientInstance()
+            .getCourseArtemisClient()
+            .getCoursesForAssessment();
     courses.forEach(course -> coursesComboBox.addItem(new DisplayableCourse(course)));
 
     //populate exam and exercise dropdown if a course is selected
@@ -98,7 +111,8 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     });
 
     //populate the dropdowns once because on load event listener is not triggered
-    Course initial = ((DisplayableCourse) Objects.requireNonNull(coursesComboBox.getSelectedItem())).getWrappedValue();
+    Course initial = ((DisplayableCourse) Objects.requireNonNull(coursesComboBox.getSelectedItem()))
+            .getWrappedValue();
     populateExamDropdown(initial);
     populateExercisesDropdown(initial);
   }
@@ -110,7 +124,7 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     try {
       //try to add all exams to the dropdown or fail
       course.getExams().forEach(exam -> examsComboBox.addItem(new DisplayableExam(exam)));
-    } catch (ArtemisClientException _e) {
+    } catch (ArtemisClientException e) {
       ArtemisUtils.displayGenericErrorBalloon(String.format(EXAMS_FETCH_ERROR_FORMAT, course));
     }
   }
@@ -119,8 +133,10 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     exerciseComboBox.removeAllItems();
 
     try {
-      course.getExercises().forEach(exercise -> exerciseComboBox.addItem(new DisplayableExercise(exercise)));
-    } catch (ArtemisClientException _e) {
+      course.getExercises().forEach(exercise ->
+              exerciseComboBox.addItem(new DisplayableExercise(exercise))
+      );
+    } catch (ArtemisClientException e) {
       ArtemisUtils.displayGenericErrorBalloon(String.format(EXERCISES_FETCH_ERROR_FORMAT, course));
     }
   }

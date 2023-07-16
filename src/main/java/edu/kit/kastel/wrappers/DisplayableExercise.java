@@ -2,6 +2,10 @@ package edu.kit.kastel.wrappers;
 
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
 
+
+/**
+ * An exercise that can be displayed in the UI by calling the toString method.
+ */
 public class DisplayableExercise extends Displayable<Exercise> {
 
   public DisplayableExercise(Exercise exercise) {

@@ -7,17 +7,20 @@ import com.intellij.ui.JBColor;
 import edu.kit.kastel.extensions.guis.SettingsContent;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.client.RestClientManager;
-import org.jetbrains.annotations.Nullable;
-
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * This class implements the settings Dialog for this PlugIn.
+ * Everything directly related to the Setting UI should be in here.
+ */
 public class ArtemisSettings implements Configurable {
 
   private static final String SETTINGS_DIALOG_NAME = "IntelliGrade Settings";
@@ -47,8 +50,7 @@ public class ArtemisSettings implements Configurable {
   /**
    * Creates a new Swing form that enables the user to configure the settings.
    * Usually this method is called on the EDT, so it should not take a long time.
-   * <p>
-   * Also, this place is designed to allocate resources (subscriptions/listeners etc.)
+   * <p>Also, this place is designed to allocate resources (subscriptions/listeners etc.)</p>
    *
    * @return new Swing form to show, or {@code null} if it cannot be created
    * @see #disposeUIResources
@@ -64,8 +66,8 @@ public class ArtemisSettings implements Configurable {
   }
 
   /**
-   * Listener Method that gets called when the login Button is pressed
-   * This method will Log in the User
+   * Listener Method that gets called when the login Button is pressed.
+   * This method will Log in the User.
    *
    * @param actionEvent The Event passed by AWT is the Button is pressed
    */
@@ -139,7 +141,9 @@ public class ArtemisSettings implements Configurable {
     } catch (ArtemisClientException e) {
       loggedInLabel.setText("false");
       loggedInLabel.setForeground(JBColor.RED);
-      JOptionPane.showMessageDialog(contentPanel, e.getMessage(), LOGIN_ERROR_DIALOG_TITLE, JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(
+              contentPanel, e.getMessage(), LOGIN_ERROR_DIALOG_TITLE, JOptionPane.ERROR_MESSAGE
+      );
     }
 
     if (artemisInstance.isReady()) {
