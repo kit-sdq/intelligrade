@@ -1,4 +1,4 @@
-JFDML JFormDesigner: "8.1.0.0.283" Java: "17.0.7" encoding: "UTF-8"
+JFDML JFormDesigner: "8.1.1.0.298" Java: "17.0.7" encoding: "UTF-8"
 
 new FormModel {
 	"i18n.bundleName": "guiStrings"
@@ -133,6 +133,9 @@ new FormModel {
 						add( new FormComponent( "javax.swing.JButton" ) {
 							name: "btnGradingRound1"
 							"text": new FormMessage( null, "AssesmentViewContent.btnGradingRound1.text" )
+							auxiliary() {
+								"JavaCodeGenerator.variableGetter": true
+							}
 						}, new FormLayoutConstraints( class java.lang.String ) {
 							"value": "Center"
 						} )

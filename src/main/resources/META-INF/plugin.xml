@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>edu.kit.kastel.sdq.intelligrade</id>
     <name>IntelliGrade</name>
-    <vendor email="git@cdaut.de" url="https://github.com/kit-sdq/programming-lecture-eclipse-artemis">SDQ</vendor>
+    <vendor email="git@cdaut.de" url="https://github.com/kit-sdq/programming-lecture-eclipse-artemis">Clemens D.</vendor>
 
     <description><![CDATA[
     This is a PlugIn to enable automatic grading of <a href="https://github.com/ls1intum/Artemis">Artemis</a> based programming exercises.

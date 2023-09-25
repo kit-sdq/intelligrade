@@ -2,7 +2,7 @@ package edu.kit.kastel.listeners;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ui.JBColor;
-import edu.kit.kastel.extensions.guis.AssesmentViewContent;
+import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
 import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
@@ -10,7 +10,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.config.JsonFileConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.wrappers.DisplayableExercise;
-import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -41,9 +40,9 @@ public class ExerciseSelectedListener implements ItemListener {
   /**
    * Hold a reference to the UI, so we can dynamically modify components.
    */
-  private final AssesmentViewContent gui;
+  private final AssessmentViewContent gui;
 
-  public ExerciseSelectedListener(AssesmentViewContent gui) {
+  public ExerciseSelectedListener(AssessmentViewContent gui) {
     this.gui = gui;
   }
 
@@ -80,6 +79,7 @@ public class ExerciseSelectedListener implements ItemListener {
 
     //if the exercise that is to be graded is invalid for this Config
     if (!configForExercise.getAllowedExercises().contains(selected.getExerciseId())) {
+      //display error message
       ArtemisUtils.displayGenericErrorBalloon(
               String.format(
                       EXERCISE_INVALID_FORMATTER,
@@ -87,8 +87,12 @@ public class ExerciseSelectedListener implements ItemListener {
                       configForExercise.getShortName()
               )
       );
+      //grey out assessment buttons
+      gui.getBtnGradingRound1().setEnabled(false);
       return;
     }
+    //enable assessment button because it may still be greyed out
+    gui.getBtnGradingRound1().setEnabled(true);
     addRatingGroups(configForExercise);
   }
 

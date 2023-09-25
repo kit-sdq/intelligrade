@@ -3,13 +3,8 @@ package edu.kit.kastel.listeners;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import edu.kit.kastel.exceptions.ImplementationMissing;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
-import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.config.JsonFileConfig;
-import edu.kit.kastel.utils.ArtemisUtils;
-import edu.kit.kastel.wrappers.DisplayableExercise;
 import java.io.File;
-import java.io.IOException;
-import java.util.Objects;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 

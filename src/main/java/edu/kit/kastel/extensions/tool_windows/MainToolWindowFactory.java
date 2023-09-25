@@ -9,10 +9,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import edu.kit.kastel.extensions.guis.AssesmentViewContent;
+import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.listeners.ExerciseSelectedListener;
 import edu.kit.kastel.listeners.GradingConfigSelectedListener;
+import edu.kit.kastel.listeners.StartAssesment1Listener;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
@@ -25,6 +26,7 @@ import edu.kit.kastel.wrappers.DisplayableExercise;
 import java.awt.GridLayout;
 import java.util.List;
 import java.util.Objects;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +43,7 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
   //set up automated GUI and generate necessary bindings
   private final JPanel contentPanel = new JPanel();
-  private final AssesmentViewContent generatedMenu = new AssesmentViewContent();
+  private final AssessmentViewContent generatedMenu = new AssessmentViewContent();
   private final TextFieldWithBrowseButton gradingConfigInput =
           generatedMenu.getGradingConfigPathInput();
   private final TextFieldWithBrowseButton autograderConfigInput =
@@ -50,6 +52,8 @@ public class MainToolWindowFactory implements ToolWindowFactory {
   private final ComboBox<Displayable<Exam>> examsComboBox = generatedMenu.getExamsDropdown();
   private final ComboBox<Displayable<Exercise>> exerciseComboBox =
           generatedMenu.getExercisesDropdown();
+
+  private final JButton startAssessment1Btn = generatedMenu.getBtnGradingRound1();
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -102,6 +106,10 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
     //parse config on exercise select
     exerciseComboBox.addItemListener(new ExerciseSelectedListener(generatedMenu));
+
+    //add listener for Button that starts first grading round
+    startAssessment1Btn.addActionListener(new StartAssesment1Listener(generatedMenu));
+
   }
 
   private void populateDropdowns() throws ArtemisClientException {

@@ -1,6 +1,5 @@
 package edu.kit.kastel.listeners;
 
-import edu.kit.kastel.sdq.artemis4j.api.grading.IMistakeType;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
