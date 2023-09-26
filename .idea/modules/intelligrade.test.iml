@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4">
-  <component name="AdditionalModuleElements">
-    <content url="file://$MODULE_DIR$/../../src/test" dumb="true">
-      <sourceFolder url="file://$MODULE_DIR$/../../src/test/java" isTestSource="true" />
-    </content>
-  </component>
-  <component name="CheckStyle-IDEA-Module" serialisationVersion="2">
-    <option name="activeLocationsIds" />
-  </component>
   <component name="SonarLintModuleSettings">
-    <option name="uniqueId" value="0d839499-7e2f-423b-b7c4-2f144069a048" />
+    <option name="uniqueId" value="7dbcae1c-b0c7-4280-a3a0-9a69c5ddefad" />
   </component>
 </module>

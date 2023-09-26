@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intelligrade.iml" filepath="$PROJECT_DIR$/.idea/modules/intelligrade.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/intelligrade.test.iml" filepath="$PROJECT_DIR$/.idea/modules/intelligrade.test.iml" />
     </modules>
   </component>
 </project>
