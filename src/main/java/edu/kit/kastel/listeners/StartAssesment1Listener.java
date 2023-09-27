@@ -3,13 +3,18 @@ package edu.kit.kastel.listeners;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
+import edu.kit.kastel.sdq.artemis4j.api.artemis.ExerciseStats;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.LockResult;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.Submission;
+import edu.kit.kastel.sdq.artemis4j.api.client.IAssessmentArtemisClient;
+import edu.kit.kastel.sdq.artemis4j.client.AssessmentArtemisClient;
 import edu.kit.kastel.utils.ArtemisUtils;
+import edu.kit.kastel.utils.AssessmentUtils;
 import edu.kit.kastel.wrappers.Displayable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,6 +32,7 @@ import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 /**
  * Listener that gets called when the first grading round is started.
@@ -48,7 +54,15 @@ public class StartAssesment1Listener implements ActionListener {
 
   private static final String ERROR_DELETE_REPO_DIR =
           "Error deleting existing submission directory.";
+
+  private static final String LOOSE_ASSESSMENT_MSG =
+          "You already have an assessment loaded. Loading a new assessment"
+                  + " will cause you to loose all unsaved gradings! Load new assessment anyway?";
   private final AssessmentViewContent gui;
+
+  private IAssessmentArtemisClient assessmentClient = ArtemisUtils
+          .getArtemisClientInstance()
+          .getAssessmentArtemisClient();
 
   public StartAssesment1Listener(AssessmentViewContent gui) {
     this.gui = gui;
@@ -56,6 +70,7 @@ public class StartAssesment1Listener implements ActionListener {
 
   @Override
   public void actionPerformed(ActionEvent actionEvent) {
+
     //check if any config is selected. If wrong config is selected Button will be unclickable
     if (gui.getGradingConfigPathInput().getText().isBlank()) {
       ArtemisUtils.displayGenericErrorBalloon(NO_CONFIG_SELECTED_MSG);
@@ -67,16 +82,28 @@ public class StartAssesment1Listener implements ActionListener {
       return;
     }
 
+    //check if an assessment is already loaded
+    if (AssessmentUtils.isAssesmentMode()
+            && !MessageDialogBuilder.yesNo(
+                    "Unsaved assessment",
+                    LOOSE_ASSESSMENT_MSG)
+            .guessWindowAndAsk()) {
+      return;
+    }
+
     //get the assessment and try to obtain a lock 
     Exercise selectedExercise = ((Displayable<Exercise>) gui.getExercisesDropdown().getSelectedItem())
             .getWrappedValue();
 
     Optional<LockResult> assessmentLockWrapper;
     try {
-      assessmentLockWrapper = ArtemisUtils
-              .getArtemisClientInstance()
-              .getAssessmentArtemisClient()
-              .startNextAssessment(selectedExercise, 0);
+
+      ExerciseStats stats = assessmentClient.getStats(selectedExercise);
+
+      //TODO: Calculate if assessments are still to be graded or not
+
+      assessmentLockWrapper = assessmentClient.startNextAssessment(selectedExercise, 0);
+
     } catch (ArtemisClientException e) {
       ArtemisUtils.displayGenericErrorBalloon(
               String.format(ERROR_NEXT_ASSESSMENT_FORMATTER, e.getMessage())
@@ -169,7 +196,7 @@ public class StartAssesment1Listener implements ActionListener {
                             ArtemisSettingsState.getInstance().getArtemisPassword()
                     )
             );
-    //generate notification beecause cloning is slow
+    //generate notification because cloning is slow
     NotificationGroupManager.getInstance()
             .getNotificationGroup("IntelliGrade Notifications")
             .createNotification("Cloning repository...\n This might take a while.",
@@ -178,11 +205,12 @@ public class StartAssesment1Listener implements ActionListener {
             .notify(ProjectUtil.getActiveProject());
 
     try (Git ignored = cloner.call()) {
+      //empty because of try with resource
     } catch (InvalidRemoteException | TransportException e) {
       ArtemisUtils.displayGenericErrorBalloon(String.format(GIT_ERROR_FORMATTER, e.getMessage()));
       return;
     } catch (GitAPIException e) {
-      e.printStackTrace();
+      LoggerFactory.getLogger(StartAssesment1Listener.class).error(e.toString());
       return;
     }
 
@@ -202,6 +230,9 @@ public class StartAssesment1Listener implements ActionListener {
 
     //set correct exercise in panel (new IDE instance resets this)
     this.gui.getExercisesDropdown().setSelectedIndex(selectedIdx);
+
+    //set assessment mode
+    AssessmentUtils.enabeleAssessmentMode();
   }
 }
 
