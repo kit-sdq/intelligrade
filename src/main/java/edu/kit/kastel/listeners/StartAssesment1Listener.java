@@ -12,7 +12,6 @@ import edu.kit.kastel.sdq.artemis4j.api.artemis.ExerciseStats;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.LockResult;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.Submission;
 import edu.kit.kastel.sdq.artemis4j.api.client.IAssessmentArtemisClient;
-import edu.kit.kastel.sdq.artemis4j.client.AssessmentArtemisClient;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.AssessmentUtils;
 import edu.kit.kastel.wrappers.Displayable;
@@ -60,7 +59,7 @@ public class StartAssesment1Listener implements ActionListener {
                   + " will cause you to loose all unsaved gradings! Load new assessment anyway?";
   private final AssessmentViewContent gui;
 
-  private IAssessmentArtemisClient assessmentClient = ArtemisUtils
+  private final IAssessmentArtemisClient assessmentClient = ArtemisUtils
           .getArtemisClientInstance()
           .getAssessmentArtemisClient();
 
@@ -125,11 +124,21 @@ public class StartAssesment1Listener implements ActionListener {
     Optional<String> repoUrlWrapper =
             getRepoUrlFromAssessmentLock(assessmentLock, selectedExercise);
 
+    //obtain student name or use submission number
+    String repoIdentifier;
+    try {
+      repoIdentifier = ArtemisUtils
+              .getArtemisClientInstance()
+              .getSubmissionArtemisClient()
+              .getSubmissionById(selectedExercise, assessmentLock.getSubmissionId())
+              .getParticipantIdentifier();
+    } catch (ArtemisClientException e) {
+      repoIdentifier = Integer.toString(assessmentLock.getSubmissionId());
+    }
 
-    //TODO: maybe get participant name here
     String repositoryName = String.format(
-            "%s_%d", selectedExercise.getShortName(),
-            assessmentLock.getSubmissionId()
+            "%s_%s", selectedExercise.getShortName(),
+            repoIdentifier
     );
 
     repoUrlWrapper.ifPresent(repoUrl -> this.cloneSubmissionToTempdir(repoUrl, repositoryName));
