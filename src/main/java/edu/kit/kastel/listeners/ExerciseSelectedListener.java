@@ -141,7 +141,6 @@ public class ExerciseSelectedListener implements ItemListener {
                         assessmentButton.addActionListener(
                                 new OnAssesmentButtonClickListener((MistakeType) mistakeType)
                         );
-
                         ratingCroupContainer.add(assessmentButton);
                       });
 

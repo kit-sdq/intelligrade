@@ -227,7 +227,10 @@ public class StartAssesment1Listener implements ActionListener {
     int selectedIdx = this.gui.getExercisesDropdown().getSelectedIndex();
 
     //open project
-    ProjectUtil.openOrImport(submissionRepoDir.toPath());
+    ProjectUtil.openOrImport(submissionRepoDir.toPath(), ProjectUtil.getActiveProject(), false);
+
+    //reset listeners because they get registered when a new project is opened
+    AssessmentUtils.resetAssessmentListeners();
 
     //generate notification because cloning is slow
     NotificationGroupManager.getInstance()

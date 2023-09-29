@@ -1,7 +1,8 @@
 <idea-plugin>
     <id>edu.kit.kastel.sdq.intelligrade</id>
     <name>IntelliGrade</name>
-    <vendor email="git@cdaut.de" url="https://github.com/kit-sdq/programming-lecture-eclipse-artemis">Clemens D.</vendor>
+    <vendor email="git@cdaut.de" url="https://github.com/kit-sdq/programming-lecture-eclipse-artemis">Clemens D.
+    </vendor>
 
     <description><![CDATA[
     This is a PlugIn to enable automatic grading of <a href="https://github.com/ls1intum/Artemis">Artemis</a> based programming exercises.
@@ -20,8 +21,10 @@
                 displayName="IntelliGrade Settings"/>
         <applicationService
                 serviceImplementation="edu.kit.kastel.extensions.settings.ArtemisSettingsState"/>
-        <toolWindow id="Grading" secondary="true" anchor="right" icon="AllIcons.Actions.Lightning"
+        <toolWindow id="Grading" secondary="true" anchor="right" icon="AllIcons.Actions.Edit"
                     factoryClass="edu.kit.kastel.extensions.tool_windows.MainToolWindowFactory"/>
+        <toolWindow factoryClass="edu.kit.kastel.extensions.tool_windows.AnnotationsToolWindowFactory" id="Annotations"
+                    anchor="bottom" icon="AllIcons.Actions.Annotate"/>
         <notificationGroup id="IntelliGrade Notifications"
                            displayType="BALLOON"/>
     </extensions>
