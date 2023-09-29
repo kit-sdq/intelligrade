@@ -53,6 +53,10 @@ public class AssessmentViewContent extends JPanel {
     return ratingGroupContainer;
   }
 
+  public JButton getBtnSaveAssessment() {
+    return btnSaveAssessment;
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - Clemens
@@ -76,7 +80,7 @@ public class AssessmentViewContent extends JPanel {
     btnGradingRound2 = new JButton();
     button5 = new JButton();
     var assessmentPanel = new JPanel();
-    button1 = new JButton();
+    btnSaveAssessment = new JButton();
     button2 = new JButton();
     button3 = new JButton();
     button4 = new JButton();
@@ -99,13 +103,12 @@ public class AssessmentViewContent extends JPanel {
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing
-    . border. EmptyBorder( 0, 0, 0, 0) , "JFor\u006dDesi\u0067ner \u0045valu\u0061tion", javax. swing. border. TitledBorder
-    . CENTER, javax. swing. border. TitledBorder. BOTTOM, new java .awt .Font ("Dia\u006cog" ,java .
-    awt .Font .BOLD ,12 ), java. awt. Color. red) , getBorder( )) )
-    ;  addPropertyChangeListener (new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e
-    ) {if ("bord\u0065r" .equals (e .getPropertyName () )) throw new RuntimeException( ); }} )
-    ;
+    setBorder ( new javax . swing. border .CompoundBorder ( new javax . swing. border .TitledBorder ( new javax . swing. border .EmptyBorder
+    ( 0, 0 ,0 , 0) ,  "JF\u006frm\u0044es\u0069gn\u0065r \u0045va\u006cua\u0074io\u006e" , javax. swing .border . TitledBorder. CENTER ,javax . swing. border
+    .TitledBorder . BOTTOM, new java. awt .Font ( "D\u0069al\u006fg", java .awt . Font. BOLD ,12 ) ,java . awt
+    . Color .red ) , getBorder () ) );  addPropertyChangeListener( new java. beans .PropertyChangeListener ( ){ @Override public void
+    propertyChange (java . beans. PropertyChangeEvent e) { if( "\u0062or\u0064er" .equals ( e. getPropertyName () ) )throw new RuntimeException( )
+    ;} } );
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -199,9 +202,9 @@ public class AssessmentViewContent extends JPanel {
             ((GridBagLayout)assessmentPanel.getLayout()).columnWeights = new double[] {1.0, 1.0, 1.0E-4};
             ((GridBagLayout)assessmentPanel.getLayout()).rowWeights = new double[] {0.0, 0.0, 1.0E-4};
 
-            //---- button1 ----
-            button1.setText(bundle.getString("AssesmentViewContent.button1.text"));
-            assessmentPanel.add(button1, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+            //---- btnSaveAssessment ----
+            btnSaveAssessment.setText(bundle.getString("AssesmentViewContent.btnSaveAssessment.text"));
+            assessmentPanel.add(btnSaveAssessment, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
               GridBagConstraints.CENTER, GridBagConstraints.BOTH,
               new Insets(0, 0, 5, 5), 0, 0));
 
@@ -339,7 +342,7 @@ public class AssessmentViewContent extends JPanel {
   private JButton btnGradingRound1;
   private JButton btnGradingRound2;
   private JButton button5;
-  private JButton button1;
+  private JButton btnSaveAssessment;
   private JButton button2;
   private JButton button3;
   private JButton button4;

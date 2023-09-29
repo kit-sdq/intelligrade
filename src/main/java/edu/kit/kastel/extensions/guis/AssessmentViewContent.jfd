@@ -170,8 +170,11 @@ new FormModel {
 								"JavaCodeGenerator.variableLocal": true
 							}
 							add( new FormComponent( "javax.swing.JButton" ) {
-								name: "button1"
-								"text": new FormMessage( null, "AssesmentViewContent.button1.text" )
+								name: "btnSaveAssessment"
+								"text": new FormMessage( null, "AssesmentViewContent.btnSaveAssessment.text" )
+								auxiliary() {
+									"JavaCodeGenerator.variableGetter": true
+								}
 							}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) )
 							add( new FormComponent( "javax.swing.JButton" ) {
 								name: "button2"

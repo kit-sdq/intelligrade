@@ -1,11 +1,13 @@
 package edu.kit.kastel.utils;
 
+import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.LockResult;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationManagement;
 import edu.kit.kastel.wrappers.EventListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,21 +25,29 @@ public final class AssessmentUtils {
 
   private static Annotation latestAnnotation;
 
+  private static Optional<LockResult> assessmentLock;
+
   private AssessmentUtils() {
     throw new IllegalAccessError("Utility Class constructor");
   }
 
-  public static void enabeleAssessmentMode() {
+  public static void enabeleAssessmentMode(LockResult assLock) {
+    AssessmentUtils.assessmentLock = Optional.of(assLock);
     AssessmentUtils.assesmentMode = true;
     AssessmentUtils.resetAnnotations();
   }
 
   public static void disableAssessmentMode() {
     AssessmentUtils.assesmentMode = false;
+    assessmentLock = Optional.empty();
   }
 
   public static boolean isAssesmentMode() {
     return AssessmentUtils.assesmentMode;
+  }
+
+  public static Optional<LockResult> getAssessmentLock() {
+    return assessmentLock;
   }
 
   /**
@@ -73,7 +83,7 @@ public final class AssessmentUtils {
     AssessmentUtils.assesmentListeners.add(assessmentListener);
   }
 
-  public static void resetAssessmentListeners(){
+  public static void resetAssessmentListeners() {
     assesmentListeners = new ArrayList<>();
   }
 

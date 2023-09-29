@@ -13,6 +13,7 @@ import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.listeners.ExerciseSelectedListener;
 import edu.kit.kastel.listeners.GradingConfigSelectedListener;
+import edu.kit.kastel.listeners.OnSaveAssessmentBtnClick;
 import edu.kit.kastel.listeners.StartAssesment1Listener;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
@@ -54,6 +55,8 @@ public class MainToolWindowFactory implements ToolWindowFactory {
           generatedMenu.getExercisesDropdown();
 
   private final JButton startAssessment1Btn = generatedMenu.getBtnGradingRound1();
+
+  private final JButton saveAssessmentBtn = generatedMenu.getBtnSaveAssessment();
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -109,6 +112,9 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
     //add listener for Button that starts first grading round
     startAssessment1Btn.addActionListener(new StartAssesment1Listener(generatedMenu));
+
+    //button that saves assessment
+    saveAssessmentBtn.addActionListener(new OnSaveAssessmentBtnClick());
 
   }
 

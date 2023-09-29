@@ -1,7 +1,6 @@
 package edu.kit.kastel.extensions.guis;
 
 import com.intellij.DynamicBundle;
-import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,7 @@ public class AnnotationsTableModel extends AbstractTableModel {
 
   @Override
   public int getColumnCount() {
-    return 6;
+    return HEADINGS.length;
   }
 
   @Override

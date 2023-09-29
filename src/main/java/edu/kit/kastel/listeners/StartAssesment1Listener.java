@@ -143,6 +143,8 @@ public class StartAssesment1Listener implements ActionListener {
 
     repoUrlWrapper.ifPresent(repoUrl -> this.cloneSubmissionToTempdir(repoUrl, repositoryName));
 
+    //set assessment mode
+    AssessmentUtils.enabeleAssessmentMode(assessmentLock);
   }
 
   /**
@@ -242,9 +244,6 @@ public class StartAssesment1Listener implements ActionListener {
 
     //set correct exercise in panel (new IDE instance resets this)
     this.gui.getExercisesDropdown().setSelectedIndex(selectedIdx);
-
-    //set assessment mode
-    AssessmentUtils.enabeleAssessmentMode();
   }
 }
 
