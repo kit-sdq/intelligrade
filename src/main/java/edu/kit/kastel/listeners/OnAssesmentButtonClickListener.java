@@ -96,5 +96,6 @@ public class OnAssesmentButtonClickListener implements ActionListener {
       System.err.println(e.getMessage());
     }
 
+    //TODO: highlight text in editor
   }
 }
