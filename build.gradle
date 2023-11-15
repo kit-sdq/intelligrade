@@ -1,5 +1,6 @@
+// See https://github.com/JetBrains/gradle-intellij-plugin/
 plugins {
-    id 'org.jetbrains.intellij' version '1.15.0'
+    id 'org.jetbrains.intellij' version '1.16.0'
     id 'java'
 }
 
@@ -19,9 +20,8 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 }
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version = '2023.1.4'
+    version = '2023.2.5'
     plugins =  ['com.intellij.java']
 }
 patchPluginXml {

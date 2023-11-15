@@ -84,7 +84,7 @@ public class OnAssesmentButtonClickListener implements ActionListener {
             this.mistakeType,
             selectedLines.first().line,
             selectedLines.second().line,
-            FilenameUtils.removeExtension((subtracted.toString())),
+            FilenameUtils.removeExtension(subtracted.toString()),
             "",
             0.0
     );
