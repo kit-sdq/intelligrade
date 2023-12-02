@@ -55,7 +55,9 @@ public final class ArtemisUtils {
                 new NotificationAction("Configure...") {
                   @Override
                   public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(null, "IntelliGrade Settings");
+                    ShowSettingsUtil
+                            .getInstance()
+                            .showSettingsDialog(null, "IntelliGrade Settings");
                   }
                 }
         );

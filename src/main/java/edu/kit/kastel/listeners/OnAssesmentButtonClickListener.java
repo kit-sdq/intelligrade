@@ -2,11 +2,16 @@ package edu.kit.kastel.listeners;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBColor;
 import edu.kit.kastel.sdq.artemis4j.api.grading.IAnnotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
@@ -14,6 +19,8 @@ import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException
 import edu.kit.kastel.sdq.artemis4j.util.Pair;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.AssessmentUtils;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.file.Path;
@@ -96,6 +103,22 @@ public class OnAssesmentButtonClickListener implements ActionListener {
       System.err.println(e.getMessage());
     }
 
-    //TODO: highlight text in editor
+    var highlightAttributes = new TextAttributes(
+            new JBColor(new Color(255, 0, 0),
+                    new Color(255, 0, 0)
+            ),
+            null,
+            null,
+            EffectType.ROUNDED_BOX,
+            Font.PLAIN
+    );
+
+    editor.getMarkupModel().addRangeHighlighter(
+            selectedLines.first().line,
+            selectedLines.second().line,
+            HighlighterLayer.SELECTION,
+            highlightAttributes,
+            HighlighterTargetArea.LINES_IN_RANGE
+    );
   }
 }
