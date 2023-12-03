@@ -1,7 +1,8 @@
 package edu.kit.kastel.listeners;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -9,14 +10,15 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
+import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder;
 import edu.kit.kastel.sdq.artemis4j.api.grading.IAnnotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException;
-import edu.kit.kastel.sdq.artemis4j.util.Pair;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.AssessmentUtils;
 import java.awt.Color;
@@ -26,7 +28,9 @@ import java.awt.event.ActionListener;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.commons.io.FilenameUtils;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This class represents a generic listener that is called if an assessment button
@@ -64,13 +68,10 @@ public class OnAssesmentButtonClickListener implements ActionListener {
       return;
     }
 
-    //selection may be a bit funky...
-    Pair<VisualPosition, VisualPosition> selectedLines =
-            new Pair<>(editor.getSelectionModel().getSelectionStartPosition(),
-                    editor.getSelectionModel().getSelectionEndPosition()
-            );
+    //get editor Selection
+    TextRange selectedText = editor.getCaretModel().getPrimaryCaret().getSelectionRange();
 
-
+    //only annotate if a selection has been made
     //get the currently selected element and the containing file
     PsiElement selectedElement = PsiDocumentManager
             .getInstance(currentProject)
@@ -89,8 +90,8 @@ public class OnAssesmentButtonClickListener implements ActionListener {
     //create and add the annotation
     Annotation annotation = new Annotation(IAnnotation.createID(),
             this.mistakeType,
-            selectedLines.first().line,
-            selectedLines.second().line,
+            selectedText.getStartOffset(),
+            selectedText.getStartOffset(),
             FilenameUtils.removeExtension(subtracted.toString()),
             "",
             0.0
@@ -103,22 +104,23 @@ public class OnAssesmentButtonClickListener implements ActionListener {
       System.err.println(e.getMessage());
     }
 
-    var highlightAttributes = new TextAttributes(
-            new JBColor(new Color(255, 0, 0),
-                    new Color(255, 0, 0)
-            ),
+    //Add highlight in Editor
+    //TODO: Create config entry for color
+    TextAttributes annotationMarkup = new TextAttributes(
             null,
+            new JBColor(new Color(155, 54, 54), new Color(155, 54, 54)),
             null,
             EffectType.ROUNDED_BOX,
             Font.PLAIN
+
     );
 
     editor.getMarkupModel().addRangeHighlighter(
-            selectedLines.first().line,
-            selectedLines.second().line,
-            HighlighterLayer.SELECTION,
-            highlightAttributes,
-            HighlighterTargetArea.LINES_IN_RANGE
+            selectedText.getStartOffset(),
+            selectedText.getEndOffset(),
+            HighlighterLayer.SELECTION - 1,
+            annotationMarkup,
+            HighlighterTargetArea.EXACT_RANGE
     );
   }
 }
