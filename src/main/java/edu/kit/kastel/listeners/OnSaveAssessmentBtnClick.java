@@ -1,9 +1,7 @@
 package edu.kit.kastel.listeners;
 
-import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.AssessmentResult;
 import edu.kit.kastel.state.AssessmentModeHandler;
 import edu.kit.kastel.utils.ArtemisUtils;
-import edu.kit.kastel.utils.AssessmentUtils;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -19,20 +17,6 @@ public class OnSaveAssessmentBtnClick implements ActionListener {
   public void actionPerformed(ActionEvent actionEvent) {
     if (!AssessmentModeHandler.getInstance().isInAssesmentMode()) {
       ArtemisUtils.displayGenericErrorBalloon(NO_ASSESSMENT_OPEN_ERR);
-      return;
     }
-
-//    AssessmentUtils.getAssessmentLock().ifPresent(
-//            lockResult -> {
-//              //save assessment
-//              ArtemisUtils.getArtemisClientInstance()
-//                      .getAssessmentArtemisClient()
-//                      .saveAssessment(
-//                              AssessmentUtils.getParticipationId(),
-//                              false,
-//                              AssessmentUtils.get
-//                      );
-//            }
-//    );
   }
 }

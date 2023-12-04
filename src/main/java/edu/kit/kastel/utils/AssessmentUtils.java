@@ -8,8 +8,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationManagement;
 import edu.kit.kastel.state.AssessmentModeHandler;
 import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
-import edu.kit.kastel.wrappers.EventListener;
-import edu.kit.kastel.wrappers.ExtendedLockResult;
+import edu.kit.kastel.wrappers.PlugInEventListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * - whether assessment mode is currently enabled
  */
 public final class AssessmentUtils {
-  private static List<EventListener> assesmentListeners = new ArrayList<>();
+  private static List<PlugInEventListener> assesmentListeners = new ArrayList<>();
 
   private static AnnotationManagement annotationManager = new AnnotationManagement();
 
@@ -83,7 +82,7 @@ public final class AssessmentUtils {
     latestAnnotation = annotation;
 
     //trigger each event so that all assessment views are updated
-    assesmentListeners.forEach(EventListener::trigger);
+    assesmentListeners.forEach(PlugInEventListener::trigger);
   }
 
   public static void deleteAnnotation(@NotNull Annotation annotation) {
@@ -98,7 +97,7 @@ public final class AssessmentUtils {
     AssessmentUtils.annotationManager = new AnnotationManagement();
   }
 
-  public static void registerAssessmentListener(EventListener assessmentListener) {
+  public static void registerAssessmentListener(PlugInEventListener assessmentListener) {
     AssessmentUtils.assesmentListeners.add(assessmentListener);
   }
 

@@ -1,5 +1,6 @@
 package edu.kit.kastel.listeners;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -119,7 +120,8 @@ public class OnAssesmentButtonClickListener implements ActionListener {
       AssessmentUtils.addAnnotation(annotation);
     } catch (AnnotationException e) {
       ArtemisUtils.displayGenericErrorBalloon(ANNOT_ADD_ERR);
-      System.err.println(e.getMessage());
+      Logger.getInstance(OnSubmitAssessmentBtnClick.class).error(e);
+
       //if an adding the annotation occurs, we remove the highlighter
       editor.getMarkupModel().removeHighlighter(highlighter);
     }

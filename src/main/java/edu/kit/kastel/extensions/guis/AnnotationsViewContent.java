@@ -4,21 +4,17 @@
 
 package edu.kit.kastel.extensions.guis;
 
-import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
-import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
 import java.awt.event.*;
 import edu.kit.kastel.utils.AssessmentUtils;
-import edu.kit.kastel.wrappers.EventListener;
+import edu.kit.kastel.wrappers.PlugInEventListener;
 import javax.swing.*;
 import com.intellij.ui.components.*;
 import com.intellij.ui.table.*;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author clemens
  */
-public class AnnotationsViewContent extends JPanel implements EventListener {
+public class AnnotationsViewContent extends JPanel implements PlugInEventListener {
   public AnnotationsViewContent() {
     initComponents();
   }

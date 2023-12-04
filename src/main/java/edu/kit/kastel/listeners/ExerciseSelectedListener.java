@@ -1,13 +1,10 @@
 package edu.kit.kastel.listeners;
 
 import com.intellij.DynamicBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.JBColor;
 import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
-import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
-import edu.kit.kastel.sdq.artemis4j.api.artemis.ExerciseStats;
 import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.config.JsonFileConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
