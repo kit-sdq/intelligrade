@@ -129,6 +129,7 @@ public class MainToolWindowFactory implements ToolWindowFactory {
   }
 
   private void populateDropdowns() throws ArtemisClientException {
+    coursesComboBox.removeAllItems();
     //add all courses to the courses dropdown
     List<Course> courses = ArtemisUtils
             .getArtemisClientInstance()
