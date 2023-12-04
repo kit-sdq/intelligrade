@@ -4,6 +4,7 @@ import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.LockResult;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationManagement;
+import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
 import edu.kit.kastel.wrappers.EventListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public final class AssessmentUtils {
 
   private static AnnotationManagement annotationManager = new AnnotationManagement();
 
-  private static Annotation latestAnnotation;
+  private static AnnotationWithTextSelection latestAnnotation;
 
   private static Optional<LockResult> assessmentLock;
 
@@ -56,7 +57,7 @@ public final class AssessmentUtils {
    * @param annotation the annotation to be added
    * @throws AnnotationException if adding the annotation fails
    */
-  public static void addAnnotation(@NotNull Annotation annotation) throws AnnotationException {
+  public static void addAnnotation(@NotNull AnnotationWithTextSelection annotation) throws AnnotationException {
 
     AssessmentUtils.annotationManager.addAnnotation(
             annotation.getUUID(),
@@ -75,6 +76,10 @@ public final class AssessmentUtils {
     assesmentListeners.forEach(EventListener::trigger);
   }
 
+  public static void deleteAnnotation(@NotNull Annotation annotation) {
+    AssessmentUtils.annotationManager.removeAnnotation(annotation.getUUID());
+  }
+
   public static void resetAnnotations() {
     AssessmentUtils.annotationManager = new AnnotationManagement();
   }
@@ -87,7 +92,7 @@ public final class AssessmentUtils {
     assesmentListeners = new ArrayList<>();
   }
 
-  public static Annotation getLatestAnnotation() {
+  public static AnnotationWithTextSelection getLatestAnnotation() {
     return latestAnnotation;
   }
 }

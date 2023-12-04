@@ -2,6 +2,8 @@ package edu.kit.kastel.extensions.guis;
 
 import com.intellij.DynamicBundle;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
+import edu.kit.kastel.utils.AssessmentUtils;
+import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
@@ -17,7 +19,7 @@ public class AnnotationsTableModel extends AbstractTableModel {
 
   private static final String LOCALE = DynamicBundle.getLocale().getLanguage();
 
-  private final List<Annotation> annotations = new ArrayList<>();
+  private final List<AnnotationWithTextSelection> annotations = new ArrayList<>();
 
   @Override
   public int getRowCount() {
@@ -61,8 +63,15 @@ public class AnnotationsTableModel extends AbstractTableModel {
    *
    * @param annotation the Annotation to be added
    */
-  public void addAnnotation(Annotation annotation) {
+  public void addAnnotation(AnnotationWithTextSelection annotation) {
     this.annotations.add(annotation);
+  }
+
+  public void deleteItem(int itemIndex) {
+    AnnotationWithTextSelection annotation = this.annotations.get(itemIndex);
+    annotation.deleteHighlighter();
+    AssessmentUtils.deleteAnnotation(annotation);
+    this.annotations.remove(annotation);
   }
 
 }
