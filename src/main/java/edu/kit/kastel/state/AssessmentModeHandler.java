@@ -1,7 +1,5 @@
 package edu.kit.kastel.state;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import edu.kit.kastel.utils.AssessmentUtils;
@@ -41,7 +39,6 @@ public class AssessmentModeHandler {
     this.indicatorLabel.ifPresent(jbLabel -> {
       jbLabel.setText(ASSESSMENT_MODE_ENABLED);
       jbLabel.setBackground(new JBColor(new Color(54, 155, 54), new Color(54, 155, 54)));
-
     });
   }
 
@@ -52,10 +49,6 @@ public class AssessmentModeHandler {
       jbLabel.setText(ASSESSMENT_MODE_DISABLED);
       jbLabel.setBackground(new JBColor(new Color(155, 54, 54), new Color(155, 54, 54)));
     });
-
-    //close project currently open
-    Project currentProject = ProjectManager.getInstance().getOpenProjects()[0];
-    ProjectManager.getInstance().closeAndDispose(currentProject);
   }
 
   public boolean isInAssesmentMode() {

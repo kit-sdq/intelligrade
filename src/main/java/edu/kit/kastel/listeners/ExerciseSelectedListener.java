@@ -1,10 +1,13 @@
 package edu.kit.kastel.listeners;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.JBColor;
 import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
+import edu.kit.kastel.sdq.artemis4j.api.artemis.ExerciseStats;
 import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.config.JsonFileConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
@@ -94,6 +97,10 @@ public class ExerciseSelectedListener implements ItemListener {
     //enable assessment button because it may still be greyed out
     gui.getBtnGradingRound1().setEnabled(true);
     addRatingGroups(configForExercise);
+
+    //update statistics
+    ArtemisUtils.updateStats(selected, gui.getStatisticsContainer());
+
   }
 
   private void addRatingGroups(@NotNull ExerciseConfig configForExercise) {

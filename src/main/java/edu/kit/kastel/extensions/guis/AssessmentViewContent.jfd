@@ -201,9 +201,11 @@ new FormModel {
 						}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
 							"value": "cell 0 7 2 1"
 						} )
-						add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.GridLayout ) {
-							"rows": 2
-							"columns": 2
+						add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class com.intellij.uiDesigner.core.GridLayoutManager ) {
+							"$columnCount": 2
+							"$rowCount": 2
+							"hGap": 0
+							"vGap": 0
 						} ) {
 							name: "panel5"
 							"border": new javax.swing.border.TitledBorder( new javax.swing.border.LineBorder( sfield java.awt.Color darkGray, 1, true ), "i18nKey=AssesmentViewContent.panel5.border" )
@@ -216,13 +218,20 @@ new FormModel {
 								auxiliary() {
 									"JavaCodeGenerator.variableLocal": true
 								}
-							} )
+							}, new FormLayoutConstraints( class com.intellij.uiDesigner.core.GridConstraints ) )
 							add( new FormComponent( "com.intellij.ui.components.JBLabel" ) {
-								name: "StatisticsContainer"
+								name: "statisticsContainer"
+								auxiliary() {
+									"JavaCodeGenerator.variableGetter": true
+								}
+							}, new FormLayoutConstraints( class com.intellij.uiDesigner.core.GridConstraints ) {
+								"column": 1
 							} )
 							add( new FormComponent( "com.intellij.ui.components.JBLabel" ) {
 								name: "label9"
 								"text": new FormMessage( null, "AssesmentViewContent.label9.text" )
+							}, new FormLayoutConstraints( class com.intellij.uiDesigner.core.GridConstraints ) {
+								"row": 1
 							} )
 							add( new FormComponent( "com.intellij.ui.components.JBLabel" ) {
 								name: "assessmentModeLabel"
@@ -232,9 +241,12 @@ new FormModel {
 								auxiliary() {
 									"JavaCodeGenerator.variableGetter": true
 								}
+							}, new FormLayoutConstraints( class com.intellij.uiDesigner.core.GridConstraints ) {
+								"column": 1
+								"row": 1
 							} )
 						}, new FormLayoutConstraints( class net.miginfocom.layout.CC ) {
-							"value": "pad 0,cell 0 8 2 1"
+							"value": "pad 0,cell 0 8 2 1,growx"
 						} )
 						add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.GridBagLayout ) {
 							"$columnSpecs": "80, 0:1.0"
@@ -347,3 +359,4 @@ new FormModel {
 		} )
 	}
 }
+

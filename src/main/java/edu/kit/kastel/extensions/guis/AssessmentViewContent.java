@@ -4,6 +4,7 @@
 
 package edu.kit.kastel.extensions.guis;
 
+import com.intellij.uiDesigner.core.*;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.exam.Exam;
@@ -65,6 +66,14 @@ public class AssessmentViewContent extends JPanel {
       return assessmentModeLabel;
   }
 
+  public JBLabel getStatisticsContainer() {
+      return statisticsContainer;
+  }
+
+  private void createUIComponents() {
+      // TODO: add custom component creation code here
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - CHServer root Passwort
@@ -94,7 +103,7 @@ public class AssessmentViewContent extends JPanel {
     button4 = new JButton();
     var panel5 = new JPanel();
     var label8 = new JBLabel();
-    StatisticsContainer = new JBLabel();
+    statisticsContainer = new JBLabel();
     label9 = new JBLabel();
     assessmentModeLabel = new JBLabel();
     var panel3 = new JPanel();
@@ -113,13 +122,14 @@ public class AssessmentViewContent extends JPanel {
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder ( new javax . swing. border .CompoundBorder ( new javax . swing. border .TitledBorder ( new javax . swing
-    . border .EmptyBorder ( 0, 0 ,0 , 0) ,  "JFor\u006dDesi\u0067ner \u0045valu\u0061tion" , javax. swing .border . TitledBorder
-    . CENTER ,javax . swing. border .TitledBorder . BOTTOM, new java. awt .Font ( "Dia\u006cog", java .
-    awt . Font. BOLD ,12 ) ,java . awt. Color .red ) , getBorder () ) )
-    ;  addPropertyChangeListener( new java. beans .PropertyChangeListener ( ){ @Override public void propertyChange (java . beans. PropertyChangeEvent e
-    ) { if( "bord\u0065r" .equals ( e. getPropertyName () ) )throw new RuntimeException( ) ;} } )
-    ;
+    setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(
+    new javax.swing.border.EmptyBorder(0,0,0,0), "JFor\u006dDesi\u0067ner \u0045valu\u0061tion"
+    ,javax.swing.border.TitledBorder.CENTER,javax.swing.border.TitledBorder.BOTTOM
+    ,new java.awt.Font("Dia\u006cog",java.awt.Font.BOLD,12)
+    ,java.awt.Color.red), getBorder())); addPropertyChangeListener(
+    new java.beans.PropertyChangeListener(){@Override public void propertyChange(java.beans.PropertyChangeEvent e
+    ){if("bord\u0065r".equals(e.getPropertyName()))throw new RuntimeException()
+    ;}});
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -242,24 +252,40 @@ public class AssessmentViewContent extends JPanel {
                 //======== panel5 ========
                 {
                     panel5.setBorder(new TitledBorder(new LineBorder(Color.darkGray, 1, true), bundle.getString("AssesmentViewContent.panel5.border")));
-                    panel5.setLayout(new GridLayout(2, 2));
+                    panel5.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), 0, 0));
 
                     //---- label8 ----
                     label8.setText(bundle.getString("AssesmentViewContent.label8.text"));
-                    panel5.add(label8);
-                    panel5.add(StatisticsContainer);
+                    panel5.add(label8, new GridConstraints(0, 0, 1, 1,
+                        GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null, null, null));
+                    panel5.add(statisticsContainer, new GridConstraints(0, 1, 1, 1,
+                        GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null, null, null));
 
                     //---- label9 ----
                     label9.setText(bundle.getString("AssesmentViewContent.label9.text"));
-                    panel5.add(label9);
+                    panel5.add(label9, new GridConstraints(1, 0, 1, 1,
+                        GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null, null, null));
 
                     //---- assessmentModeLabel ----
                     assessmentModeLabel.setText("\u274c");
                     assessmentModeLabel.setIcon(null);
                     assessmentModeLabel.setHorizontalAlignment(SwingConstants.LEFT);
-                    panel5.add(assessmentModeLabel);
+                    panel5.add(assessmentModeLabel, new GridConstraints(1, 1, 1, 1,
+                        GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null, null, null));
                 }
-                AssessmentPanel.add(panel5, "pad 0,cell 0 8 2 1");
+                AssessmentPanel.add(panel5, "pad 0,cell 0 8 2 1,growx");
 
                 //======== panel3 ========
                 {
@@ -367,7 +393,7 @@ public class AssessmentViewContent extends JPanel {
   private JButton submitAssesmentBtn;
   private JButton button3;
   private JButton button4;
-  private JBLabel StatisticsContainer;
+  private JBLabel statisticsContainer;
   private JBLabel label9;
   private JBLabel assessmentModeLabel;
   private ComboBox backlogSelector;

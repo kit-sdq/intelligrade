@@ -3,6 +3,7 @@ package edu.kit.kastel.listeners;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
@@ -147,6 +148,10 @@ public class StartAssesment1Listener implements ActionListener {
 
     //set assessment mode
     AssessmentModeHandler.getInstance().enableAssessmentMode(new ExtendedLockResult(assessmentLock, selectedExercise));
+
+    //update statistics
+    ArtemisUtils.updateStats(selectedExercise, gui.getStatisticsContainer());
+
   }
 
   /**

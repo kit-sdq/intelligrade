@@ -64,7 +64,5 @@ public class OnSubmitAssessmentBtnClick implements ActionListener {
 
 
     });
-
-
   }
 }

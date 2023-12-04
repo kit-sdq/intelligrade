@@ -6,10 +6,15 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.listeners.ExerciseSelectedListener;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
+import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
+import edu.kit.kastel.sdq.artemis4j.api.artemis.ExerciseStats;
 import edu.kit.kastel.sdq.artemis4j.client.RestClientManager;
+import javax.swing.JLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 public final class ArtemisUtils {
   private static final String LOGIN_ERROR_DIALOG_TITLE = "IntelliGrade Login error";
   public static final String GENERIC_ARTEMIS_ERROR_TITLE = "Artemis Error";
+
+  private static final String FETCH_STATS_FORMATTER = "Unable to fetch statistics for exercise %s";
+
 
   private static RestClientManager artemisClient;
 
@@ -99,6 +107,31 @@ public final class ArtemisUtils {
             .createNotification(balloonContent, NotificationType.ERROR)
             .setTitle(ArtemisUtils.GENERIC_ARTEMIS_ERROR_TITLE)
             .notify(null);
+  }
+
+  /**
+   * Update the statistics label
+   * TODO: This should really be a method of a custom Bean but UI dev is a paiiiiin
+   *
+   * @param selected currently selected exercise
+   * @param label    The label to be updated
+   * @throws ArtemisClientException if Artemis fails to retrieve the stats
+   */
+  public static void updateStats(Exercise selected, @NotNull JLabel label) {
+    try {
+      ExerciseStats stats = ArtemisUtils.getArtemisClientInstance().getAssessmentArtemisClient().getStats(selected);
+      label.setText(
+              String.format("Your submissions: %d | corrected: %d/%d | locked: %d",
+                      stats.submittedByTutor(),
+                      stats.totalAssessments(),
+                      stats.totalSubmissions(),
+                      stats.locked()
+              )
+      );
+    } catch (ArtemisClientException e) {
+      ArtemisUtils.displayGenericErrorBalloon(String.format(FETCH_STATS_FORMATTER, selected.getShortName()));
+      Logger.getInstance(ExerciseSelectedListener.class).error(e);
+    }
   }
 
 }
