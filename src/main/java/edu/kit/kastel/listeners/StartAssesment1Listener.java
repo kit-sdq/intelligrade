@@ -9,7 +9,6 @@ import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
-import edu.kit.kastel.sdq.artemis4j.api.artemis.ExerciseStats;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.LockResult;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.Submission;
 import edu.kit.kastel.sdq.artemis4j.api.client.IAssessmentArtemisClient;
@@ -60,6 +59,9 @@ public class StartAssesment1Listener implements ActionListener {
   private static final String LOOSE_ASSESSMENT_MSG =
           "You already have an assessment loaded. Loading a new assessment"
                   + " will cause you to loose all unsaved gradings! Load new assessment anyway?";
+
+  private static final String LOCKED_BUT_NO_LOCK_RESULT_ERROR =
+          "The submission has been locked but a LockResult could not be obtained. Please submit a GitHub Issue";
   private final AssessmentViewContent gui;
 
   private final IAssessmentArtemisClient assessmentClient = ArtemisUtils
@@ -97,14 +99,13 @@ public class StartAssesment1Listener implements ActionListener {
     Exercise selectedExercise = ((Displayable<Exercise>) gui.getExercisesDropdown().getSelectedItem())
             .getWrappedValue();
 
-    Optional<LockResult> assessmentLockWrapper;
+    Optional<Integer> lockedSubmissionIdWrapper;
     try {
 
-      ExerciseStats stats = assessmentClient.getStats(selectedExercise);
 
       //TODO: Calculate if assessments are still to be graded or not
 
-      assessmentLockWrapper = assessmentClient.startNextAssessment(selectedExercise, 0);
+      lockedSubmissionIdWrapper = assessmentClient.startNextAssessment(selectedExercise, 0);
 
     } catch (ArtemisClientException e) {
       ArtemisUtils.displayGenericErrorBalloon(
@@ -113,7 +114,7 @@ public class StartAssesment1Listener implements ActionListener {
       return;
     }
 
-    if (assessmentLockWrapper.isEmpty()) {
+    if (lockedSubmissionIdWrapper.isEmpty()) {
       ArtemisUtils.displayGenericErrorBalloon(
               //TODO: correct error message
               String.format(ERROR_NEXT_ASSESSMENT_FORMATTER, "")
@@ -122,10 +123,25 @@ public class StartAssesment1Listener implements ActionListener {
     }
 
     //process the submission iff a lock was obtained
-    LockResult assessmentLock = assessmentLockWrapper.get();
+    Integer lockedAssessmentId = lockedSubmissionIdWrapper.get();
+
+    //attempt to truly obtain the lock for the submission
+    Optional<LockResult> lockWrapper = Optional.empty();
+    try {
+      lockWrapper = Optional.ofNullable(assessmentClient.startAssessment(
+              ArtemisUtils
+                      .getArtemisClientInstance()
+                      .getSubmissionArtemisClient()
+                      .getSubmissionById(selectedExercise, lockedAssessmentId)
+      ));
+    } catch (ArtemisClientException e) {
+      ArtemisUtils.displayGenericErrorBalloon(LOCKED_BUT_NO_LOCK_RESULT_ERROR);
+      Logger.getInstance(StartAssesment1Listener.class).error(e);
+    }
+
 
     Optional<String> repoUrlWrapper =
-            getRepoUrlFromAssessmentLock(assessmentLock, selectedExercise);
+            getRepoUrlFromAssessmentLock(lockedAssessmentId, selectedExercise);
 
     //obtain student name or use submission number
     String repoIdentifier;
@@ -133,10 +149,10 @@ public class StartAssesment1Listener implements ActionListener {
       repoIdentifier = ArtemisUtils
               .getArtemisClientInstance()
               .getSubmissionArtemisClient()
-              .getSubmissionById(selectedExercise, assessmentLock.getSubmissionId())
+              .getSubmissionById(selectedExercise, lockedAssessmentId)
               .getParticipantIdentifier();
     } catch (ArtemisClientException e) {
-      repoIdentifier = Integer.toString(assessmentLock.getSubmissionId());
+      repoIdentifier = Integer.toString(lockedAssessmentId);
     }
 
     String repositoryName = String.format(
@@ -147,7 +163,11 @@ public class StartAssesment1Listener implements ActionListener {
     repoUrlWrapper.ifPresent(repoUrl -> this.cloneSubmissionToTempdir(repoUrl, repositoryName));
 
     //set assessment mode
-    AssessmentModeHandler.getInstance().enableAssessmentMode(new ExtendedLockResult(assessmentLock, selectedExercise));
+    lockWrapper.ifPresent(submissionLock ->
+            AssessmentModeHandler
+                    .getInstance()
+                    .enableAssessmentMode(new ExtendedLockResult(lockedAssessmentId, selectedExercise, submissionLock))
+    );
 
     //update statistics
     gui.getStatisticsContainer().triggerUpdate(selectedExercise);
@@ -157,12 +177,12 @@ public class StartAssesment1Listener implements ActionListener {
   /**
    * Use an assessmentLock to get the repository URL of a submission.
    *
-   * @param assessmentLock   the lock you obtained before to grade the Submission
-   * @param selectedExercise The exercise this submission belongs to
+   * @param lockedSubmissionId The id of the submission that has been locked
+   * @param selectedExercise   The exercise this submission belongs to
    * @return Optional#empty if an error occurred, The wrapped string otherwise
    */
   private Optional<String> getRepoUrlFromAssessmentLock(
-          @NotNull LockResult assessmentLock,
+          @NotNull Integer lockedSubmissionId,
           @NotNull Exercise selectedExercise) {
 
     Optional<String> repoUrl = Optional.empty();
@@ -171,7 +191,7 @@ public class StartAssesment1Listener implements ActionListener {
       Submission toBeGraded = ArtemisUtils
               .getArtemisClientInstance()
               .getSubmissionArtemisClient()
-              .getSubmissionById(selectedExercise, assessmentLock.getSubmissionId());
+              .getSubmissionById(selectedExercise, lockedSubmissionId);
       repoUrl = Optional.of(toBeGraded.getRepositoryUrl());
     } catch (ArtemisClientException e) {
       //display Error Balloon on failure

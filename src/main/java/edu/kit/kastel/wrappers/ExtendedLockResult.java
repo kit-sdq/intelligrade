@@ -8,16 +8,19 @@ import edu.kit.kastel.utils.ArtemisUtils;
 
 public class ExtendedLockResult {
 
-  private final LockResult lock;
+  private final Integer submissionId;
   private final Exercise exercise;
 
-  public ExtendedLockResult(LockResult lock, Exercise exercise) {
-    this.lock = lock;
+  private final LockResult submissionLock;
+
+  public ExtendedLockResult(Integer submissionId, Exercise exercise, LockResult submissionLock) {
+    this.submissionId = submissionId;
     this.exercise = exercise;
+    this.submissionLock = submissionLock;
   }
 
-  public LockResult getLock() {
-    return lock;
+  public Integer getLockedSubmissionId() {
+    return submissionId;
   }
 
   public Exercise getExercise() {
@@ -28,6 +31,10 @@ public class ExtendedLockResult {
     return ArtemisUtils
             .getArtemisClientInstance()
             .getSubmissionArtemisClient()
-            .getSubmissionById(exercise, lock.getSubmissionId());
+            .getSubmissionById(exercise, submissionId);
+  }
+
+  public LockResult getSubmissionLock() {
+    return submissionLock;
   }
 }

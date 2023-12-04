@@ -48,13 +48,13 @@ public class OnSubmitAssessmentBtnClick implements ActionListener {
                           AssessmentUtils.getAllAnnotations(),
                           exerciseConfig.getIRatingGroups(),
                           ArtemisUtils.getArtemisClientInstance().getAuthenticationClient().getUser(),
-                          lockResult.getLock()
+                          lockResult.getSubmissionLock()
                   );
                   //save the assessment
                   ArtemisUtils
                           .getArtemisClientInstance()
                           .getAssessmentArtemisClient()
-                          .saveAssessment(lockResult.getLock().getParticipationId(),
+                          .saveAssessment(lockResult.getLockedSubmissionId(),
                                   true,
                                   annotationMapper.createAssessmentResult()
                           );
