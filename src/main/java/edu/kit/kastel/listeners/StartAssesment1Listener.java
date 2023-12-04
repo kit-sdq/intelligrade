@@ -150,7 +150,7 @@ public class StartAssesment1Listener implements ActionListener {
     AssessmentModeHandler.getInstance().enableAssessmentMode(new ExtendedLockResult(assessmentLock, selectedExercise));
 
     //update statistics
-    ArtemisUtils.updateStats(selectedExercise, gui.getStatisticsContainer());
+    gui.getStatisticsContainer().triggerUpdate(selectedExercise);
 
   }
 

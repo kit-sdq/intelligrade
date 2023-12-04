@@ -26,9 +26,6 @@ public final class ArtemisUtils {
   private static final String LOGIN_ERROR_DIALOG_TITLE = "IntelliGrade Login error";
   public static final String GENERIC_ARTEMIS_ERROR_TITLE = "Artemis Error";
 
-  private static final String FETCH_STATS_FORMATTER = "Unable to fetch statistics for exercise %s";
-
-
   private static RestClientManager artemisClient;
 
   private ArtemisUtils() {
@@ -107,31 +104,6 @@ public final class ArtemisUtils {
             .createNotification(balloonContent, NotificationType.ERROR)
             .setTitle(ArtemisUtils.GENERIC_ARTEMIS_ERROR_TITLE)
             .notify(null);
-  }
-
-  /**
-   * Update the statistics label
-   * TODO: This should really be a method of a custom Bean but UI dev is a paiiiiin
-   *
-   * @param selected currently selected exercise
-   * @param label    The label to be updated
-   * @throws ArtemisClientException if Artemis fails to retrieve the stats
-   */
-  public static void updateStats(Exercise selected, @NotNull JLabel label) {
-    try {
-      ExerciseStats stats = ArtemisUtils.getArtemisClientInstance().getAssessmentArtemisClient().getStats(selected);
-      label.setText(
-              String.format("Your submissions: %d | corrected: %d/%d | locked: %d",
-                      stats.submittedByTutor(),
-                      stats.totalAssessments(),
-                      stats.totalSubmissions(),
-                      stats.locked()
-              )
-      );
-    } catch (ArtemisClientException e) {
-      ArtemisUtils.displayGenericErrorBalloon(String.format(FETCH_STATS_FORMATTER, selected.getShortName()));
-      Logger.getInstance(ExerciseSelectedListener.class).error(e);
-    }
   }
 
 }

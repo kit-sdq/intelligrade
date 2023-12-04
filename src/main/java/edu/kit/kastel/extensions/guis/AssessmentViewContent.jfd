@@ -219,7 +219,7 @@ new FormModel {
 									"JavaCodeGenerator.variableLocal": true
 								}
 							}, new FormLayoutConstraints( class com.intellij.uiDesigner.core.GridConstraints ) )
-							add( new FormComponent( "com.intellij.ui.components.JBLabel" ) {
+							add( new FormComponent( "edu.kit.kastel.extensions.guis.StatisticsContainer" ) {
 								name: "statisticsContainer"
 								auxiliary() {
 									"JavaCodeGenerator.variableGetter": true
@@ -359,4 +359,3 @@ new FormModel {
 		} )
 	}
 }
-

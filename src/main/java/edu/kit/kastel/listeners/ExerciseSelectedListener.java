@@ -99,7 +99,7 @@ public class ExerciseSelectedListener implements ItemListener {
     addRatingGroups(configForExercise);
 
     //update statistics
-    ArtemisUtils.updateStats(selected, gui.getStatisticsContainer());
+    gui.getStatisticsContainer().triggerUpdate(selected);
 
   }
 

@@ -1,6 +1,7 @@
 package edu.kit.kastel.listeners;
 
 import com.intellij.openapi.diagnostic.Logger;
+import edu.kit.kastel.extensions.guis.StatisticsContainer;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.grading.artemis.AnnotationMapper;
 import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
@@ -21,10 +22,19 @@ public class OnSubmitAssessmentBtnClick implements ActionListener {
   private static final String ERROR_NOT_ASSESSING =
           "Error obtaining exercise config. Are you currently assessing a submission?";
 
+  private final StatisticsContainer statisticsContainer;
+
+  public OnSubmitAssessmentBtnClick(StatisticsContainer statisticsContainer) {
+    this.statisticsContainer = statisticsContainer;
+  }
+
   @Override
   public void actionPerformed(ActionEvent actionEvent) {
     //submit iff a lock is present
     AssessmentModeHandler.getInstance().getAssessmentLock().ifPresent(lockResult -> {
+
+      //trigger a statistics update
+      this.statisticsContainer.triggerUpdate(lockResult.getExercise());
 
       Optional<ExerciseConfig> config = AssessmentUtils.getConfigAsExerciseCfg();
 

@@ -124,7 +124,7 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     saveAssessmentBtn.addActionListener(new OnSaveAssessmentBtnClick());
 
     //button that submits assessment
-    submitAssessmentBtn.addActionListener(new OnSubmitAssessmentBtnClick());
+    submitAssessmentBtn.addActionListener(new OnSubmitAssessmentBtnClick(generatedMenu.getStatisticsContainer()));
 
   }
 

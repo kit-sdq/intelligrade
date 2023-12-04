@@ -66,7 +66,7 @@ public class AssessmentViewContent extends JPanel {
       return assessmentModeLabel;
   }
 
-  public JBLabel getStatisticsContainer() {
+  public StatisticsContainer getStatisticsContainer() {
       return statisticsContainer;
   }
 
@@ -103,7 +103,7 @@ public class AssessmentViewContent extends JPanel {
     button4 = new JButton();
     var panel5 = new JPanel();
     var label8 = new JBLabel();
-    statisticsContainer = new JBLabel();
+    statisticsContainer = new StatisticsContainer();
     label9 = new JBLabel();
     assessmentModeLabel = new JBLabel();
     var panel3 = new JPanel();
@@ -122,14 +122,12 @@ public class AssessmentViewContent extends JPanel {
     testResultsTable = new JBTable();
 
     //======== this ========
-    setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(
-    new javax.swing.border.EmptyBorder(0,0,0,0), "JFor\u006dDesi\u0067ner \u0045valu\u0061tion"
-    ,javax.swing.border.TitledBorder.CENTER,javax.swing.border.TitledBorder.BOTTOM
-    ,new java.awt.Font("Dia\u006cog",java.awt.Font.BOLD,12)
-    ,java.awt.Color.red), getBorder())); addPropertyChangeListener(
-    new java.beans.PropertyChangeListener(){@Override public void propertyChange(java.beans.PropertyChangeEvent e
-    ){if("bord\u0065r".equals(e.getPropertyName()))throw new RuntimeException()
-    ;}});
+    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing. border.
+    EmptyBorder( 0, 0, 0, 0) , "JF\u006frmD\u0065sig\u006eer \u0045val\u0075ati\u006fn", javax. swing. border. TitledBorder. CENTER, javax. swing
+    . border. TitledBorder. BOTTOM, new java .awt .Font ("Dia\u006cog" ,java .awt .Font .BOLD ,12 ),
+    java. awt. Color. red) , getBorder( )) );  addPropertyChangeListener (new java. beans. PropertyChangeListener( )
+    { @Override public void propertyChange (java .beans .PropertyChangeEvent e) {if ("\u0062ord\u0065r" .equals (e .getPropertyName () ))
+    throw new RuntimeException( ); }} );
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
     //======== tabbedPane1 ========
@@ -393,7 +391,7 @@ public class AssessmentViewContent extends JPanel {
   private JButton submitAssesmentBtn;
   private JButton button3;
   private JButton button4;
-  private JBLabel statisticsContainer;
+  private StatisticsContainer statisticsContainer;
   private JBLabel label9;
   private JBLabel assessmentModeLabel;
   private ComboBox backlogSelector;
