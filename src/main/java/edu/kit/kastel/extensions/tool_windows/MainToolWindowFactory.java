@@ -14,11 +14,13 @@ import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.listeners.ExerciseSelectedListener;
 import edu.kit.kastel.listeners.GradingConfigSelectedListener;
 import edu.kit.kastel.listeners.OnSaveAssessmentBtnClick;
+import edu.kit.kastel.listeners.OnSubmitAssessmentBtnClick;
 import edu.kit.kastel.listeners.StartAssesment1Listener;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.exam.Exam;
+import edu.kit.kastel.state.AssessmentModeHandler;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.wrappers.Displayable;
 import edu.kit.kastel.wrappers.DisplayableCourse;
@@ -58,6 +60,8 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
   private final JButton saveAssessmentBtn = generatedMenu.getBtnSaveAssessment();
 
+  private final JButton submitAssessmentBtn = generatedMenu.getSubmitAssesmentBtn();
+
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     contentPanel.setLayout(new GridLayout());
@@ -81,6 +85,9 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     } catch (ArtemisClientException exc) {
       ArtemisUtils.displayLoginErrorBalloon("Error retrieving courses!", null);
     }
+
+    //connect label to AssessmentModeHandler
+    AssessmentModeHandler.getInstance().connectIndicatorLabel(generatedMenu.getAssessmentModeLabel());
 
     toolWindow.getContentManager().addContent(content);
   }
@@ -115,6 +122,9 @@ public class MainToolWindowFactory implements ToolWindowFactory {
 
     //button that saves assessment
     saveAssessmentBtn.addActionListener(new OnSaveAssessmentBtnClick());
+
+    //button that submits assessment
+    submitAssessmentBtn.addActionListener(new OnSubmitAssessmentBtnClick());
 
   }
 

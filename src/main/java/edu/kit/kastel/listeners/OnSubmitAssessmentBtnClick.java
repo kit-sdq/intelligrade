@@ -1,0 +1,70 @@
+package edu.kit.kastel.listeners;
+
+import com.intellij.openapi.diagnostic.Logger;
+import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
+import edu.kit.kastel.sdq.artemis4j.grading.artemis.AnnotationMapper;
+import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
+import edu.kit.kastel.state.AssessmentModeHandler;
+import edu.kit.kastel.utils.ArtemisUtils;
+import edu.kit.kastel.utils.AssessmentUtils;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.util.Optional;
+
+public class OnSubmitAssessmentBtnClick implements ActionListener {
+
+  private static final String ARTEMIS_ERROR_STRING = "An error occurred submitting the assessment to Artemis.";
+
+  private static final String IO_ERROR_STRING = "Error creating assessment result";
+
+  private static final String ERROR_NOT_ASSESSING =
+          "Error obtaining exercise config. Are you currently assessing a submission?";
+
+  @Override
+  public void actionPerformed(ActionEvent actionEvent) {
+    //submit iff a lock is present
+    AssessmentModeHandler.getInstance().getAssessmentLock().ifPresent(lockResult -> {
+
+      Optional<ExerciseConfig> config = AssessmentUtils.getConfigAsExerciseCfg();
+
+      //only assess if the exercise config can be obtained
+      config.ifPresentOrElse(exerciseConfig -> {
+                try {
+                  //create assessment results
+                  AnnotationMapper annotationMapper = new AnnotationMapper(
+                          lockResult.getExercise(),
+                          lockResult.getSubmission(),
+                          AssessmentUtils.getAllAnnotations(),
+                          exerciseConfig.getIRatingGroups(),
+                          ArtemisUtils.getArtemisClientInstance().getAuthenticationClient().getUser(),
+                          lockResult.getLock()
+                  );
+                  //save the assessment
+                  ArtemisUtils
+                          .getArtemisClientInstance()
+                          .getAssessmentArtemisClient()
+                          .saveAssessment(lockResult.getLock().getParticipationId(),
+                                  true,
+                                  annotationMapper.createAssessmentResult()
+                          );
+                } catch (ArtemisClientException ace) {
+                  Logger.getInstance(OnSubmitAssessmentBtnClick.class).error(ace);
+                  ArtemisUtils.displayGenericErrorBalloon(ARTEMIS_ERROR_STRING);
+                } catch (IOException ioe) {
+                  Logger.getInstance(OnSubmitAssessmentBtnClick.class).error(ioe);
+                  ArtemisUtils.displayGenericErrorBalloon(IO_ERROR_STRING);
+                }
+
+                //disable the assessment mode
+                AssessmentModeHandler.getInstance().disableAssessmentMode();
+              },
+              () -> ArtemisUtils.displayGenericErrorBalloon(ERROR_NOT_ASSESSING)
+      );
+
+
+    });
+
+
+  }
+}

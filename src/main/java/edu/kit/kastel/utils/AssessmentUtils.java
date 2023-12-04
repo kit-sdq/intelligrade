@@ -1,14 +1,20 @@
 package edu.kit.kastel.utils;
 
-import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.LockResult;
+import edu.kit.kastel.sdq.artemis4j.api.grading.IAnnotation;
+import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
+import edu.kit.kastel.sdq.artemis4j.grading.config.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationManagement;
+import edu.kit.kastel.state.AssessmentModeHandler;
 import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
 import edu.kit.kastel.wrappers.EventListener;
+import edu.kit.kastel.wrappers.ExtendedLockResult;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,37 +24,41 @@ import org.jetbrains.annotations.NotNull;
  * - whether assessment mode is currently enabled
  */
 public final class AssessmentUtils {
-  private static boolean assesmentMode = false;
-
   private static List<EventListener> assesmentListeners = new ArrayList<>();
 
   private static AnnotationManagement annotationManager = new AnnotationManagement();
 
   private static AnnotationWithTextSelection latestAnnotation;
 
-  private static Optional<LockResult> assessmentLock;
+  private static GradingConfig config;
+
+  private static final String ERROR_GETTING_EXERCISE_CONFIG = "IO Error while obtaining an exercise config";
 
   private AssessmentUtils() {
     throw new IllegalAccessError("Utility Class constructor");
   }
 
-  public static void enabeleAssessmentMode(LockResult assLock) {
-    AssessmentUtils.assessmentLock = Optional.of(assLock);
-    AssessmentUtils.assesmentMode = true;
-    AssessmentUtils.resetAnnotations();
+  public static void initExerciseConfig(GradingConfig config) {
+    AssessmentUtils.config = config;
   }
 
-  public static void disableAssessmentMode() {
-    AssessmentUtils.assesmentMode = false;
-    assessmentLock = Optional.empty();
-  }
+  /**
+   * Get the exercise config from the saved grading config or Optional#empty if no lock is currently held
+   *
+   * @return the exercise config behind the current grading config or Empty if no lock is currently held
+   */
+  public static Optional<ExerciseConfig> getConfigAsExerciseCfg() {
+    AtomicReference<Optional<ExerciseConfig>> returnValue = new AtomicReference<>(Optional.empty());
+    //we can only obtain a config if a lock is currently held
+    AssessmentModeHandler.getInstance().getAssessmentLock().ifPresent(extendedLockResult -> {
+      try {
+        returnValue.set(Optional.of(AssessmentUtils.config.getExerciseConfig(extendedLockResult.getExercise())));
+      } catch (IOException e) {
+        ArtemisUtils.displayGenericErrorBalloon(ERROR_GETTING_EXERCISE_CONFIG);
+      }
+    });
 
-  public static boolean isAssesmentMode() {
-    return AssessmentUtils.assesmentMode;
-  }
-
-  public static Optional<LockResult> getAssessmentLock() {
-    return assessmentLock;
+    return returnValue.get();
   }
 
   /**
@@ -78,6 +88,10 @@ public final class AssessmentUtils {
 
   public static void deleteAnnotation(@NotNull Annotation annotation) {
     AssessmentUtils.annotationManager.removeAnnotation(annotation.getUUID());
+  }
+
+  public static List<IAnnotation> getAllAnnotations() {
+    return new ArrayList<>(AssessmentUtils.annotationManager.getAnnotations());
   }
 
   public static void resetAnnotations() {

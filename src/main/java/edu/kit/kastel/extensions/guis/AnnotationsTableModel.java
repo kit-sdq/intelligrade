@@ -67,6 +67,12 @@ public class AnnotationsTableModel extends AbstractTableModel {
     this.annotations.add(annotation);
   }
 
+  /**
+   * Delete an annotation with a specified index from the Table, its model and the AnnotationManager
+   *
+   * @param itemIndex the index of the item to be deleted TODO: not necesarrily the same as
+   *                  the selected item if a TableSorter is used. Implement sorting.
+   */
   public void deleteItem(int itemIndex) {
     AnnotationWithTextSelection annotation = this.annotations.get(itemIndex);
     annotation.deleteHighlighter();

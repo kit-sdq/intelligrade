@@ -12,9 +12,11 @@ import edu.kit.kastel.sdq.artemis4j.api.artemis.ExerciseStats;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.LockResult;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.assessment.Submission;
 import edu.kit.kastel.sdq.artemis4j.api.client.IAssessmentArtemisClient;
+import edu.kit.kastel.state.AssessmentModeHandler;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.AssessmentUtils;
 import edu.kit.kastel.wrappers.Displayable;
+import edu.kit.kastel.wrappers.ExtendedLockResult;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -82,7 +84,7 @@ public class StartAssesment1Listener implements ActionListener {
     }
 
     //check if an assessment is already loaded
-    if (AssessmentUtils.isAssesmentMode()
+    if (AssessmentModeHandler.getInstance().isInAssesmentMode()
             && !MessageDialogBuilder.yesNo(
                     "Unsaved assessment",
                     LOOSE_ASSESSMENT_MSG)
@@ -144,7 +146,7 @@ public class StartAssesment1Listener implements ActionListener {
     repoUrlWrapper.ifPresent(repoUrl -> this.cloneSubmissionToTempdir(repoUrl, repositoryName));
 
     //set assessment mode
-    AssessmentUtils.enabeleAssessmentMode(assessmentLock);
+    AssessmentModeHandler.getInstance().enableAssessmentMode(new ExtendedLockResult(assessmentLock, selectedExercise));
   }
 
   /**

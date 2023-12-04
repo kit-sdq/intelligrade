@@ -15,8 +15,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
 import edu.kit.kastel.sdq.artemis4j.api.grading.IAnnotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
-import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException;
+import edu.kit.kastel.state.AssessmentModeHandler;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.AssessmentUtils;
 import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
@@ -49,7 +49,7 @@ public class OnAssesmentButtonClickListener implements ActionListener {
   @Override
   public void actionPerformed(@NotNull ActionEvent actionEvent) {
 
-    if (!AssessmentUtils.isAssesmentMode()) {
+    if (!AssessmentModeHandler.getInstance().isInAssesmentMode()) {
       ArtemisUtils.displayGenericErrorBalloon(NO_ASSESSMENT_MSG);
       return;
     }

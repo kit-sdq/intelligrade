@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import edu.kit.kastel.exceptions.ImplementationMissing;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.grading.config.JsonFileConfig;
+import edu.kit.kastel.utils.AssessmentUtils;
 import java.io.File;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -28,8 +29,10 @@ public class GradingConfigSelectedListener implements DocumentListener {
     settings.setSelectedGradingConfigPath(gradingConfigPath);
 
 
-    //parse JSON Data and make it accessible to the listener
-    ExerciseSelectedListener.updateJsonConfig(new JsonFileConfig(new File(gradingConfigPath)));
+    //parse JSON Data and make it accessible to the listeners
+    JsonFileConfig gradingConfig = new JsonFileConfig(new File(gradingConfigPath));
+    ExerciseSelectedListener.updateJsonConfig(gradingConfig);
+    AssessmentUtils.initExerciseConfig(gradingConfig);
   }
 
   @Override

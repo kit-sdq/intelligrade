@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * This listener handles selection of a new exercise.
  */
 public class ExerciseSelectedListener implements ItemListener {
-  public static @Nullable JsonFileConfig fileConfig;
+  private static @Nullable JsonFileConfig fileConfig;
 
   private static final String CONFIG_FILE_LOAD_ERROR_FORMATTER = "Error loading config at %s!";
   private static final String NO_EXERCISE_SELECTED_ERROR =
