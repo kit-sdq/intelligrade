@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.login.CustomLoginManager;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.client.RestClientManager;
 import org.jetbrains.annotations.NotNull;
@@ -37,16 +38,21 @@ public final class ArtemisUtils {
       //retrieve settings
       ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
 
-      //create new Artemis Instance
-      var artemisInstance = new RestClientManager(
+      var tokenLoginManager = new CustomLoginManager(
               settings.getArtemisInstanceUrl(),
               settings.getUsername(),
               settings.getArtemisPassword()
       );
 
+      //create new Artemis Instance
+      var artemisInstance = new RestClientManager(
+              settings.getArtemisInstanceUrl(),
+              tokenLoginManager
+      );
+
       //try logging in
       try {
-        artemisInstance.login();
+        tokenLoginManager.login();
       } catch (ArtemisClientException clientException) {
         ArtemisUtils.displayLoginErrorBalloon(
                 String.format("%s. This will make the grading PlugIn unusable!%n",

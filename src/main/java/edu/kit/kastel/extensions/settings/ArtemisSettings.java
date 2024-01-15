@@ -3,8 +3,10 @@ package edu.kit.kastel.extensions.settings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
 import edu.kit.kastel.extensions.guis.SettingsContent;
+import edu.kit.kastel.login.CustomLoginManager;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.client.RestClientManager;
 import java.awt.GridLayout;
@@ -36,6 +38,8 @@ public class ArtemisSettings implements Configurable {
   private final JTextField artemisUrlField = generatedMenu.getArtemisUrlInput();
 
   private final JSpinner numColsSpinner = generatedMenu.getNumColsSlider();
+
+  private final ColorPanel annotationColorSelector = generatedMenu.getAnnotationColorPicker();
 
   /**
    * Returns the visible name of the configurable component.
@@ -94,6 +98,7 @@ public class ArtemisSettings implements Configurable {
     modified |= !usernameField.getText().equals(settings.getUsername());
     modified |= !artemisUrlField.getText().equals(settings.getArtemisInstanceUrl());
     modified |= !numColsSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
+    modified |= !annotationColorSelector.getSelectedColor().equals(settings.getAnnotationColor());
     return modified;
   }
 
@@ -104,13 +109,14 @@ public class ArtemisSettings implements Configurable {
    * @throws ConfigurationException if values cannot be applied
    */
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     //store all settings persistently
     ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
     settings.setArtemisInstanceUrl(artemisUrlField.getText());
     settings.setUsername(usernameField.getText());
     settings.setArtemisPassword(new String(pwdInput.getPassword()));
     settings.setColumnsPerRatingGroup(Integer.parseInt(numColsSpinner.getValue().toString()));
+    settings.setAnnotationColor(annotationColorSelector.getSelectedColor());
   }
 
   /**
@@ -124,6 +130,7 @@ public class ArtemisSettings implements Configurable {
     usernameField.setText(settings.getUsername());
     pwdInput.setText(settings.getArtemisPassword());
     numColsSpinner.setValue(settings.getColumnsPerRatingGroup());
+    annotationColorSelector.setSelectedColor(settings.getAnnotationColor());
 
     setLabelOnLoginSuccess();
   }
@@ -134,16 +141,24 @@ public class ArtemisSettings implements Configurable {
    * If login was successful the label in the settings dialog will be set
    */
   private void setLabelOnLoginSuccess() {
-    //create new Artemis Instance
-    var artemisInstance = new RestClientManager(
+
+    //create token based login manager
+    var tokenLoginManager = new CustomLoginManager(
             artemisUrlField.getText(),
             usernameField.getText(),
             new String(pwdInput.getPassword())
     );
 
+
+    //create new Artemis Instance
+    var artemisInstance = new RestClientManager(
+            artemisUrlField.getText(),
+            tokenLoginManager
+    );
+
     //try logging in and display error iff error occurred
     try {
-      artemisInstance.login();
+      tokenLoginManager.login();
     } catch (ArtemisClientException e) {
       loggedInLabel.setText("false");
       loggedInLabel.setForeground(JBColor.RED);
@@ -153,7 +168,12 @@ public class ArtemisSettings implements Configurable {
     }
 
     if (artemisInstance.isReady()) {
-      loggedInLabel.setText("true");
+      if (usernameField.getText().isBlank() || new String(pwdInput.getPassword()).isBlank()) {
+        loggedInLabel.setText("true (logged in via Token)");
+      } else {
+        loggedInLabel.setText("true");
+
+      }
       loggedInLabel.setForeground(JBColor.GREEN);
     }
   }

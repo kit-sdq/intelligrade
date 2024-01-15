@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
+import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.api.grading.IAnnotation;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
 import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.AnnotationException;
@@ -86,10 +87,11 @@ public class OnAssesmentButtonClickListener implements ActionListener {
 
 
     //Add highlight in Editor
-    //TODO: Create config entry for color
+    Color annotationColor = ArtemisSettingsState.getInstance().getAnnotationColor();
+
     TextAttributes annotationMarkup = new TextAttributes(
             null,
-            new JBColor(new Color(155, 54, 54), new Color(155, 54, 54)),
+            new JBColor(annotationColor, annotationColor),
             null,
             EffectType.ROUNDED_BOX,
             Font.PLAIN

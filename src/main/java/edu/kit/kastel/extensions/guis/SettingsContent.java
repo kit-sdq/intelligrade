@@ -46,9 +46,13 @@ public class SettingsContent extends JPanel {
     return numColsSlider;
   }
 
+  public ColorPanel getAnnotationColorPicker() {
+      return annotationColorPicker;
+  }
+
   private void initComponents() {
     // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
-    // Generated using JFormDesigner Evaluation license - Clemens
+    // Generated using JFormDesigner Evaluation license - CHServer root Passwort
     ResourceBundle bundle = ResourceBundle.getBundle("guiStrings");
     label3 = new JLabel();
     loggedInLabel = new JLabel();
@@ -63,28 +67,31 @@ public class SettingsContent extends JPanel {
     separator2 = new JSeparator();
     label5 = new JLabel();
     numColsSlider = new JSpinner();
+    label6 = new JLabel();
+    annotationColorPicker = new ColorPanel();
 
     //======== this ========
-    setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new javax. swing.
-    border. EmptyBorder( 0, 0, 0, 0) , "JFor\u006dDesi\u0067ner \u0045valu\u0061tion", javax. swing. border. TitledBorder. CENTER
-    , javax. swing. border. TitledBorder. BOTTOM, new java .awt .Font ("Dia\u006cog" ,java .awt .Font
-    .BOLD ,12 ), java. awt. Color. red) , getBorder( )) );  addPropertyChangeListener (
-    new java. beans. PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e) {if ("bord\u0065r"
-    .equals (e .getPropertyName () )) throw new RuntimeException( ); }} );
+    setBorder ( new javax . swing. border .CompoundBorder ( new javax . swing. border .TitledBorder ( new javax . swing. border .
+    EmptyBorder ( 0, 0 ,0 , 0) ,  "JF\u006frmDes\u0069gner \u0045valua\u0074ion" , javax. swing .border . TitledBorder. CENTER ,javax . swing
+    . border .TitledBorder . BOTTOM, new java. awt .Font ( "D\u0069alog", java .awt . Font. BOLD ,12 ) ,
+    java . awt. Color .red ) , getBorder () ) );  addPropertyChangeListener( new java. beans .PropertyChangeListener ( )
+    { @Override public void propertyChange (java . beans. PropertyChangeEvent e) { if( "\u0062order" .equals ( e. getPropertyName () ) )
+    throw new RuntimeException( ) ;} } );
     setLayout(new MigLayout(
-      "fillx,insets 0,hidemode 3,align left top,gap 0 0",
-      // columns
-      "[109,fill]" +
-      "[grow,fill]",
-      // rows
-      "[]" +
-      "[]" +
-      "[]" +
-      "[top]" +
-      "[top]" +
-      "[top]" +
-      "[]" +
-      "[]"));
+        "fillx,insets 0,hidemode 3,align left top,gap 0 0",
+        // columns
+        "[109,fill]" +
+        "[grow,fill]",
+        // rows
+        "[]" +
+        "[]" +
+        "[]" +
+        "[top]" +
+        "[top]" +
+        "[top]" +
+        "[]" +
+        "[]" +
+        "[]"));
 
     //---- label3 ----
     label3.setText(bundle.getString("DebugMenuContent.label3.text"));
@@ -126,11 +133,19 @@ public class SettingsContent extends JPanel {
     //---- numColsSlider ----
     numColsSlider.setModel(new SpinnerNumberModel(2, 1, null, 1));
     add(numColsSlider, "cell 1 7");
+
+    //---- label6 ----
+    label6.setText(bundle.getString("AnnotationColor"));
+    add(label6, "cell 0 8");
+
+    //---- annotationColorPicker ----
+    annotationColorPicker.setSelectedColor(new Color(0x9b3636));
+    add(annotationColorPicker, "cell 1 8");
     // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
   }
 
   // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
-  // Generated using JFormDesigner Evaluation license - Clemens
+  // Generated using JFormDesigner Evaluation license - CHServer root Passwort
   private JLabel label3;
   private JLabel loggedInLabel;
   private JSeparator separator1;
@@ -144,5 +159,7 @@ public class SettingsContent extends JPanel {
   private JSeparator separator2;
   private JLabel label5;
   private JSpinner numColsSlider;
+  private JLabel label6;
+  private ColorPanel annotationColorPicker;
   // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 }

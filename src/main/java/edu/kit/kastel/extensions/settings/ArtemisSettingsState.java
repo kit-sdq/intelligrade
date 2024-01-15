@@ -8,8 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import java.awt.Color;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +28,14 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   private static final String PASSWORD_STORE_KEY = "artemisPassword";
   private static final String CREDENTIALS_PATH = "edu.kit.kastel.intelligrade.artemisCredentials";
 
+  private static final String JWT_STORE_KEY = "artemisAuthJWT";
+
   private String username = "";
   private String artemisInstanceUrl = "https://artemis.praktomat.cs.kit.edu";
   private @Nullable String selectedGradingConfigPath;
   private int columnsPerRatingGroup = 2;
 
+  private Color annotationColor = new JBColor(new Color(155, 54, 54), new Color(155, 54, 54));
 
   public static ArtemisSettingsState getInstance() {
     return ApplicationManager.getApplication().getService(ArtemisSettingsState.class);
@@ -102,6 +107,16 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
     PasswordSafe.getInstance().set(credentialAttributes, credentials);
   }
 
+  public synchronized void setArtemisAuthJWT(String jwt) {
+    CredentialAttributes credentialAttributes = createCredentialAttributes(JWT_STORE_KEY);
+    PasswordSafe.getInstance().setPassword(credentialAttributes, jwt);
+  }
+
+  public synchronized String getArtemisAuthJWT() {
+    CredentialAttributes credentialAttributes = createCredentialAttributes(JWT_STORE_KEY);
+    return PasswordSafe.getInstance().getPassword(credentialAttributes);
+  }
+
   public String getArtemisInstanceUrl() {
     return artemisInstanceUrl;
   }
@@ -124,5 +139,13 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   public void setSelectedGradingConfigPath(@Nullable String selectedGradingConfigPath) {
     this.selectedGradingConfigPath = selectedGradingConfigPath;
+  }
+
+  public Color getAnnotationColor() {
+    return annotationColor;
+  }
+
+  public void setAnnotationColor(Color annotationColor) {
+    this.annotationColor = annotationColor;
   }
 }
