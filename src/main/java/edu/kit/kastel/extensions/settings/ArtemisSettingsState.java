@@ -12,6 +12,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import java.awt.Color;
+import java.time.Instant;
+import java.util.Date;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,8 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   private String artemisInstanceUrl = "https://artemis.praktomat.cs.kit.edu";
   private @Nullable String selectedGradingConfigPath;
   private int columnsPerRatingGroup = 2;
+
+  private Date jwtExpiry = new Date(Long.MAX_VALUE);
 
   private Color annotationColor = new JBColor(new Color(155, 54, 54), new Color(155, 54, 54));
 
@@ -147,5 +151,13 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
   public void setAnnotationColor(Color annotationColor) {
     this.annotationColor = annotationColor;
+  }
+
+  public Date getJwtExpiry() {
+    return jwtExpiry;
+  }
+
+  public void setJwtExpiry(Date jwtExpiry) {
+    this.jwtExpiry = jwtExpiry;
   }
 }

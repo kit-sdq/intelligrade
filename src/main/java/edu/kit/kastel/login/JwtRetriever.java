@@ -20,10 +20,11 @@ public class JwtRetriever extends Thread {
 
   @Override
   public void run() {
+    ArtemisSettingsState settingsStore = ArtemisSettingsState.getInstance();
 
     JBCefCookieManager cookieManager = browser.getJBCefCookieManager();
     Future<List<JBCefCookie>> cookies = cookieManager.getCookies(
-            ArtemisSettingsState.getInstance().getArtemisInstanceUrl(),
+            settingsStore.getArtemisInstanceUrl(),
             true
     );
 
@@ -33,8 +34,9 @@ public class JwtRetriever extends Thread {
               .filter(cookie -> cookie.getName().equals(JWT_COOKIE_KEY))
               .forEach(cookie -> {
                 String jwt = cookie.getValue();
-                if (!jwt.equals(ArtemisSettingsState.getInstance().getArtemisAuthJWT())) {
-                  ArtemisSettingsState.getInstance().setArtemisAuthJWT(jwt);
+                if (!jwt.equals(settingsStore.getArtemisAuthJWT())) {
+                  settingsStore.setArtemisAuthJWT(jwt);
+                  settingsStore.setJwtExpiry(cookie.getExpires());
                   this.browser.getJBCefClient().dispose();
                   this.browser.dispose();
                 }
