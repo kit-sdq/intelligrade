@@ -125,6 +125,8 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   }
 
   public void setArtemisInstanceUrl(String artemisInstanceUrl) {
+    //invalidate JWT if URL changed
+    this.setArtemisAuthJWT("");
     this.artemisInstanceUrl = artemisInstanceUrl;
   }
 
