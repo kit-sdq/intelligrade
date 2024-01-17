@@ -2,7 +2,7 @@ name: Build project with gradle and test
 
 on:
   push:
-    branches: [ "main, cicd" ]
+    branches: [ "main", "cicd" ]
   pull_request:
     branches: [ "main" ]
 
