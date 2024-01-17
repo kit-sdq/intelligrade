@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import java.awt.Color;
-import java.time.Instant;
 import java.util.Date;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
