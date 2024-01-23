@@ -5,3 +5,6 @@ used to grade Artemis based exercises.
 
 ## Building
 - run gradle target `runIde` to get a development version of the IDE
+
+## Features
+
