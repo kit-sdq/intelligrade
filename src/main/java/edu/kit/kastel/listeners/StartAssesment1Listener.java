@@ -169,6 +169,9 @@ public class StartAssesment1Listener implements ActionListener {
                     .enableAssessmentMode(new ExtendedLockResult(lockedAssessmentId, selectedExercise, submissionLock))
     );
 
+    //run Autograder
+    runAutograder();
+
     //update statistics
     gui.getStatisticsContainer().triggerUpdate(selectedExercise);
 
@@ -272,6 +275,11 @@ public class StartAssesment1Listener implements ActionListener {
     //set correct exercise in panel (new IDE instance resets this)
     this.gui.getExercisesDropdown().setSelectedIndex(selectedIdx);
   }
+
+  private void runAutograder(){
+    //TODO: run autograder here
+  }
+
 }
 
 
