@@ -13,6 +13,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import java.awt.Color;
 import java.util.Date;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +75,8 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
   }
 
 
-  private CredentialAttributes createCredentialAttributes(String key) {
+  @Contract("_ -> new")
+  private @NotNull CredentialAttributes createCredentialAttributes(String key) {
     return new CredentialAttributes(
             CredentialAttributesKt.generateServiceName(CREDENTIALS_PATH, key)
     );

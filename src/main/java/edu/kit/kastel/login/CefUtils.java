@@ -3,9 +3,11 @@ package edu.kit.kastel.login;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefClient;
+import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.util.concurrent.Future;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -23,8 +25,10 @@ public final class CefUtils {
 
   /**
    * Create and display a Window containing a JBCef Window to request login.
+   *
+   * @return A future on the JWT Cookie to log in
    */
-  public static void jcefBrowserLogin() {
+  public static @NotNull Future<JBCefCookie> jcefBrowserLogin() throws InterruptedException {
 
     //create browser and browser Client
     JBCefClient browserClient = JBCefApp.getInstance().createClient();
@@ -35,10 +39,12 @@ public final class CefUtils {
 
 
     //add a handler to the Browser to be run if a page is loaded
-    browserClient.addLoadHandler(new CefWindowLoadHandler(browser), browser.getCefBrowser());
+    CefWindowLoadHandler loadHandler = new CefWindowLoadHandler(browser);
+    browserClient.addLoadHandler(loadHandler, browser.getCefBrowser());
 
     //create window, display it and navigate to log in URL
     createWindow(browser);
+    return loadHandler.getCookieFuture();
   }
 
   private static void createWindow(@NotNull JBCefBrowser browserToAdd) {

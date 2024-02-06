@@ -5,11 +5,13 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.ui.jcef.JBCefApp;
+import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.utils.ArtemisUtils;
 import java.time.Instant;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 import org.jetbrains.annotations.NotNull;
 
 public class CustomLoginManager extends edu.kit.kastel.sdq.artemis4j.client.LoginManager {
@@ -43,8 +45,7 @@ public class CustomLoginManager extends edu.kit.kastel.sdq.artemis4j.client.Logi
               || settingsStore.getArtemisAuthJWT().isBlank()
       ) {
         if (JBCefApp.isSupported()) {
-          //open the JCEF Browser in a new Panel to allow user to log in
-          CefUtils.jcefBrowserLogin();
+          ifCefAvailable();
         } else {
           //if JCEF is unavailable suggest usage of conventional login
           displayJCEFUnavailableError();
@@ -71,5 +72,22 @@ public class CustomLoginManager extends edu.kit.kastel.sdq.artemis4j.client.Logi
               }
             }
     );
+  }
+
+  private void ifCefAvailable() throws ArtemisClientException {
+    try {
+      //open the JCEF Browser in a new Panel to allow user to log in
+      //wait for operation to complete
+      JBCefCookie jwtCookie = CefUtils.jcefBrowserLogin().get();
+
+      //set relevant information
+      settingsStore.setArtemisAuthJWT(jwtCookie.getValue());
+      settingsStore.setJwtExpiry(jwtCookie.getExpires());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new ArtemisClientException("Interrupted while attempting to get login token");
+    } catch (ExecutionException e) {
+      throw new ArtemisClientException(String.format("Error retrieving token! %n%s", e.getMessage()));
+    }
   }
 }

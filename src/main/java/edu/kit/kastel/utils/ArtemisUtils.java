@@ -33,7 +33,7 @@ public final class ArtemisUtils {
    *
    * @return the instance persisted or created
    */
-  public static synchronized @NotNull RestClientManager getArtemisClientInstance() {
+  public static @NotNull RestClientManager getArtemisClientInstance() {
     if (artemisClient == null) {
       //retrieve settings
       ArtemisSettingsState settings = ArtemisSettingsState.getInstance();

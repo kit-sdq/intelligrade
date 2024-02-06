@@ -174,7 +174,6 @@ public class StartAssesment1Listener implements ActionListener {
 
     //update statistics
     gui.getStatisticsContainer().triggerUpdate(selectedExercise);
-
   }
 
   /**
@@ -276,10 +275,22 @@ public class StartAssesment1Listener implements ActionListener {
     this.gui.getExercisesDropdown().setSelectedIndex(selectedIdx);
   }
 
-  private void runAutograder(){
-    //TODO: run autograder here
+  private void runAutograder() {
+    //TODO: boilerplate implementation
+    /*
+    try (TempLocation tempProjectLocation = TempLocation.random()) {
+      Application autograderInstance = new Application(tempProjectLocation);
+      Future<Integer> resultCode = Executors.newSingleThreadExecutor().submit(autograderInstance);
+      resultCode.get();
+    } catch (IOException e) {
+      //If creation of temp dir fails
+    } catch (ExecutionException e) {
+      //if autograder Throws Exception
+    } catch (InterruptedException e) {
+      //If autograder is interrupted
+    }
+     */
   }
-
 }
 
 
