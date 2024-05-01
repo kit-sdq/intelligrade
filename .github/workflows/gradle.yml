@@ -22,6 +22,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Build project with gradle
-        uses: gradle/gradle-build-action@v3.3.1
+        uses: gradle/gradle-build-action@v3.3.2
       - name: Execute Gradle build
         run: gradle build
