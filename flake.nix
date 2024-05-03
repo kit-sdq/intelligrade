@@ -21,7 +21,18 @@
     {
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
-          packages = with pkgs; [ gradle jdk maven jdt-language-server xorg.libXext ];
+          packages = with pkgs; [
+            gradle 
+            jdk 
+            maven 
+            jdt-language-server
+          ];
+          
+          #NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [
+          #  pkgs.cc.cc
+          #];
+
+          # NIX_LD = builtins.readFile "${pkgs.cc}/nix-support/dynamic-linker";
         };
       });
     };
