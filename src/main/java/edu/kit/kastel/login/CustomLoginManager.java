@@ -9,9 +9,11 @@ import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.utils.ArtemisUtils;
+
 import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
+
 import org.jetbrains.annotations.NotNull;
 
 public class CustomLoginManager extends edu.kit.kastel.sdq.artemis4j.client.LoginManager {
@@ -38,7 +40,7 @@ public class CustomLoginManager extends edu.kit.kastel.sdq.artemis4j.client.Logi
 
     if (this.hostname.isBlank()) {
       throw new ArtemisClientException("Login without hostname is impossible");
-    } else if (this.username.isBlank() || this.password.isBlank()) {
+    } else if (this.username == null || this.password == null || this.username.isBlank() || this.password.isBlank()) {
       //check log in data and open login Browser iff needed
       //only do browser login if no token is set and either username or password is not set as well
       if (settingsStore.getArtemisAuthJWT() == null

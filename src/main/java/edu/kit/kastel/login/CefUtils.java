@@ -5,12 +5,15 @@ import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefClient;
 import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.concurrent.Future;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
+
+import org.cef.handler.CefFocusHandler;
 import org.jetbrains.annotations.NotNull;
 
 public final class CefUtils {
@@ -41,6 +44,10 @@ public final class CefUtils {
     //add a handler to the Browser to be run if a page is loaded
     CefWindowLoadHandler loadHandler = new CefWindowLoadHandler(browser);
     browserClient.addLoadHandler(loadHandler, browser.getCefBrowser());
+
+    //set focus handler because it gets invoked sometimes and causes NullPE otherwise
+    CefFocusHandler focusHandler = new CefWindowFocusHandler();
+    browserClient.addFocusHandler(focusHandler, browser.getCefBrowser());
 
     //create window, display it and navigate to log in URL
     createWindow(browser);

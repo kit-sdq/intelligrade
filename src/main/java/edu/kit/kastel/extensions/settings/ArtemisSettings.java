@@ -9,15 +9,11 @@ import edu.kit.kastel.extensions.guis.SettingsContent;
 import edu.kit.kastel.login.CustomLoginManager;
 import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.client.RestClientManager;
+
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
+import javax.swing.*;
+
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -68,6 +64,8 @@ public class ArtemisSettings implements Configurable {
     contentPanel.add(generatedMenu);
     //add action listener to login Button
     generatedMenu.getBtnLogin().addActionListener(this::loginButtonListener);
+    //add action listener to log out button
+    generatedMenu.getBtnLogout().addActionListener(this::logOutButtonListener);
 
     return contentPanel;
   }
@@ -81,6 +79,18 @@ public class ArtemisSettings implements Configurable {
   private void loginButtonListener(ActionEvent actionEvent) {
     //set label if login was successful
     setLabelOnLoginSuccess();
+  }
+
+  private void logOutButtonListener(ActionEvent actionEvent) {
+    //reset username, password and token
+    ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
+    settings.setUsername("");
+    settings.setArtemisPassword("");
+    settings.setArtemisAuthJWT("");
+
+    //blank input fields
+    this.pwdInput.setText("");
+    this.usernameField.setText("");
   }
 
   /**
