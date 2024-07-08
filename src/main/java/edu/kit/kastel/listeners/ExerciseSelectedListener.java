@@ -8,8 +8,10 @@ import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
 import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.config.JsonFileConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.model.MistakeType;
+import edu.kit.kastel.state.AssessmentModeHandler;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.wrappers.DisplayableExercise;
+
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -19,6 +21,7 @@ import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +97,7 @@ public class ExerciseSelectedListener implements ItemListener {
     //enable assessment button because it may still be greyed out
     gui.getBtnGradingRound1().setEnabled(true);
     addRatingGroups(configForExercise);
+    AssessmentModeHandler.getInstance().setCurrentExerciseConfig(configForExercise);
 
     //update statistics
     gui.getStatisticsContainer().triggerUpdate(selected);

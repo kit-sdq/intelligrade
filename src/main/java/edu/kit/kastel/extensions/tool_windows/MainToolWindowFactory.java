@@ -134,7 +134,7 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     List<Course> courses = ArtemisUtils
             .getArtemisClientInstance()
             .getCourseArtemisClient()
-            .getCourses();//TODO: this seems to fail due to a permission error
+            .getCourses();
     courses.forEach(course -> coursesComboBox.addItem(new DisplayableCourse(course)));
 
     //populate exam and exercise dropdown if a course is selected

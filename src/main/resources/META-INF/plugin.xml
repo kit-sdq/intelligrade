@@ -33,4 +33,11 @@
         <listener class="edu.kit.kastel.listeners.OnPlugInLoad"
                   topic="com.intellij.ide.AppLifecycleListener"/>
     </applicationListeners>
+    <actions>
+        <action id="edu.kit.kastel.actions.AddAnnotationPopupAction"
+                class="edu.kit.kastel.actions.edu.kit.kastel.actions.AddAnnotationPopupAction" text="Add Annotation"
+                description="Add a new grading annotation">
+            <keyboard-shortcut keymap="$default" first-keystroke="alt a"/>
+        </action>
+    </actions>
 </idea-plugin>

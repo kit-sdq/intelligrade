@@ -2,6 +2,7 @@ package edu.kit.kastel.state;
 
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import edu.kit.kastel.sdq.artemis4j.grading.config.ExerciseConfig;
 import edu.kit.kastel.utils.AssessmentUtils;
 import edu.kit.kastel.wrappers.ExtendedLockResult;
 import java.awt.Color;
@@ -17,6 +18,7 @@ public class AssessmentModeHandler {
   private static final String ASSESSMENT_MODE_DISABLED = "❌";
 
   private boolean assessmentMode = false;
+  private Optional<ExerciseConfig> currentExerciseConfig = Optional.empty();
   private Optional<ExtendedLockResult> assessmentLock;
 
   private Optional<JBLabel> indicatorLabel = Optional.empty();
@@ -61,5 +63,13 @@ public class AssessmentModeHandler {
 
   public void connectIndicatorLabel(JBLabel label) {
     this.indicatorLabel = Optional.of(label);
+  }
+
+  public Optional<ExerciseConfig> getCurrentExerciseConfig() {
+    return currentExerciseConfig;
+  }
+
+  public void setCurrentExerciseConfig(ExerciseConfig currentExerciseConfig) {
+    this.currentExerciseConfig = Optional.of(currentExerciseConfig);
   }
 }
