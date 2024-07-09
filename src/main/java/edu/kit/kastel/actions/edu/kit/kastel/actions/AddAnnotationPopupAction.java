@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import edu.kit.kastel.sdq.artemis4j.api.grading.IMistakeType;
 import edu.kit.kastel.state.AssessmentModeHandler;
+import edu.kit.kastel.utils.AnnotationUtils;
 import edu.kit.kastel.wrappers.Displayable;
 import edu.kit.kastel.wrappers.DisplayableMistakeType;
 import org.jetbrains.annotations.NotNull;
@@ -66,8 +67,8 @@ public class AddAnnotationPopupAction extends AnAction {
 
   }
 
-  private void addQuickAnnotation(DisplayableMistakeType mistakeType){
-
+  private void addQuickAnnotation(@NotNull DisplayableMistakeType mistakeType){
+    AnnotationUtils.addAnnotationByMistakeType(mistakeType.getWrappedValue());
   }
 
 
