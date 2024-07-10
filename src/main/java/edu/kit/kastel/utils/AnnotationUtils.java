@@ -1,5 +1,7 @@
 package edu.kit.kastel.utils;
 
+import com.intellij.DynamicBundle;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -92,6 +94,11 @@ public final class AnnotationUtils {
             annotationMarkup,
             HighlighterTargetArea.EXACT_RANGE
     );
+
+    //add tooltip (on the right bar)
+    highlighter.setErrorStripeMarkColor(JBColor.CYAN);
+    highlighter.setThinErrorStripeMark(true);
+    highlighter.setErrorStripeTooltip(mistakeType.getButtonText(DynamicBundle.getLocale().getLanguage()));
 
     //create and add the annotation
     var annotation = new AnnotationWithTextSelection(IAnnotation.createID(),
