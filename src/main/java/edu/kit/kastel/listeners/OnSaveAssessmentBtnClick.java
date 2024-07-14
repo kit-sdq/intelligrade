@@ -18,5 +18,6 @@ public class OnSaveAssessmentBtnClick implements ActionListener {
     if (!AssessmentModeHandler.getInstance().isInAssesmentMode()) {
       ArtemisUtils.displayGenericErrorBalloon(NO_ASSESSMENT_OPEN_ERR);
     }
+    //TODO: implement
   }
 }

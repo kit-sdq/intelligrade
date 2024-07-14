@@ -25,7 +25,7 @@ dependencies {
 }
 
 intellij {
-    version = '2023.2.5'
+    version = '2024.1.4'
     plugins = ['com.intellij.java']
 }
 patchPluginXml {

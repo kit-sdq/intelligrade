@@ -25,6 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
@@ -276,8 +279,8 @@ public class StartAssesment1Listener implements ActionListener {
   }
 
   private void runAutograder() {
-    //TODO: boilerplate implementation
     /*
+    //TODO: boilerplate implementation
     try (TempLocation tempProjectLocation = TempLocation.random()) {
       Application autograderInstance = new Application(tempProjectLocation);
       Future<Integer> resultCode = Executors.newSingleThreadExecutor().submit(autograderInstance);
@@ -289,7 +292,7 @@ public class StartAssesment1Listener implements ActionListener {
     } catch (InterruptedException e) {
       //If autograder is interrupted
     }
-     */
+    */
   }
 }
 

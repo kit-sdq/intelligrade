@@ -82,7 +82,7 @@ public final class AnnotationUtils {
             null,
             new JBColor(annotationColor, annotationColor),
             null,
-            EffectType.ROUNDED_BOX,
+            EffectType.BOLD_LINE_UNDERSCORE,
             Font.PLAIN
 
     );
