@@ -7,4 +7,3 @@ used to grade Artemis based exercises.
 - run gradle target `runIde` to get a development version of the IDE
 
 ## Features
-

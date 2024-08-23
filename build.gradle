@@ -19,9 +19,9 @@ dependencies {
     implementation 'de.firemage.autograder:autograder-cmd:' + AUTOGRADER_VERION
     implementation 'de.firemage.autograder:autograder-core:' + AUTOGRADER_VERION
     implementation 'de.firemage.autograder:autograder-extra:' + AUTOGRADER_VERION
-    //Tests
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.3'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.3'
+    // Tests
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:' + JUNIT_VERSION
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + JUNIT_VERSION
 }
 
 intellij {

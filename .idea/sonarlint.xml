@@ -7,7 +7,7 @@
         <option value="DIRECTORY:src/main/java/edu/kit/kastel/extensions/guis" />
       </list>
     </option>
-    <option name="projectKey" value="CDaut_intelligrade" />
-    <option name="serverId" value="CDaut_sonarCloud" />
+    <option name="projectKey" value="kit-sdq_intelligrade" />
+    <option name="serverId" value="kitsdq" />
   </component>
 </project>
