@@ -1,8 +1,10 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.listeners;
+
+import java.util.List;
 
 import com.intellij.ide.AppLifecycleListener;
 import edu.kit.kastel.utils.ArtemisUtils;
-import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class OnPlugInLoad implements AppLifecycleListener {
 
-  @Override
-  public void appFrameCreated(@NotNull List<String> commandLineArgs) {
-    AppLifecycleListener.super.appFrameCreated(commandLineArgs);
-    ArtemisUtils.getArtemisClientInstance();
-  }
+    @Override
+    public void appFrameCreated(@NotNull List<String> commandLineArgs) {
+        AppLifecycleListener.super.appFrameCreated(commandLineArgs);
+        ArtemisUtils.getArtemisClientInstance();
+    }
 }

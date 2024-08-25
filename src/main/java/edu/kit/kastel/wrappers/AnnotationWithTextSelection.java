@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.wrappers;
 
 import com.intellij.openapi.editor.Editor;
@@ -10,29 +11,28 @@ import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
 
 public class AnnotationWithTextSelection extends Annotation {
 
-  RangeHighlighter mistakeHighlighter;
+    RangeHighlighter mistakeHighlighter;
 
-  public AnnotationWithTextSelection(String uuid,
-                                     IMistakeType mistakeType,
-                                     int startLine,
-                                     int endLine,
-                                     String fullyClassifiedClassName,
-                                     String customMessage,
-                                     Double customPenalty,
-                                     RangeHighlighter pMistakeHighlighter) {
-    super(uuid, mistakeType, startLine, endLine, fullyClassifiedClassName, customMessage, customPenalty);
-    this.mistakeHighlighter = pMistakeHighlighter;
-  }
+    public AnnotationWithTextSelection(
+            String uuid,
+            IMistakeType mistakeType,
+            int startLine,
+            int endLine,
+            String fullyClassifiedClassName,
+            String customMessage,
+            Double customPenalty,
+            RangeHighlighter pMistakeHighlighter) {
+        super(uuid, mistakeType, startLine, endLine, fullyClassifiedClassName, customMessage, customPenalty);
+        this.mistakeHighlighter = pMistakeHighlighter;
+    }
 
-  /**
-   * Deletes the mistake Highlighter associated with this Annotation
-   */
-  public void deleteHighlighter() {
-    Project currentProject = ProjectManager.getInstance().getOpenProjects()[0];
-    Editor editor = FileEditorManager
-            .getInstance(currentProject)
-            .getSelectedTextEditor();
+    /**
+     * Deletes the mistake Highlighter associated with this Annotation
+     */
+    public void deleteHighlighter() {
+        Project currentProject = ProjectManager.getInstance().getOpenProjects()[0];
+        Editor editor = FileEditorManager.getInstance(currentProject).getSelectedTextEditor();
 
-    editor.getMarkupModel().removeHighlighter(mistakeHighlighter);
-  }
+        editor.getMarkupModel().removeHighlighter(mistakeHighlighter);
+    }
 }

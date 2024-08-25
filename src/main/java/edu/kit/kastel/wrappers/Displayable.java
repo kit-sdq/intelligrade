@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.wrappers;
 
 /**
@@ -7,21 +8,21 @@ package edu.kit.kastel.wrappers;
  * @param <T> The Type to be wrapped
  */
 public abstract class Displayable<T> {
-  private final T item;
+    private final T item;
 
-  protected Displayable(T item) {
-    this.item = item;
-  }
+    protected Displayable(T item) {
+        this.item = item;
+    }
 
-  /**
-   * Get the wrapped value.
-   *
-   * @return A reference to the wrapped value. Does not copy.
-   */
-  public T getWrappedValue() {
-    return item;
-  }
+    /**
+     * Get the wrapped value.
+     *
+     * @return A reference to the wrapped value. Does not copy.
+     */
+    public T getWrappedValue() {
+        return item;
+    }
 
-  @Override
-  public abstract String toString();
+    @Override
+    public abstract String toString();
 }

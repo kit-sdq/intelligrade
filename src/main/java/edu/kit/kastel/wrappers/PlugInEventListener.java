@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.wrappers;
 
 /**
@@ -5,5 +6,5 @@ package edu.kit.kastel.wrappers;
  */
 public interface PlugInEventListener extends java.util.EventListener {
 
-  void trigger();
+    void trigger();
 }

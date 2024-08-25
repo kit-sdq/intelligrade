@@ -2,6 +2,7 @@
 plugins {
     id 'org.jetbrains.intellij' version '1.17.4'
     id 'java'
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group 'edu.kit.kastel.sdq'
@@ -42,5 +43,22 @@ tasks {
 
     buildSearchableOptions {
         enabled = false
+    }
+}
+
+spotless {
+    // ratchetFrom 'origin/main'
+
+    format 'misc', {
+        target '*.gradle', '.gitattributes', '.gitignore', '*.md'
+        trimTrailingWhitespace()
+        indentWithSpaces()
+        endWithNewline()
+    }
+    java {
+        palantirJavaFormat("2.39.0").formatJavadoc(false)
+        licenseHeaderFile('header.txt')
+        importOrderFile('spotless.importorder')
+        targetExcludeIfContentContains("//GEN-BEGIN:")
     }
 }

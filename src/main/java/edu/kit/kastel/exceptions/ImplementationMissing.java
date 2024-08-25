@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.exceptions;
 
 /**
@@ -5,7 +6,7 @@ package edu.kit.kastel.exceptions;
  */
 public class ImplementationMissing extends RuntimeException {
 
-  public ImplementationMissing(String message) {
-    super(message);
-  }
+    public ImplementationMissing(String message) {
+        super(message);
+    }
 }
