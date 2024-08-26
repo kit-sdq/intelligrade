@@ -56,9 +56,9 @@ spotless {
         endWithNewline()
     }
     java {
+        toggleOffOn("@formatter:off", "@formatter:on")
         palantirJavaFormat("2.39.0").formatJavadoc(false)
         licenseHeaderFile('header.txt')
         importOrderFile('spotless.importorder')
-        targetExcludeIfContentContains("//GEN-BEGIN:")
     }
 }

@@ -1,12 +1,11 @@
-/*
- * Created by JFormDesigner on Fri May 03 10:17:13 CEST 2024
- */
-
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
 
 import java.awt.*;
 import java.util.*;
+
 import javax.swing.*;
+
 import com.intellij.ui.*;
 import com.intellij.ui.components.*;
 import net.miginfocom.swing.*;

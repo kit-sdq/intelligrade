@@ -1,81 +1,80 @@
-/*
- * Created by JFormDesigner on Mon Sep 25 22:54:17 CEST 2023
- */
-
+/* Licensed under EPL-2.0 2023. */
 package edu.kit.kastel.extensions.guis;
 
+import java.awt.*;
+import java.util.*;
+
+import javax.swing.*;
+import javax.swing.border.*;
+
+import com.intellij.openapi.ui.*;
+import com.intellij.ui.components.*;
+import com.intellij.ui.table.*;
 import com.intellij.uiDesigner.core.*;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
 import edu.kit.kastel.sdq.artemis4j.api.artemis.exam.Exam;
 import edu.kit.kastel.wrappers.Displayable;
-import java.awt.*;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import com.intellij.openapi.ui.*;
-import com.intellij.ui.components.*;
-import com.intellij.ui.table.*;
 import net.miginfocom.swing.*;
 
 /**
  * @author clemens
  */
 public class AssessmentViewContent extends JPanel {
-  public AssessmentViewContent() {
-    initComponents();
-  }
+    public AssessmentViewContent() {
+        initComponents();
+    }
 
-  public ComboBox<Displayable<Course>> getCoursesDropdown() {
-    return coursesDropdown;
-  }
+    public ComboBox<Displayable<Course>> getCoursesDropdown() {
+        return coursesDropdown;
+    }
 
-  public ComboBox<Displayable<Exam>> getExamsDropdown() {
-    return examsDropdown;
-  }
+    public ComboBox<Displayable<Exam>> getExamsDropdown() {
+        return examsDropdown;
+    }
 
-  public ComboBox<Displayable<Exercise>> getExercisesDropdown() {
-    return exercisesDropdown;
-  }
+    public ComboBox<Displayable<Exercise>> getExercisesDropdown() {
+        return exercisesDropdown;
+    }
 
-  public TextFieldWithBrowseButton getGradingConfigPathInput() {
-    return gradingConfigPathInput;
-  }
+    public TextFieldWithBrowseButton getGradingConfigPathInput() {
+        return gradingConfigPathInput;
+    }
 
-  public TextFieldWithBrowseButton getAutograderConfigPathInput() {
-    return autograderConfigPathInput;
-  }
+    public TextFieldWithBrowseButton getAutograderConfigPathInput() {
+        return autograderConfigPathInput;
+    }
 
-  public JButton getBtnGradingRound1() {
-    return btnGradingRound1;
-  }
+    public JButton getBtnGradingRound1() {
+        return btnGradingRound1;
+    }
 
-  public JPanel getRatingGroupContainer() {
-    return ratingGroupContainer;
-  }
+    public JPanel getRatingGroupContainer() {
+        return ratingGroupContainer;
+    }
 
-  public JButton getBtnSaveAssessment() {
-    return btnSaveAssessment;
-  }
+    public JButton getBtnSaveAssessment() {
+        return btnSaveAssessment;
+    }
 
-  public JButton getSubmitAssesmentBtn() {
-      return submitAssesmentBtn;
-  }
+    public JButton getSubmitAssesmentBtn() {
+        return submitAssesmentBtn;
+    }
 
-  public JBLabel getAssessmentModeLabel() {
-      return assessmentModeLabel;
-  }
+    public JBLabel getAssessmentModeLabel() {
+        return assessmentModeLabel;
+    }
 
-  public StatisticsContainer getStatisticsContainer() {
-      return statisticsContainer;
-  }
+    public StatisticsContainer getStatisticsContainer() {
+        return statisticsContainer;
+    }
 
-  private void createUIComponents() {
-      // TODO: add custom component creation code here
-  }
+    private void createUIComponents() {
+        // TODO: add custom component creation code here
+    }
 
-  private void initComponents() {
-    // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
+    private void initComponents() {
+        // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - CHServer root Passwort
     ResourceBundle bundle = ResourceBundle.getBundle("guiStrings");
     var tabbedPane1 = new JBTabbedPane();
@@ -374,9 +373,9 @@ public class AssessmentViewContent extends JPanel {
     }
     add(tabbedPane1);
     // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
-  }
+    }
 
-  // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
+    // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
   // Generated using JFormDesigner Evaluation license - CHServer root Passwort
   private JBScrollPane scrollPane2;
   private ComboBox<Displayable<Course>> coursesDropdown;

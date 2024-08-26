@@ -1,41 +1,39 @@
-/*
- * Created by JFormDesigner on Fri Sep 29 14:41:05 CEST 2023
- */
-
+/* Licensed under EPL-2.0 2023. */
 package edu.kit.kastel.extensions.guis;
 
 import java.awt.event.*;
-import edu.kit.kastel.utils.AssessmentUtils;
-import edu.kit.kastel.wrappers.PlugInEventListener;
+
 import javax.swing.*;
+
 import com.intellij.ui.components.*;
 import com.intellij.ui.table.*;
+import edu.kit.kastel.utils.AssessmentUtils;
+import edu.kit.kastel.wrappers.PlugInEventListener;
 
 /**
  * @author clemens
  */
 public class AnnotationsViewContent extends JPanel implements PlugInEventListener {
-  public AnnotationsViewContent() {
-    initComponents();
-  }
-
-  private void createUIComponents() {
-    // TODO: add custom component creation code here
-  }
-
-  private void annotationsTableKeyReleased(KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-      int selectedRow = annotationsTable.getSelectedRow();
-      if (selectedRow != -1) {
-        ((AnnotationsTableModel) this.annotationsTable.getModel()).deleteItem(selectedRow);
-        this.updateUI();
-      }
-
+    public AnnotationsViewContent() {
+        initComponents();
     }
-  }
 
-  private void initComponents() {
-    // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
+    private void createUIComponents() {
+        // TODO: add custom component creation code here
+    }
+
+    private void annotationsTableKeyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+            int selectedRow = annotationsTable.getSelectedRow();
+            if (selectedRow != -1) {
+                ((AnnotationsTableModel) this.annotationsTable.getModel()).deleteItem(selectedRow);
+                this.updateUI();
+            }
+        }
+    }
+
+    private void initComponents() {
+        // JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents  @formatter:off
     // Generated using JFormDesigner Evaluation license - CHServer root Passwort
     scrollPane1 = new JBScrollPane();
     annotationsTable = new JBTable(new AnnotationsTableModel());
@@ -63,18 +61,18 @@ public class AnnotationsViewContent extends JPanel implements PlugInEventListene
     }
     add(scrollPane1);
     // JFormDesigner - End of component initialization  //GEN-END:initComponents  @formatter:on
-  }
+    }
 
-  // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
+    // JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables  @formatter:off
   // Generated using JFormDesigner Evaluation license - CHServer root Passwort
   private JBScrollPane scrollPane1;
   private JBTable annotationsTable;
   // JFormDesigner - End of variables declaration  //GEN-END:variables  @formatter:on
 
-  @Override
-  public void trigger() {
-    AnnotationsTableModel model = ((AnnotationsTableModel) this.annotationsTable.getModel());
-    model.addAnnotation(AssessmentUtils.getLatestAnnotation());
-    this.annotationsTable.updateUI();
-  }
+    @Override
+    public void trigger() {
+        AnnotationsTableModel model = ((AnnotationsTableModel) this.annotationsTable.getModel());
+        model.addAnnotation(AssessmentUtils.getLatestAnnotation());
+        this.annotationsTable.updateUI();
+    }
 }
