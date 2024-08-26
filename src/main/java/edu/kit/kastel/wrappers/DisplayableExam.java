@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.wrappers;
 
 import edu.kit.kastel.sdq.artemis4j.api.artemis.exam.Exam;
@@ -10,19 +11,18 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DisplayableExam extends Displayable<Exam> {
 
-  private static final String EMPTY_EXAM_REPRESENTATION = "No exam selected";
+    private static final String EMPTY_EXAM_REPRESENTATION = "No exam selected";
 
-  public DisplayableExam(@Nullable Exam exam) {
-    super(exam);
-  }
-
-
-  @Override
-  public String toString() {
-    if (this.getWrappedValue() != null) {
-      return this.getWrappedValue().getTitle();
-    } else {
-      return EMPTY_EXAM_REPRESENTATION;
+    public DisplayableExam(@Nullable Exam exam) {
+        super(exam);
     }
-  }
+
+    @Override
+    public String toString() {
+        if (this.getWrappedValue() != null) {
+            return this.getWrappedValue().getTitle();
+        } else {
+            return EMPTY_EXAM_REPRESENTATION;
+        }
+    }
 }

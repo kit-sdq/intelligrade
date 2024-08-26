@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.login;
 
 import org.cef.browser.CefBrowser;
@@ -8,18 +9,14 @@ import org.cef.handler.CefFocusHandler;
  * We do not want to do anything on focus nor do we care about focus.
  */
 public class CefWindowFocusHandler implements CefFocusHandler {
-  @Override
-  public void onTakeFocus(CefBrowser cefBrowser, boolean b) {
+    @Override
+    public void onTakeFocus(CefBrowser cefBrowser, boolean b) {}
 
-  }
+    @Override
+    public boolean onSetFocus(CefBrowser cefBrowser, FocusSource focusSource) {
+        return false;
+    }
 
-  @Override
-  public boolean onSetFocus(CefBrowser cefBrowser, FocusSource focusSource) {
-    return false;
-  }
-
-  @Override
-  public void onGotFocus(CefBrowser cefBrowser) {
-
-  }
+    @Override
+    public void onGotFocus(CefBrowser cefBrowser) {}
 }
