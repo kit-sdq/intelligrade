@@ -3,12 +3,13 @@ package edu.kit.kastel.extensions.guis;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.swing.table.AbstractTableModel;
 
 import com.intellij.DynamicBundle;
-import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
-import edu.kit.kastel.utils.AssessmentUtils;
+import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
+import edu.kit.kastel.state.PluginState;
 import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
 
 /**
@@ -16,11 +17,9 @@ import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
  */
 public class AnnotationsTableModel extends AbstractTableModel {
 
-    private static final String[] HEADINGS = {
-        "Mistake type", "Start Line", "End Line", "File", "Message", "Custom Penalty"
-    };
+    private static final String[] HEADINGS = {"Mistake type", "Line(s)", "File", "Source", "Message", "Custom Penalty"};
 
-    private static final String LOCALE = DynamicBundle.getLocale().getLanguage();
+    private static final Locale LOCALE = DynamicBundle.getLocale();
 
     private final List<AnnotationWithTextSelection> annotations = new ArrayList<>();
 
@@ -41,19 +40,19 @@ public class AnnotationsTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int i, int i1) {
-        Annotation queriedAnnotation = annotations.get(i);
+        Annotation annotation = annotations.get(i).annotation();
 
-        if (queriedAnnotation == null) {
+        if (annotation == null) {
             return "";
         }
 
         return switch (i1) {
-            case 0 -> queriedAnnotation.getMistakeType().getButtonText(LOCALE);
-            case 1 -> queriedAnnotation.getStartLine();
-            case 2 -> queriedAnnotation.getEndLine();
-            case 3 -> queriedAnnotation.getClassFilePath();
-            case 4 -> queriedAnnotation.getCustomMessage().orElse("");
-            case 5 -> queriedAnnotation.getCustomPenalty().orElse(0.0);
+            case 0 -> annotation.getMistakeType().getButtonText().translateTo(LOCALE);
+            case 1 -> formatLines(annotation);
+            case 2 -> annotation.getFilePath();
+            case 3 -> annotation.getSource();
+            case 4 -> annotation.getCustomMessage().orElse("");
+            case 5 -> annotation.getCustomScore().orElse(0.0);
             default -> {
                 System.err.printf("No table data at index %d:%d\n", i, i1);
                 yield "n.A.";
@@ -61,25 +60,28 @@ public class AnnotationsTableModel extends AbstractTableModel {
         };
     }
 
-    /**
-     * Add an annotation to the Table model.
-     *
-     * @param annotation the Annotation to be added
-     */
-    public void addAnnotation(AnnotationWithTextSelection annotation) {
-        this.annotations.add(annotation);
+    public void setAnnotations(List<AnnotationWithTextSelection> annotations) {
+        this.annotations.clear();
+        this.annotations.addAll(annotations);
     }
 
-    /**
-     * Delete an annotation with a specified index from the Table, its model and the AnnotationManager
-     *
-     * @param itemIndex the index of the item to be deleted TODO: not necesarrily the same as
-     *                  the selected item if a TableSorter is used. Implement sorting.
-     */
+    public void clearAnnotations() {
+        this.annotations.clear();
+    }
+
     public void deleteItem(int itemIndex) {
         AnnotationWithTextSelection annotation = this.annotations.get(itemIndex);
-        annotation.deleteHighlighter();
-        AssessmentUtils.deleteAnnotation(annotation);
-        this.annotations.remove(annotation);
+        PluginState.getInstance().getActiveAssessment().orElseThrow().deleteAnnotation(annotation);
+    }
+
+    private String formatLines(Annotation annotation) {
+        int startLine = annotation.getStartLine() + 1;
+        int endLine = annotation.getEndLine() + 1;
+
+        if (startLine == endLine) {
+            return String.valueOf(startLine);
+        } else {
+            return String.format("%d - %d", startLine, endLine);
+        }
     }
 }

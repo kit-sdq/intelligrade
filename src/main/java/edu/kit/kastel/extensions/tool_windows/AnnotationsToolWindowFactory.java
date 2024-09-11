@@ -11,8 +11,7 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import edu.kit.kastel.extensions.guis.AnnotationsViewContent;
-import edu.kit.kastel.utils.ArtemisUtils;
-import edu.kit.kastel.utils.AssessmentUtils;
+import edu.kit.kastel.state.PluginState;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +29,7 @@ public class AnnotationsToolWindowFactory implements ToolWindowFactory {
         contentPanel.setLayout(new GridLayout());
 
         // give up if logging in to Artemis failed
-        if (!ArtemisUtils.getArtemisClientInstance().isReady()) {
+        if (!PluginState.getInstance().isConnected()) {
             return;
         }
 
@@ -39,8 +38,5 @@ public class AnnotationsToolWindowFactory implements ToolWindowFactory {
         Content content = ContentFactory.getInstance().createContent(this.contentPanel, null, false);
 
         toolWindow.getContentManager().addContent(content);
-
-        // register the GUI to be updated when an annotation is added
-        AssessmentUtils.registerAssessmentListener(generatedMenu);
     }
 }

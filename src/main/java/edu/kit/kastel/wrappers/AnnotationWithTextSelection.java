@@ -1,38 +1,22 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.wrappers;
 
-import com.intellij.openapi.editor.Editor;
+import java.util.Objects;
+
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import edu.kit.kastel.sdq.artemis4j.api.grading.IMistakeType;
-import edu.kit.kastel.sdq.artemis4j.grading.model.annotation.Annotation;
+import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 
-public class AnnotationWithTextSelection extends Annotation {
-
-    RangeHighlighter mistakeHighlighter;
-
-    public AnnotationWithTextSelection(
-            String uuid,
-            IMistakeType mistakeType,
-            int startLine,
-            int endLine,
-            String fullyClassifiedClassName,
-            String customMessage,
-            Double customPenalty,
-            RangeHighlighter pMistakeHighlighter) {
-        super(uuid, mistakeType, startLine, endLine, fullyClassifiedClassName, customMessage, customPenalty);
-        this.mistakeHighlighter = pMistakeHighlighter;
+public record AnnotationWithTextSelection(Annotation annotation, RangeHighlighter mistakeHighlighter) {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AnnotationWithTextSelection that = (AnnotationWithTextSelection) o;
+        return Objects.equals(annotation, that.annotation);
     }
 
-    /**
-     * Deletes the mistake Highlighter associated with this Annotation
-     */
-    public void deleteHighlighter() {
-        Project currentProject = ProjectManager.getInstance().getOpenProjects()[0];
-        Editor editor = FileEditorManager.getInstance(currentProject).getSelectedTextEditor();
-
-        editor.getMarkupModel().removeHighlighter(mistakeHighlighter);
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(annotation);
     }
 }

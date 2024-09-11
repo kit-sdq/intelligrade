@@ -2,57 +2,56 @@
 package edu.kit.kastel.extensions.tool_windows;
 
 import java.awt.GridLayout;
-import java.util.List;
+import java.awt.event.ItemEvent;
+import java.util.Comparator;
+import java.util.Locale;
 import java.util.Objects;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import com.intellij.DynamicBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import edu.kit.kastel.extensions.guis.AssessmentViewContent;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
-import edu.kit.kastel.listeners.ExerciseSelectedListener;
 import edu.kit.kastel.listeners.GradingConfigSelectedListener;
-import edu.kit.kastel.listeners.OnSaveAssessmentBtnClick;
-import edu.kit.kastel.listeners.OnSubmitAssessmentBtnClick;
-import edu.kit.kastel.listeners.StartAssesment1Listener;
-import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
-import edu.kit.kastel.sdq.artemis4j.api.artemis.Course;
-import edu.kit.kastel.sdq.artemis4j.api.artemis.Exercise;
-import edu.kit.kastel.sdq.artemis4j.api.artemis.exam.Exam;
-import edu.kit.kastel.state.AssessmentModeHandler;
+import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
+import edu.kit.kastel.sdq.artemis4j.grading.Course;
+import edu.kit.kastel.sdq.artemis4j.grading.Exam;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
+import edu.kit.kastel.state.ActiveAssessment;
+import edu.kit.kastel.state.PluginState;
 import edu.kit.kastel.utils.ArtemisUtils;
-import edu.kit.kastel.wrappers.Displayable;
-import edu.kit.kastel.wrappers.DisplayableCourse;
-import edu.kit.kastel.wrappers.DisplayableExam;
-import edu.kit.kastel.wrappers.DisplayableExercise;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * This class handles all logic for the main grading UI.
  * It does not handle any other logic, that should be factored out.
  */
-public class MainToolWindowFactory implements ToolWindowFactory {
+public class MainToolWindowFactory implements ToolWindowFactory, DumbAware {
 
     private static final String EXAMS_FETCH_ERROR_FORMAT = "Unable to fetch Exams for course %s.";
     private static final String EXERCISES_FETCH_ERROR_FORMAT = "Unable to fetch exercises for course %s.";
+    private static final Locale LOCALE = DynamicBundle.getLocale();
 
     // set up automated GUI and generate necessary bindings
     private final JPanel contentPanel = new JPanel();
     private final AssessmentViewContent generatedMenu = new AssessmentViewContent();
     private final TextFieldWithBrowseButton gradingConfigInput = generatedMenu.getGradingConfigPathInput();
-    private final TextFieldWithBrowseButton autograderConfigInput = generatedMenu.getAutograderConfigPathInput();
-    private final ComboBox<Displayable<Course>> coursesComboBox = generatedMenu.getCoursesDropdown();
-    private final ComboBox<Displayable<Exam>> examsComboBox = generatedMenu.getExamsDropdown();
-    private final ComboBox<Displayable<Exercise>> exerciseComboBox = generatedMenu.getExercisesDropdown();
+    private final ComboBox<Course> coursesComboBox = generatedMenu.getCoursesDropdown();
+    private final ComboBox<Exam> examsComboBox = generatedMenu.getExamsDropdown();
+    private final ComboBox<ProgrammingExercise> exerciseComboBox = generatedMenu.getExercisesDropdown();
 
     private final JButton startAssessment1Btn = generatedMenu.getBtnGradingRound1();
 
@@ -65,7 +64,7 @@ public class MainToolWindowFactory implements ToolWindowFactory {
         contentPanel.setLayout(new GridLayout());
 
         // give up if logging in to Artemis failed
-        if (!ArtemisUtils.getArtemisClientInstance().isReady()) {
+        if (!PluginState.getInstance().isConnected()) {
             return;
         }
 
@@ -80,16 +79,13 @@ public class MainToolWindowFactory implements ToolWindowFactory {
             ArtemisUtils.displayLoginErrorBalloon("Error retrieving courses!", null);
         }
 
-        // connect label to AssessmentModeHandler
-        AssessmentModeHandler.getInstance().connectIndicatorLabel(generatedMenu.getAssessmentModeLabel());
-
         toolWindow.getContentManager().addContent(content);
+
+        PluginState.getInstance().registerAssessmentStartedListener(this::onAssessmentStarted);
     }
 
     private void addListeners() {
         gradingConfigInput.addBrowseFolderListener(
-                new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
-        autograderConfigInput.addBrowseFolderListener(
                 new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
 
         // why the heck would you add a listener for text change like this????
@@ -102,36 +98,44 @@ public class MainToolWindowFactory implements ToolWindowFactory {
         ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
         gradingConfigInput.setText(settings.getSelectedGradingConfigPath());
 
-        // parse config on exercise select
-        exerciseComboBox.addItemListener(new ExerciseSelectedListener(generatedMenu));
-
-        // add listener for Button that starts first grading round
-        startAssessment1Btn.addActionListener(new StartAssesment1Listener(generatedMenu));
-
-        // button that saves assessment
-        saveAssessmentBtn.addActionListener(new OnSaveAssessmentBtnClick());
-
-        // button that submits assessment
-        submitAssessmentBtn.addActionListener(new OnSubmitAssessmentBtnClick(generatedMenu.getStatisticsContainer()));
-    }
-
-    private void populateDropdowns() throws ArtemisClientException {
-        coursesComboBox.removeAllItems();
-        // add all courses to the courses dropdown
-        List<Course> courses =
-                ArtemisUtils.getArtemisClientInstance().getCourseArtemisClient().getCourses();
-        courses.forEach(course -> coursesComboBox.addItem(new DisplayableCourse(course)));
-
-        // populate exam and exercise dropdown if a course is selected
         coursesComboBox.addItemListener(itemEvent -> {
-            Course selectedCourse = ((DisplayableCourse) itemEvent.getItem()).getWrappedValue();
+            if (itemEvent.getStateChange() == ItemEvent.DESELECTED) {
+                return;
+            }
+
+            Course selectedCourse = ((Course) itemEvent.getItem());
+            PluginState.getInstance().setActiveCourse(selectedCourse);
             populateExamDropdown(selectedCourse);
             populateExercisesDropdown(selectedCourse);
         });
 
+        exerciseComboBox.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.DESELECTED) {
+                PluginState.getInstance().setActiveExercise((ProgrammingExercise) e.getItem());
+            }
+        });
+
+        // add listener for Button that starts first grading round
+        startAssessment1Btn.addActionListener(e -> PluginState.getInstance().startNextAssessment());
+
+        // button that saves assessment
+        saveAssessmentBtn.addActionListener(e -> {
+            // TODO
+        });
+
+        // button that submits assessment
+        submitAssessmentBtn.addActionListener(e -> PluginState.getInstance().submitAssessment());
+    }
+
+    private void populateDropdowns() throws ArtemisClientException {
+        var connection = PluginState.getInstance().getConnection().orElseThrow();
+
+        // add all courses to the courses dropdown
+        coursesComboBox.removeAllItems();
+        connection.getCourses().forEach(coursesComboBox::addItem);
+
         // populate the dropdowns once because on load event listener is not triggered
-        Course initial =
-                ((DisplayableCourse) Objects.requireNonNull(coursesComboBox.getSelectedItem())).getWrappedValue();
+        Course initial = ((Course) Objects.requireNonNull(coursesComboBox.getSelectedItem()));
         populateExamDropdown(initial);
         populateExercisesDropdown(initial);
     }
@@ -139,10 +143,10 @@ public class MainToolWindowFactory implements ToolWindowFactory {
     private void populateExamDropdown(@NotNull Course course) {
         examsComboBox.removeAllItems();
         // we usually do not want to select the exam. Whe thus create a null Item
-        examsComboBox.addItem(new DisplayableExam(null));
+        examsComboBox.addItem(null);
+
         try {
-            // try to add all exams to the dropdown or fail
-            course.getExams().forEach(exam -> examsComboBox.addItem(new DisplayableExam(exam)));
+            course.getExams().forEach(examsComboBox::addItem);
         } catch (ArtemisClientException e) {
             ArtemisUtils.displayGenericErrorBalloon(String.format(EXAMS_FETCH_ERROR_FORMAT, course));
         }
@@ -152,9 +156,58 @@ public class MainToolWindowFactory implements ToolWindowFactory {
         exerciseComboBox.removeAllItems();
 
         try {
-            course.getExercises().forEach(exercise -> exerciseComboBox.addItem(new DisplayableExercise(exercise)));
+            course.getProgrammingExercises().forEach(exerciseComboBox::addItem);
         } catch (ArtemisClientException e) {
             ArtemisUtils.displayGenericErrorBalloon(String.format(EXERCISES_FETCH_ERROR_FORMAT, course));
         }
+    }
+
+    private void onAssessmentStarted(ActiveAssessment assessment) {
+        // clear content before adding new
+        generatedMenu.getRatingGroupContainer().removeAll();
+
+        // add all rating groups
+        assessment.getGradingConfig().getRatingGroups().stream()
+                // only add assessment group if it is non-empty
+                .filter(ratingGroup -> !ratingGroup.getMistakeTypes().isEmpty())
+                .forEach(ratingGroup -> {
+
+                    // calculate grid size
+                    int colsPerRatingGroup = ArtemisSettingsState.getInstance().getColumnsPerRatingGroup();
+                    int numRows = ratingGroup.getMistakeTypes().size() / colsPerRatingGroup;
+
+                    // create a panel of appropriate size for each rating group
+                    JPanel ratingCroupContainer = new JPanel(new GridLayout(numRows + 1, colsPerRatingGroup));
+
+                    ratingCroupContainer.setBorder(BorderFactory.createTitledBorder(
+                            BorderFactory.createLineBorder(JBColor.LIGHT_GRAY),
+                            String.format(
+                                    "%s [%.2f of %.2f]",
+                                    ratingGroup.getDisplayName().translateTo(LOCALE),
+                                    ratingGroup.getMinPenalty(),
+                                    ratingGroup.getMaxPenalty())));
+
+                    // add buttons to rating group
+                    ratingGroup.getMistakeTypes().stream()
+                            // sort buttons alphabetically
+                            // TODO: for some reason this is broken
+                            .sorted(Comparator.comparing(
+                                    mistake -> mistake.getButtonText().translateTo(LOCALE)))
+                            .forEach(mistakeType -> {
+                                // create button, add listener and add it to the container
+                                JButton assessmentButton =
+                                        new JButton(mistakeType.getButtonText().translateTo(LOCALE));
+                                assessmentButton.addActionListener(e -> {
+                                    // add annotation to the current caret position
+                                    PluginState.getInstance()
+                                            .getActiveAssessment()
+                                            .orElseThrow()
+                                            .addAnnotationAtCaret(mistakeType, false);
+                                });
+                                ratingCroupContainer.add(assessmentButton);
+                            });
+
+                    generatedMenu.getRatingGroupContainer().add(ratingCroupContainer);
+                });
     }
 }

@@ -4,7 +4,7 @@ package edu.kit.kastel.listeners;
 import java.util.List;
 
 import com.intellij.ide.AppLifecycleListener;
-import edu.kit.kastel.utils.ArtemisUtils;
+import edu.kit.kastel.state.PluginState;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,6 +16,6 @@ public class OnPlugInLoad implements AppLifecycleListener {
     @Override
     public void appFrameCreated(@NotNull List<String> commandLineArgs) {
         AppLifecycleListener.super.appFrameCreated(commandLineArgs);
-        ArtemisUtils.getArtemisClientInstance();
+        PluginState.getInstance().connect();
     }
 }

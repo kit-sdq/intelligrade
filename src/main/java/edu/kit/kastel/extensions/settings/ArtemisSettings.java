@@ -4,7 +4,12 @@ package edu.kit.kastel.extensions.settings;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -12,9 +17,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
 import edu.kit.kastel.extensions.guis.SettingsContent;
-import edu.kit.kastel.login.CustomLoginManager;
-import edu.kit.kastel.sdq.artemis4j.api.ArtemisClientException;
-import edu.kit.kastel.sdq.artemis4j.client.RestClientManager;
+import edu.kit.kastel.state.PluginState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -152,31 +155,17 @@ public class ArtemisSettings implements Configurable {
      * If login was successful the label in the settings dialog will be set
      */
     private void setLabelOnLoginSuccess() {
-
-        // create token based login manager
-        var tokenLoginManager = new CustomLoginManager(
-                artemisUrlField.getText(), usernameField.getText(), new String(pwdInput.getPassword()));
-
-        // create new Artemis Instance
-        var artemisInstance = new RestClientManager(artemisUrlField.getText(), tokenLoginManager);
-
         // try logging in and display error iff error occurred
-        try {
-            tokenLoginManager.login();
-        } catch (ArtemisClientException e) {
-            loggedInLabel.setText("false");
-            loggedInLabel.setForeground(JBColor.RED);
-            JOptionPane.showMessageDialog(
-                    contentPanel, e.getMessage(), LOGIN_ERROR_DIALOG_TITLE, JOptionPane.ERROR_MESSAGE);
-        }
-
-        if (artemisInstance.isReady()) {
+        if (PluginState.getInstance().connect()) {
             if (usernameField.getText().isBlank() || new String(pwdInput.getPassword()).isBlank()) {
-                loggedInLabel.setText("true (logged in via Token)");
+                loggedInLabel.setText("✓ (via token)");
             } else {
-                loggedInLabel.setText("true");
+                loggedInLabel.setText("✓ (via username/password)");
             }
             loggedInLabel.setForeground(JBColor.GREEN);
+        } else {
+            loggedInLabel.setText("❌");
+            loggedInLabel.setForeground(JBColor.RED);
         }
     }
 }
