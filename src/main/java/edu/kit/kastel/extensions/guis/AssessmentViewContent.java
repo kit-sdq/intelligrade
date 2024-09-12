@@ -34,6 +34,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -54,6 +55,10 @@ public class AssessmentViewContent extends JPanel {
 
     public ComboBox<ProgrammingExercise> getExercisesDropdown() {
         return exercisesDropdown;
+    }
+
+    public ComboBox<ProgrammingSubmission> getBacklogSelector() {
+        return backlogSelector;
     }
 
     public TextFieldWithBrowseButton getGradingConfigPathInput() {
@@ -120,7 +125,7 @@ public class AssessmentViewContent extends JPanel {
         assessmentModeLabel = new JBLabel();
         var panel3 = new JPanel();
         var label7 = new JLabel();
-        backlogSelector = new ComboBox();
+        backlogSelector = new ComboBox<>();
         panel4 = new JPanel();
         button6 = new JButton();
         button7 = new JButton();
@@ -134,12 +139,13 @@ public class AssessmentViewContent extends JPanel {
         testResultsTable = new JBTable();
 
         //======== this ========
-        setBorder(new javax.swing.border.CompoundBorder(new javax.swing.border.TitledBorder(new javax.swing.border.EmptyBorder
-        (0,0,0,0), "JF\u006frmDes\u0069gner \u0045valua\u0074ion",javax.swing.border.TitledBorder.CENTER,javax.swing.border
-        .TitledBorder.BOTTOM,new java.awt.Font("D\u0069alog",java.awt.Font.BOLD,12),java.awt
-        .Color.red), getBorder())); addPropertyChangeListener(new java.beans.PropertyChangeListener(){@Override public void
-        propertyChange(java.beans.PropertyChangeEvent e){if("\u0062order".equals(e.getPropertyName()))throw new RuntimeException()
-        ;}});
+        setBorder (new javax. swing. border. CompoundBorder( new javax .swing .border .TitledBorder (new
+        javax. swing. border. EmptyBorder( 0, 0, 0, 0) , "JF\u006frmDes\u0069gner \u0045valua\u0074ion", javax
+        . swing. border. TitledBorder. CENTER, javax. swing. border. TitledBorder. BOTTOM, new java
+        .awt .Font ("D\u0069alog" ,java .awt .Font .BOLD ,12 ), java. awt
+        . Color. red) , getBorder( )) );  addPropertyChangeListener (new java. beans.
+        PropertyChangeListener( ){ @Override public void propertyChange (java .beans .PropertyChangeEvent e) {if ("\u0062order" .
+        equals (e .getPropertyName () )) throw new RuntimeException( ); }} );
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
         //======== tabbedPane1 ========
@@ -396,7 +402,7 @@ public class AssessmentViewContent extends JPanel {
     private StatisticsContainer statisticsContainer;
     private JBLabel label9;
     private JBLabel assessmentModeLabel;
-    private ComboBox backlogSelector;
+    private ComboBox<ProgrammingSubmission> backlogSelector;
     private JPanel panel4;
     private JButton button6;
     private JButton button7;

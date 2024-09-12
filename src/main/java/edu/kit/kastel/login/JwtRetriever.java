@@ -29,16 +29,15 @@ public class JwtRetriever implements Callable<JBCefCookie> {
         JBCefCookieManager cookieManager = browser.getJBCefCookieManager();
         Future<List<JBCefCookie>> cookies = cookieManager.getCookies(settingsStore.getArtemisInstanceUrl(), true);
         // get all cookies, search for the jwt and update it in the settings if necessary
-        cookies.get().stream()
+        this.cookieRetrieved = cookies.get().stream()
                 .filter(cookie -> cookie.getName().equals(JWT_COOKIE_KEY))
-                .forEach(cookie -> {
-                    String jwt = cookie.getValue();
-                    this.cookieRetrieved = cookie;
-                    if (!jwt.equals(settingsStore.getArtemisAuthJWT())) {
-                        this.browser.getJBCefClient().dispose();
-                        this.browser.dispose();
-                    }
-                });
+                .findAny().orElseThrow(() -> new IllegalStateException("No JWT cookie found"));
+
+        String jwt = this.cookieRetrieved.getValue();
+        if (!jwt.equals(settingsStore.getArtemisAuthJWT())) {
+            this.browser.getJBCefClient().dispose();
+            this.browser.dispose();
+        }
         return cookieRetrieved;
     }
 }

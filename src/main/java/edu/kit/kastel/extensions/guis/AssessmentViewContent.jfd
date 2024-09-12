@@ -254,6 +254,9 @@ new FormModel {
 							} )
 							add( new FormComponent( "com.intellij.openapi.ui.ComboBox" ) {
 								name: "backlogSelector"
+								auxiliary() {
+									"JavaCodeGenerator.typeParameters": "ProgrammingSubmission"
+								}
 							}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
 								"gridx": 1
 							} )

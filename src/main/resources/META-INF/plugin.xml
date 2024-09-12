@@ -28,6 +28,7 @@
                     anchor="bottom" icon="AllIcons.Actions.Annotate"/>
         <notificationGroup id="IntelliGrade Notifications"
                            displayType="BALLOON"/>
+        <postStartupActivity implementation="edu.kit.kastel.listeners.OnStartupCompleted" />
     </extensions>
 
     <applicationListeners>

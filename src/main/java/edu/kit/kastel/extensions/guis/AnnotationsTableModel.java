@@ -10,7 +10,6 @@ import javax.swing.table.AbstractTableModel;
 import com.intellij.DynamicBundle;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.state.PluginState;
-import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
 
 /**
  * The table model for the annotations table.
@@ -21,7 +20,7 @@ public class AnnotationsTableModel extends AbstractTableModel {
 
     private static final Locale LOCALE = DynamicBundle.getLocale();
 
-    private final List<AnnotationWithTextSelection> annotations = new ArrayList<>();
+    private final List<Annotation> annotations = new ArrayList<>();
 
     @Override
     public int getRowCount() {
@@ -40,7 +39,7 @@ public class AnnotationsTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int i, int i1) {
-        Annotation annotation = annotations.get(i).annotation();
+        Annotation annotation = annotations.get(i);
 
         if (annotation == null) {
             return "";
@@ -60,7 +59,7 @@ public class AnnotationsTableModel extends AbstractTableModel {
         };
     }
 
-    public void setAnnotations(List<AnnotationWithTextSelection> annotations) {
+    public void setAnnotations(List<Annotation> annotations) {
         this.annotations.clear();
         this.annotations.addAll(annotations);
     }
@@ -70,7 +69,7 @@ public class AnnotationsTableModel extends AbstractTableModel {
     }
 
     public void deleteItem(int itemIndex) {
-        AnnotationWithTextSelection annotation = this.annotations.get(itemIndex);
+        Annotation annotation = this.annotations.get(itemIndex);
         PluginState.getInstance().getActiveAssessment().orElseThrow().deleteAnnotation(annotation);
     }
 

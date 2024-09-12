@@ -19,11 +19,11 @@ public class CefWindowLoadHandler extends CefLoadHandlerAdapter {
 
     private final JBCefBrowser containingBrowser;
 
-    private Optional<Future<JBCefCookie>> cookieFuture;
+    private volatile Future<JBCefCookie> cookieFuture;
 
     CefWindowLoadHandler(JBCefBrowser browser) {
         this.containingBrowser = browser;
-        this.cookieFuture = Optional.empty();
+        this.cookieFuture = null;
     }
 
     @Override
@@ -31,11 +31,10 @@ public class CefWindowLoadHandler extends CefLoadHandlerAdapter {
 
         // build and start a new Thread to retrieve the Cookies
         JwtRetriever cookieRetriever = new JwtRetriever(containingBrowser);
-        // lock the Monitor
         synchronized (this) {
             // create future to retrieve Cookie
             // NOTE: using Callable<T> instead of Runnable<T>
-            this.cookieFuture = Optional.of(Executors.newSingleThreadExecutor().submit(cookieRetriever));
+            this.cookieFuture = Executors.newSingleThreadExecutor().submit(cookieRetriever);
             // wake up potentially waiting Threads that want to get the Cookie
             notifyAll();
         }
@@ -48,15 +47,14 @@ public class CefWindowLoadHandler extends CefLoadHandlerAdapter {
      * @throws InterruptedException if the call is interrupted while attempting to obtain the Cookie
      */
     public Future<JBCefCookie> getCookieFuture() throws InterruptedException {
-        // lock monitor
         synchronized (this) {
             // wait for the cookie to become available.
             // necessary because this method might be called before onLoadEnd
-            while (this.cookieFuture.isEmpty()) {
+            while (this.cookieFuture == null) {
                 wait();
             }
-            // return content of Optional
-            return cookieFuture.get();
         }
+        // return content of Optional
+        return this.cookieFuture;
     }
 }

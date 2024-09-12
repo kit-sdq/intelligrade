@@ -18,6 +18,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
@@ -29,6 +30,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
 import edu.kit.kastel.utils.ArtemisUtils;
@@ -41,7 +43,7 @@ public class PluginState {
     private static final Logger log = Logger.getInstance(PluginState.class);
     private static PluginState pluginState;
 
-    private final List<Runnable> stateChangeListeners = new ArrayList<>();
+    private final List<Runnable> connectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
 
@@ -49,7 +51,6 @@ public class PluginState {
     private Course activeCourse;
     private Exam activeExam;
     private ProgrammingExercise activeExercise;
-    private int correctionRound;
 
     private ActiveAssessment activeAssessment;
 
@@ -81,6 +82,7 @@ public class PluginState {
                         instance, settings.getUsername(), settings.getArtemisPassword());
             }
 
+            this.connectedListeners.forEach(Runnable::run);
             return true;
         } catch (ArtemisClientException ex) {
             ArtemisUtils.displayGenericErrorBalloon("Error connecting to Artemis: %s".formatted(ex.getMessage()));
@@ -92,11 +94,18 @@ public class PluginState {
         return connection != null;
     }
 
+    public void registerConnectedListener(Runnable listener) {
+        this.connectedListeners.add(listener);
+        if (this.isConnected()) {
+            listener.run();
+        }
+    }
+
     public boolean isAssessing() {
         return activeAssessment != null;
     }
 
-    public void startNextAssessment() {
+    public void startNextAssessment(int correctionRound) {
         if (activeAssessment != null
                 && !MessageDialogBuilder.yesNo("Unsaved assessment", LOOSE_ASSESSMENT_MSG)
                         .guessWindowAndAsk()) {
@@ -128,6 +137,19 @@ public class PluginState {
         }
     }
 
+    public void saveAssessment() {
+        if (activeAssessment == null) {
+            ArtemisUtils.displayGenericErrorBalloon("No active assessment");
+            return;
+        }
+
+        try {
+            activeAssessment.getAssessment().save();
+        } catch (ArtemisClientException e) {
+            ArtemisUtils.displayGenericErrorBalloon("Error saving assessment: %s".formatted(e.getMessage()));
+        }
+    }
+
     public void submitAssessment() {
         if (activeAssessment == null) {
             ArtemisUtils.displayGenericErrorBalloon("No active assessment");
@@ -139,6 +161,49 @@ public class PluginState {
             this.cleanupAssessment();
         } catch (ArtemisClientException e) {
             ArtemisUtils.displayGenericErrorBalloon("Error submitting assessment: %s".formatted(e.getMessage()));
+        }
+    }
+
+    public void cancelAssessment() {
+        if (activeAssessment == null) {
+            ArtemisUtils.displayGenericErrorBalloon("No active assessment");
+            return;
+        }
+
+        try {
+            activeAssessment.getAssessment().cancel();
+            this.cleanupAssessment();
+        } catch (ArtemisClientException e) {
+            ArtemisUtils.displayGenericErrorBalloon("Error cancelling assessment: %s".formatted(e.getMessage()));
+        }
+    }
+
+    public void reopenAssessment(ProgrammingSubmission submission) {
+        if (activeAssessment != null) {
+            ArtemisUtils.displayGenericErrorBalloon("Please finish the current assessment first");
+            return;
+        }
+
+        if (activeCourse == null || activeExercise == null) {
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "Please select a course and exercise: " + activeCourse + " " + activeExercise);
+            return;
+        }
+
+        var gradingConfig = createGradingConfig();
+        if (gradingConfig.isEmpty()) {
+            return;
+        }
+
+        try {
+            var assessment = submission.tryLock(gradingConfig.get());
+            if (assessment.isPresent()) {
+                this.initializeAssessment(assessment.get());
+            } else {
+                ArtemisUtils.displayGenericErrorBalloon("Failed to reopen assessment");
+            }
+        } catch (ArtemisClientException e) {
+            ArtemisUtils.displayGenericErrorBalloon("Error reopening assessment: %s".formatted(e.getMessage()));
         }
     }
 
@@ -176,6 +241,9 @@ public class PluginState {
 
     public void registerAssessmentStartedListener(Consumer<ActiveAssessment> listener) {
         this.assessmentStartedListeners.add(listener);
+        if (this.isAssessing()) {
+            listener.accept(activeAssessment);
+        }
     }
 
     public void registerAssessmentClosedListener(Runnable listener) {
@@ -188,7 +256,6 @@ public class PluginState {
         activeExam = null;
         activeExercise = null;
         activeAssessment = null;
-        correctionRound = 0;
     }
 
     private void retrieveNewJWT() throws ArtemisClientException {
@@ -227,11 +294,11 @@ public class PluginState {
             var clonedSubmission =
                     assessment.getSubmission().cloneViaVCSTokenInto(EditorUtil.getProjectRootDirectory(), null);
 
-            // Synchronously refresh all files, so that they are up-to-date for the maven update
-            EditorUtil.forceFilesSync();
-
-            // Force IntelliJ to update the Maven project
-            EditorUtil.getMavenManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+            // Refresh all files, so that they are up-to-date for the maven update
+            EditorUtil.forceFilesSync(() -> {
+                // Force IntelliJ to update the Maven project
+                EditorUtil.getMavenManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+            });
 
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
             this.assessmentStartedListeners.forEach(listener -> listener.accept(activeAssessment));
@@ -257,9 +324,10 @@ public class PluginState {
 
         // Tell IntelliJ's VCS manager that the Git repo is gone
         // This prevents an annoying popup that warns about a missing Git root
-        EditorUtil.forceFilesSync();
-        EditorUtil.getVcsManager().setDirectoryMappings(List.of());
-        EditorUtil.getVcsManager().fireDirectoryMappingsChanged();
+        EditorUtil.forceFilesSync(() -> {
+            EditorUtil.getVcsManager().setDirectoryMappings(List.of());
+            EditorUtil.getVcsManager().fireDirectoryMappingsChanged();
+        });
 
         this.assessmentClosedListeners.forEach(Runnable::run);
     }

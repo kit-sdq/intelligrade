@@ -21,15 +21,18 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import edu.kit.kastel.extensions.guis.AssessmentViewContent;
+import edu.kit.kastel.extensions.guis.ExercisePanel;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.listeners.GradingConfigSelectedListener;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.state.ActiveAssessment;
 import edu.kit.kastel.state.PluginState;
 import edu.kit.kastel.utils.ArtemisUtils;
@@ -52,6 +55,7 @@ public class MainToolWindowFactory implements ToolWindowFactory, DumbAware {
     private final ComboBox<Course> coursesComboBox = generatedMenu.getCoursesDropdown();
     private final ComboBox<Exam> examsComboBox = generatedMenu.getExamsDropdown();
     private final ComboBox<ProgrammingExercise> exerciseComboBox = generatedMenu.getExercisesDropdown();
+    private final ComboBox<ProgrammingSubmission> backlogComboBox = generatedMenu.getBacklogSelector();
 
     private final JButton startAssessment1Btn = generatedMenu.getBtnGradingRound1();
 
@@ -80,6 +84,7 @@ public class MainToolWindowFactory implements ToolWindowFactory, DumbAware {
         }
 
         toolWindow.getContentManager().addContent(content);
+        toolWindow.getContentManager().addContent(ContentFactory.getInstance().createContent(new ExercisePanel(), "Exercise", false));
 
         PluginState.getInstance().registerAssessmentStartedListener(this::onAssessmentStarted);
     }
@@ -116,7 +121,7 @@ public class MainToolWindowFactory implements ToolWindowFactory, DumbAware {
         });
 
         // add listener for Button that starts first grading round
-        startAssessment1Btn.addActionListener(e -> PluginState.getInstance().startNextAssessment());
+        startAssessment1Btn.addActionListener(e -> PluginState.getInstance().startNextAssessment(0));
 
         // button that saves assessment
         saveAssessmentBtn.addActionListener(e -> {

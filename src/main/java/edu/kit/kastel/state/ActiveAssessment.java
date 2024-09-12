@@ -1,21 +1,13 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.state;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
-import com.intellij.DynamicBundle;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.JBColor;
-import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.JBTextField;
+import edu.kit.kastel.highlighter.HighlighterManager;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
@@ -25,12 +17,23 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.CodeSelection;
 import edu.kit.kastel.utils.EditorUtil;
-import edu.kit.kastel.wrappers.AnnotationWithTextSelection;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import java.awt.EventQueue;
+import java.awt.event.InputEvent;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class ActiveAssessment {
-    private final List<Consumer<List<AnnotationWithTextSelection>>> annotationsUpdatedListener = new ArrayList<>();
+    private final List<Consumer<List<Annotation>>> annotationsUpdatedListener = new ArrayList<>();
 
-    private final List<AnnotationWithTextSelection> annotations;
     private final Assessment assessment;
     private final ClonedProgrammingSubmission clonedSubmission;
 
@@ -38,13 +41,11 @@ public class ActiveAssessment {
             throws IOException, ArtemisClientException {
         this.assessment = assessment;
         this.clonedSubmission = clonedSubmission;
-        this.annotations = new ArrayList<>(assessment.getAnnotations().stream()
-                .map(annotation -> new AnnotationWithTextSelection(annotation, createHighlighter(annotation)))
-                .toList());
     }
 
-    public void registerAnnotationsUpdatedListener(Consumer<List<AnnotationWithTextSelection>> listener) {
+    public void registerAnnotationsUpdatedListener(Consumer<List<Annotation>> listener) {
         annotationsUpdatedListener.add(listener);
+        listener.accept(assessment.getAnnotations());
     }
 
     public GradingConfig getGradingConfig() {
@@ -72,61 +73,80 @@ public class ActiveAssessment {
         int endLine = editor.getDocument().getLineNumber(selectedText.getEndOffset());
         String path = selection.get().projectRelativePath().toString();
 
-        Annotation annotation;
         if (mistakeType.isCustomAnnotation()) {
-            double customScore = -1.0;
-            String customMessage = "custom message for custom score";
-            annotation =
-                    assessment.addCustomAnnotation(mistakeType, path, startLine, endLine, customMessage, customScore);
+            addCustomAnnotation(mistakeType, startLine, endLine, path);
         } else {
-            String customMessage = null;
             if (withCustomMessage) {
-                customMessage = "custom message";
+                addPredefinedAnnotationWithCustomMessage(mistakeType, startLine, endLine, path);
+            } else {
+                addAnnotation(assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, null));
             }
-            annotation = assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, customMessage);
         }
-
-        var highlighter = createHighlighter(annotation);
-
-        this.annotations.add(new AnnotationWithTextSelection(annotation, highlighter));
-        this.annotationsUpdatedListener.forEach(listener -> listener.accept(this.annotations));
     }
 
-    public void deleteAnnotation(AnnotationWithTextSelection annotation) {
-        EditorUtil.getActiveEditor().getMarkupModel().removeHighlighter(annotation.mistakeHighlighter());
-        this.annotations.remove(annotation);
-        this.assessment.removeAnnotation(annotation.annotation());
-        this.annotationsUpdatedListener.forEach(listener -> listener.accept(this.annotations));
+    public void deleteAnnotation(Annotation annotation) {
+        HighlighterManager.deleteHighlighter(annotation);
+        this.assessment.removeAnnotation(annotation);
+        this.annotationsUpdatedListener.forEach(listener -> listener.accept(this.assessment.getAnnotations()));
     }
 
     public Assessment getAssessment() {
         return this.assessment;
     }
 
-    private RangeHighlighter createHighlighter(Annotation annotation) {
-        var editor = EditorUtil.getActiveEditor();
+    private void addPredefinedAnnotationWithCustomMessage(MistakeType mistakeType, int startLine, int endLine, String path) {
+        var customMessage = new JBTextField();
+        var popup = JBPopupFactory.getInstance()
+                .createComponentPopupBuilder(customMessage, customMessage)
+                .setTitle("Custom Message")
+                .setFocusable(true)
+                .setRequestFocus(true)
+                .setMovable(true)
+                .setResizable(true)
+                .setNormalWindowLevel(true)
+                .setOkHandler(() -> {
+                    addAnnotation(this.assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, customMessage.getText()));
+                })
+                .createPopup();
+        customMessage.addActionListener(a -> popup.closeOk((InputEvent) EventQueue.getCurrentEvent()));
+        popup.showCenteredInCurrentWindow(EditorUtil.getActiveProject());
+    }
 
-        int startOffset = editor.getDocument().getLineStartOffset(annotation.getStartLine());
-        int endOffset = editor.getDocument().getLineEndOffset(annotation.getEndLine());
+    private void addCustomAnnotation(MistakeType mistakeType, int startLine, int endLine, String path) {
+        var panel = new JBPanel<>(new MigLayout("wrap 2", "[100lp] []"));
 
-        Color annotationColor = ArtemisSettingsState.getInstance().getAnnotationColor();
-        var attributes = new TextAttributes(
-                null, new JBColor(annotationColor, annotationColor), null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN);
+        var customMessage = new JBTextArea();
+        customMessage.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+        panel.add(ScrollPaneFactory.createScrollPane(customMessage), "span 2, grow, height 100lp");
 
-        var highlighter = editor.getMarkupModel()
-                .addRangeHighlighter(
-                        startOffset,
-                        endOffset,
-                        HighlighterLayer.SELECTION - 1,
-                        attributes,
-                        HighlighterTargetArea.LINES_IN_RANGE);
-        highlighter.setErrorStripeMarkColor(JBColor.CYAN);
-        highlighter.setErrorStripeTooltip(
-                annotation.getMistakeType().getButtonText().translateTo(DynamicBundle.getLocale()));
-        highlighter.setThinErrorStripeMark(true);
-        highlighter.setErrorStripeTooltip(
-                annotation.getMistakeType().getButtonText().translateTo(DynamicBundle.getLocale()));
+        double maxValue = this.assessment.getConfig().isPositiveFeedbackAllowed() ? Double.MAX_VALUE : 0.0;
+        double minValue = mistakeType.getRatingGroup().getMinPenalty();
+        var customScore = new JSpinner(new SpinnerNumberModel(0.0, minValue, maxValue, 0.5));
+        panel.add(customScore, "spanx 2, growx");
 
-        return highlighter;
+        panel.add(new JSeparator(), "growx");
+
+        var okButton = new JButton("Create");
+        panel.add(okButton, "tag ok");
+
+        var popup = JBPopupFactory.getInstance()
+                .createComponentPopupBuilder(panel, customMessage)
+                .setTitle("Custom Message")
+                .setFocusable(true)
+                .setRequestFocus(true)
+                .setMovable(true)
+                .setResizable(true)
+                .setNormalWindowLevel(true)
+                .setOkHandler(() -> addAnnotation(assessment.addCustomAnnotation(mistakeType, path, startLine, endLine, customMessage.getText(), (double) customScore.getValue())))
+                .createPopup();
+
+        okButton.addActionListener(a -> popup.closeOk((InputEvent) EventQueue.getCurrentEvent()));
+
+        popup.showCenteredInCurrentWindow(EditorUtil.getActiveProject());
+    }
+
+    private void addAnnotation(Annotation annotation) {
+        HighlighterManager.createHighlighter(annotation);
+        this.annotationsUpdatedListener.forEach(listener -> listener.accept(this.assessment.getAnnotations()));
     }
 }

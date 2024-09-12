@@ -2,6 +2,7 @@
 package edu.kit.kastel.utils;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class EditorUtil {
@@ -28,8 +30,11 @@ public class EditorUtil {
         return MavenProjectsManager.getInstance(getActiveProject());
     }
 
-    public static void forceFilesSync() {
-        VfsUtil.markDirtyAndRefresh(false, true, true, getProjectRootDirectory().toFile());
+    public static void forceFilesSync(Runnable afterSyncAction) {
+        var rootVirtualFile = Objects.requireNonNull(VfsUtil.findFileByIoFile(getProjectRootDirectory().toFile(), true));
+        var session = RefreshQueue.getInstance().createSession(true, true, afterSyncAction);
+        session.addFile(rootVirtualFile);
+        session.launch();
     }
 
     public static ProjectLevelVcsManagerImpl getVcsManager() {

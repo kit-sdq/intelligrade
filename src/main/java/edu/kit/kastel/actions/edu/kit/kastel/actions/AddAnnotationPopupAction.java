@@ -39,7 +39,7 @@ public class AddAnnotationPopupAction extends AnAction {
 
         // if no exercise config is loaded, we cannot make annotations
         // if there is no caret we can not sensibly display a popup
-        if (caret == null | !PluginState.getInstance().isAssessing()) {
+        if (caret == null || !PluginState.getInstance().isAssessing()) {
             return;
         }
 

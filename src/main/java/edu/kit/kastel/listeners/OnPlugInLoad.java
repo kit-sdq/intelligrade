@@ -4,6 +4,7 @@ package edu.kit.kastel.listeners;
 import java.util.List;
 
 import com.intellij.ide.AppLifecycleListener;
+import edu.kit.kastel.highlighter.HighlighterManager;
 import edu.kit.kastel.state.PluginState;
 import org.jetbrains.annotations.NotNull;
 
