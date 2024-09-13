@@ -10,7 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
+import edu.kit.kastel.state.ActiveAssessment;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class EditorUtil {
@@ -41,7 +44,18 @@ public class EditorUtil {
         return ProjectLevelVcsManagerImpl.getInstanceImpl(EditorUtil.getActiveProject());
     }
 
-    public static int convertPositionToLine(int position) {
-        return getActiveEditor().getDocument().getLineNumber(position);
+    public static Path getAnnotationPath(Annotation annotation) {
+        return EditorUtil.getProjectRootDirectory()
+                .resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH)
+                .resolve(annotation.getFilePath());
+    }
+
+    public static VirtualFile getAnnotationFile(Annotation annotation) {
+        var path = getAnnotationPath(annotation);
+        var file = VfsUtil.findFile(path, true);
+        if (file == null) {
+            throw new IllegalStateException("File not found: " + path);
+        }
+        return file;
     }
 }

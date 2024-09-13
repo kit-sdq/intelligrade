@@ -5,6 +5,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
+import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
@@ -27,44 +28,7 @@ public final class ArtemisUtils {
     private static Assessment activeAssessment;
 
     private ArtemisUtils() {
-        throw new IllegalAccessError("Utility Class Constructor");
     }
-
-    // /**
-    //  * get an instance of the Artemis Client. Create one if necessary (singleton).
-    //  *
-    //  * @return the instance persisted or created
-    //  */
-    // public static @NotNull RestClientManager getArtemisClientInstance() {
-    //     if (artemisClient == null) {
-    //         // retrieve settings
-    //         ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
-    //
-    //         var tokenLoginManager = new CustomLoginManager(
-    //                 settings.getArtemisInstanceUrl(), settings.getUsername(), settings.getArtemisPassword());
-    //
-    //         // create new Artemis Instance
-    //         var artemisInstance = new RestClientManager(settings.getArtemisInstanceUrl(), tokenLoginManager);
-    //
-    //         // try logging in
-    //         try {
-    //             tokenLoginManager.login();
-    //         } catch (ArtemisClientException clientException) {
-    //             ArtemisUtils.displayLoginErrorBalloon(
-    //                     String.format(
-    //                             "%s. This will make the grading PlugIn unusable!%n", clientException.getMessage()),
-    //                     new NotificationAction("Configure...") {
-    //                         @Override
-    //                         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification)
-    // {
-    //                             ShowSettingsUtil.getInstance().showSettingsDialog(null, "IntelliGrade Settings");
-    //                         }
-    //                     });
-    //         }
-    //         artemisClient = artemisInstance;
-    //     }
-    //     return artemisClient;
-    // }
 
     /**
      * Display an error ballon that indicates a login error.
@@ -87,16 +51,43 @@ public final class ArtemisUtils {
         balloon.notify(null);
     }
 
-    /**
-     * Display an error balloon that indicates a generic error message.
-     *
-     * @param balloonContent The message to be displayed in the error balloon
-     */
-    public static void displayGenericErrorBalloon(String balloonContent) {
+    public static void displayGenericErrorBalloon(String title, String content) {
         NotificationGroupManager.getInstance()
                 .getNotificationGroup("IntelliGrade Notifications")
-                .createNotification(balloonContent, NotificationType.ERROR)
-                .setTitle(ArtemisUtils.GENERIC_ARTEMIS_ERROR_TITLE)
+                .createNotification(content, NotificationType.ERROR)
+                .setTitle(title)
                 .notify(null);
+    }
+
+    public static void displayGenericWarningBalloon(String title, String content) {
+        NotificationGroupManager.getInstance()
+                .getNotificationGroup("IntelliGrade Notifications")
+                .createNotification(content, NotificationType.WARNING)
+                .setTitle(title)
+                .notify(null);
+    }
+
+    public static void displayGenericInfoBalloon(String title, String content) {
+        NotificationGroupManager.getInstance()
+                .getNotificationGroup("IntelliGrade Notifications")
+                .createNotification(content, NotificationType.INFORMATION)
+                .setTitle(title)
+                .notify(null);
+    }
+
+    public static void displayNetworkErrorBalloon(String content, ArtemisNetworkException cause) {
+        displayGenericErrorBalloon("Network Error", content + " (" + cause.getMessage() + ")");
+    }
+
+    public static void displayGenericExceptionBalloon(Exception e) {
+        displayGenericErrorBalloon("IntelliGrade Error", e.getMessage());
+    }
+
+    public static void displayNoAssessmentBalloon() {
+        displayGenericWarningBalloon("No active assessment", "Please start an assessment first.");
+    }
+
+    public static void displayFinishAssessmentFirstBalloon() {
+        displayGenericWarningBalloon("Finish assessment first", "Please finish the current assessment first. If you do not want to, please cancel it.");
     }
 }

@@ -29,6 +29,7 @@
         <notificationGroup id="IntelliGrade Notifications"
                            displayType="BALLOON"/>
         <postStartupActivity implementation="edu.kit.kastel.listeners.OnStartupCompleted" />
+        <editorFactoryMouseMotionListener implementation="edu.kit.kastel.listeners.OnMouseInEditorMoved"/>
     </extensions>
 
     <applicationListeners>

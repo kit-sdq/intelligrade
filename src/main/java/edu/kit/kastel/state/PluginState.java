@@ -1,6 +1,32 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.state;
 
+import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.ui.jcef.JBCefApp;
+import com.intellij.ui.jcef.JBCefCookie;
+import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.login.CefUtils;
+import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
+import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
+import edu.kit.kastel.sdq.artemis4j.client.ArtemisInstance;
+import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
+import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
+import edu.kit.kastel.sdq.artemis4j.grading.Course;
+import edu.kit.kastel.sdq.artemis4j.grading.Exam;
+import edu.kit.kastel.sdq.artemis4j.grading.MoreRecentSubmissionException;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
+import edu.kit.kastel.utils.ArtemisUtils;
+import edu.kit.kastel.utils.EditorUtil;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -13,34 +39,12 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.ui.jcef.JBCefApp;
-import com.intellij.ui.jcef.JBCefCookie;
-import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
-import edu.kit.kastel.login.CefUtils;
-import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
-import edu.kit.kastel.sdq.artemis4j.client.ArtemisInstance;
-import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
-import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
-import edu.kit.kastel.sdq.artemis4j.grading.Course;
-import edu.kit.kastel.sdq.artemis4j.grading.Exam;
-import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
-import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
-import edu.kit.kastel.utils.ArtemisUtils;
-import edu.kit.kastel.utils.EditorUtil;
-
 public class PluginState {
+    private static final Logger LOG = Logger.getInstance(PluginState.class);
+
     private static final String LOOSE_ASSESSMENT_MSG = "You already have an assessment loaded. Loading a new assessment"
             + " will cause you to loose all unsaved gradings! Load new assessment anyway?";
 
-    private static final Logger log = Logger.getInstance(PluginState.class);
     private static PluginState pluginState;
 
     private final List<Runnable> connectedListeners = new ArrayList<>();
@@ -84,8 +88,9 @@ public class PluginState {
 
             this.connectedListeners.forEach(Runnable::run);
             return true;
-        } catch (ArtemisClientException ex) {
-            ArtemisUtils.displayGenericErrorBalloon("Error connecting to Artemis: %s".formatted(ex.getMessage()));
+        } catch (ArtemisClientException e) {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Artemis login failed", e.getMessage());
             return false;
         }
     }
@@ -106,16 +111,13 @@ public class PluginState {
     }
 
     public void startNextAssessment(int correctionRound) {
-        if (activeAssessment != null
-                && !MessageDialogBuilder.yesNo("Unsaved assessment", LOOSE_ASSESSMENT_MSG)
-                        .guessWindowAndAsk()) {
-            ArtemisUtils.displayGenericErrorBalloon("Please finish the current assessment first");
+        if (activeAssessment != null) {
+            ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
         }
 
         if (activeCourse == null || activeExercise == null) {
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Please select a course and exercise: " + activeCourse + " " + activeExercise);
+            ArtemisUtils.displayGenericErrorBalloon("Could not start assessment", "No course selected");
             return;
         }
 
@@ -129,64 +131,84 @@ public class PluginState {
             if (nextAssessment.isPresent()) {
                 this.initializeAssessment(nextAssessment.get());
             } else {
-                ArtemisUtils.displayGenericErrorBalloon(
-                        "There are no more submissions to assess. Thanks for your work :)");
+                ArtemisUtils.displayGenericInfoBalloon("Could not start assessment", "There are no more submissions to assess. Thanks for your work :)");
             }
-        } catch (ArtemisClientException e) {
-            ArtemisUtils.displayGenericErrorBalloon("Error starting assessment: %s".formatted(e.getMessage()));
+        } catch (ArtemisNetworkException e) {
+            LOG.error(e);
+            ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
+        } catch (AnnotationMappingException e) {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Could not parse assessment", "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
         }
     }
 
     public void saveAssessment() {
         if (activeAssessment == null) {
-            ArtemisUtils.displayGenericErrorBalloon("No active assessment");
+            ArtemisUtils.displayNoAssessmentBalloon();
             return;
         }
 
         try {
             activeAssessment.getAssessment().save();
-        } catch (ArtemisClientException e) {
-            ArtemisUtils.displayGenericErrorBalloon("Error saving assessment: %s".formatted(e.getMessage()));
+        } catch (ArtemisNetworkException e) {
+            LOG.error(e);
+            ArtemisUtils.displayNetworkErrorBalloon("Could not save assessment", e);
+        } catch (AnnotationMappingException e) {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Could not save assessment", "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
         }
     }
 
     public void submitAssessment() {
         if (activeAssessment == null) {
-            ArtemisUtils.displayGenericErrorBalloon("No active assessment");
+            ArtemisUtils.displayNoAssessmentBalloon();
             return;
         }
 
         try {
             activeAssessment.getAssessment().submit();
             this.cleanupAssessment();
-        } catch (ArtemisClientException e) {
-            ArtemisUtils.displayGenericErrorBalloon("Error submitting assessment: %s".formatted(e.getMessage()));
+        } catch (ArtemisNetworkException e) {
+            LOG.error(e);
+            ArtemisUtils.displayNetworkErrorBalloon("Could not submit assessment", e);
+        } catch (AnnotationMappingException e) {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Could not submit assessment", "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
         }
     }
 
     public void cancelAssessment() {
         if (activeAssessment == null) {
-            ArtemisUtils.displayGenericErrorBalloon("No active assessment");
+            ArtemisUtils.displayNoAssessmentBalloon();
             return;
         }
 
         try {
             activeAssessment.getAssessment().cancel();
             this.cleanupAssessment();
-        } catch (ArtemisClientException e) {
-            ArtemisUtils.displayGenericErrorBalloon("Error cancelling assessment: %s".formatted(e.getMessage()));
+        } catch (ArtemisNetworkException e) {
+            LOG.error(e);
+            ArtemisUtils.displayNetworkErrorBalloon("Could not submit assessment", e);
         }
+    }
+
+    public void closeAssessment() {
+        if (activeAssessment == null) {
+            ArtemisUtils.displayNoAssessmentBalloon();
+            return;
+        }
+
+        this.cleanupAssessment();
     }
 
     public void reopenAssessment(ProgrammingSubmission submission) {
         if (activeAssessment != null) {
-            ArtemisUtils.displayGenericErrorBalloon("Please finish the current assessment first");
+            ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
         }
 
         if (activeCourse == null || activeExercise == null) {
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Please select a course and exercise: " + activeCourse + " " + activeExercise);
+            ArtemisUtils.displayGenericErrorBalloon("Could not reopen assessment", "No course or exercise selected");
             return;
         }
 
@@ -200,10 +222,17 @@ public class PluginState {
             if (assessment.isPresent()) {
                 this.initializeAssessment(assessment.get());
             } else {
-                ArtemisUtils.displayGenericErrorBalloon("Failed to reopen assessment");
+                ArtemisUtils.displayGenericErrorBalloon("Failed to reopen assessment", "Most likely, your lock has been taken by someone else.");
             }
-        } catch (ArtemisClientException e) {
-            ArtemisUtils.displayGenericErrorBalloon("Error reopening assessment: %s".formatted(e.getMessage()));
+        } catch (ArtemisNetworkException e) {
+            LOG.error(e);
+            ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
+        } catch (AnnotationMappingException e) {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Could not parse assessment", "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
+        } catch (MoreRecentSubmissionException e) {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Could not reopen assessment", "The student has submitted a newer version of his code.");
         }
     }
 
@@ -279,14 +308,6 @@ public class PluginState {
 
     private void initializeAssessment(Assessment assessment) {
         try {
-            // generate notification because cloning is slow
-            NotificationGroupManager.getInstance()
-                    .getNotificationGroup("IntelliGrade Notifications")
-                    .createNotification(
-                            "Cloning repository...\n This might take a while.", NotificationType.INFORMATION)
-                    .setTitle("Please wait")
-                    .notify(ProjectUtil.getActiveProject());
-
             // Cleanup first, in case there are files left from a previous assessment
             this.cleanupProjectDirectory();
 
@@ -302,15 +323,17 @@ public class PluginState {
 
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
             this.assessmentStartedListeners.forEach(listener -> listener.accept(activeAssessment));
-        } catch (IOException | ArtemisClientException e) {
-            log.error("Error cloning submission", e);
-            ArtemisUtils.displayGenericErrorBalloon("Error cloning submission: %s".formatted(e.getMessage()));
 
+        } catch (IOException | ArtemisClientException e) {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Error cloning submission", e.getMessage());
+
+            // Cancel the assessment to prevent spurious locks
             try {
                 assessment.cancel();
-            } catch (ArtemisClientException ex) {
-                ArtemisUtils.displayGenericErrorBalloon(
-                        "Failed to free the assessment lock: %s".formatted(ex.getMessage()));
+            } catch (ArtemisNetworkException ex) {
+                LOG.error(ex);
+                ArtemisUtils.displayGenericErrorBalloon("Failed to free the assessment lock", ex.getMessage());
             }
         }
     }
@@ -335,7 +358,7 @@ public class PluginState {
     private Optional<GradingConfig> createGradingConfig() {
         var gradingConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
         if (gradingConfigPath == null) {
-            ArtemisUtils.displayGenericErrorBalloon("Please select a grading config");
+            ArtemisUtils.displayGenericErrorBalloon("No grading config", "Please select a grading config");
             return Optional.empty();
         }
 
@@ -343,12 +366,19 @@ public class PluginState {
             return Optional.of(
                     GradingConfig.readFromString(Files.readString(Path.of(gradingConfigPath)), activeExercise));
         } catch (IOException | InvalidGradingConfigException e) {
-            ArtemisUtils.displayGenericErrorBalloon("Invalid grading config: %s".formatted(e.getMessage()));
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
             return Optional.empty();
         }
     }
 
     private void cleanupProjectDirectory() {
+        // Close all open editors
+        var editorManager = FileEditorManager.getInstance(EditorUtil.getActiveProject());
+        for (var editor : editorManager.getAllEditors())  {
+            editorManager.closeFile(editor.getFile());
+        }
+
         var rootPath = EditorUtil.getProjectRootDirectory();
         try {
             Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
@@ -367,9 +397,8 @@ public class PluginState {
                 }
             });
         } catch (IOException e) {
-            log.error("Error cleaning up project directory", e);
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Error cleaning up project directory: %s".formatted(e.getMessage()));
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Error cleaning up project directory", e.getMessage());
         }
     }
 }

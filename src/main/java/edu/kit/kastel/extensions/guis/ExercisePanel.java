@@ -1,28 +1,45 @@
 package edu.kit.kastel.extensions.guis;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
-import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
+import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.state.PluginState;
 import edu.kit.kastel.utils.ArtemisUtils;
+import edu.kit.kastel.utils.EditorUtil;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
 import java.awt.event.ItemEvent;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Comparator;
 
 public class ExercisePanel extends SimpleToolWindowPanel {
+    private static final Logger LOG = Logger.getInstance(ExercisePanel.class);
+
     private final JPanel content = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
 
     private ComboBox<Course> courseSelector;
@@ -35,10 +52,10 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private JButton startGradingRound2Button;
 
     private JPanel assessmentPanel;
-    private JButton saveAssessmentButton;
     private JButton submitAssessmentButton;
-    private JButton reloadAssessmentButton;
     private JButton cancelAssessmentButton;
+    private JButton saveAssessmentButton;
+    private JButton closeAssessmentButton;
     private JButton reRunAutograder;
 
     private JPanel backlogPanel;
@@ -62,6 +79,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         content.add(new JBLabel("Grading Config:"));
         gradingConfigPathInput = new TextFieldWithBrowseButton();
         gradingConfigPathInput.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
+        gradingConfigPathInput.setText(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath());
+        gradingConfigPathInput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent documentEvent) {
+                ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
+            }
+        });
         content.add(gradingConfigPathInput, "growx");
 
         createGeneralPanel();
@@ -76,6 +100,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         setContent(ScrollPaneFactory.createScrollPane(content));
 
         exerciseSelector.addItemListener(e -> {
+            // Exercise selected: Update plugin state, enable/disable grading buttons, update backlog
             if (e.getStateChange() != ItemEvent.DESELECTED) {
                 var exercise = (ProgrammingExercise) e.getItem();
                 startGradingRound2Button.setEnabled(exercise.hasSecondCorrectionRound());
@@ -89,6 +114,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         });
 
         examSelector.addItemListener(e -> {
+            // If an exam was selected, update the exercise selector with the exercises of the exam
+            // If no exam was selected, update the exercise selector with the exercises of the course
             if (e.getStateChange() != ItemEvent.DESELECTED) {
                 try {
                     exerciseSelector.removeAllItems();
@@ -103,14 +130,16 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                         courseSelector.getItem().getProgrammingExercises().forEach(exerciseSelector::addItem);
                     }
                     updateUI();
-
-                } catch (ArtemisClientException ex) {
-                    ArtemisUtils.displayGenericErrorBalloon("Failed to fetch exercise info: " + ex.getMessage());
+                } catch (ArtemisNetworkException ex) {
+                    LOG.error(ex);
+                    ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
                 }
             }
         });
 
         courseSelector.addItemListener(e -> {
+            // Course was selected: Update the exam selector with the exams of the course
+            // This triggers an item event in the exam selector, which updates the exercise selector
             if (e.getStateChange() != ItemEvent.DESELECTED) {
                 try {
                     var course = (Course) e.getItem();
@@ -118,52 +147,48 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                     examSelector.addItem(new OptionalExam(null));
                     course.getExams().forEach(exam -> examSelector.addItem(new OptionalExam(exam)));
                     updateUI();
-                } catch (ArtemisClientException ex) {
-                    ArtemisUtils.displayGenericErrorBalloon("Failed to fetch exam info: " + ex.getMessage());
+                } catch (ArtemisNetworkException ex) {
+                    LOG.error(ex);
+                    ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exam info", ex);
                 }
             }
         });
 
         PluginState.getInstance().registerConnectedListener(() -> {
+            // When a connection is established, update the course selector with the courses of the connection
             try {
                 courseSelector.removeAllItems();
                 PluginState.getInstance().getConnection().get().getCourses().forEach(courseSelector::addItem);
                 updateUI();
-            } catch (ArtemisClientException ex) {
-                ArtemisUtils.displayGenericErrorBalloon("Failed to fetch course info: " + ex.getMessage());
+            } catch (ArtemisNetworkException ex) {
+                LOG.error(ex);
+                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
             }
         });
 
         PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
             assessmentPanel.setEnabled(true);
-            saveAssessmentButton.setEnabled(true);
             submitAssessmentButton.setEnabled(true);
-            reloadAssessmentButton.setEnabled(true);
             cancelAssessmentButton.setEnabled(!assessment.getAssessment().getSubmission().isSubmitted());
+            saveAssessmentButton.setEnabled(true);
+            closeAssessmentButton.setEnabled(true);
             reRunAutograder.setEnabled(true);
         });
 
         PluginState.getInstance().registerAssessmentClosedListener(() -> {
             assessmentPanel.setEnabled(false);
-            saveAssessmentButton.setEnabled(false);
             submitAssessmentButton.setEnabled(false);
-            reloadAssessmentButton.setEnabled(false);
             cancelAssessmentButton.setEnabled(false);
+            saveAssessmentButton.setEnabled(false);
+            closeAssessmentButton.setEnabled(false);
             reRunAutograder.setEnabled(false);
 
             updateBacklog();
         });
     }
 
-    private record OptionalExam(Exam exam) {
-        @Override
-        public String toString() {
-            return exam == null ? "<No Exam>" : exam.toString();
-        }
-    }
-
     private void createGeneralPanel() {
-        generalPanel = new JBPanel<>().withBorder(new TitledBorder("General"));
+        generalPanel = new JBPanel<>().withBorder(new TitledBorder(new LineBorder(JBColor.border()), "General"));
         generalPanel.setLayout(new MigLayout("wrap 1", "[grow]"));
 
         startGradingRound1Button = new JButton("Start Grading Round 1");
@@ -177,27 +202,47 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
     private void createAssessmentPanel() {
         assessmentPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow][grow]"))
-                .withBorder(new TitledBorder("Assessment"));
+                .withBorder(new TitledBorder(new LineBorder(JBColor.border()), "Assessment"));
         assessmentPanel.setEnabled(false);
+
+        submitAssessmentButton = new JButton("Submit Assessment");
+        submitAssessmentButton.setForeground(JBColor.GREEN);
+        submitAssessmentButton.setEnabled(false);
+        submitAssessmentButton.addActionListener(a -> PluginState.getInstance().submitAssessment());
+        assessmentPanel.add(submitAssessmentButton, "growx");
+
+        cancelAssessmentButton = new JButton("Cancel Assessment");
+        cancelAssessmentButton.setEnabled(false);
+        cancelAssessmentButton.addActionListener(a -> {
+            var confirmed = MessageDialogBuilder.okCancel(
+                            "Cancel Assessment?",
+                            "Your assessment will be discarded, and the lock will be freed.")
+                    .guessWindowAndAsk();
+
+            if (confirmed) {
+                PluginState.getInstance().cancelAssessment();
+            }
+        });
+        assessmentPanel.add(cancelAssessmentButton, "growx");
 
         saveAssessmentButton = new JButton("Save Assessment");
         saveAssessmentButton.setEnabled(false);
         saveAssessmentButton.addActionListener(a -> PluginState.getInstance().saveAssessment());
         assessmentPanel.add(saveAssessmentButton, "growx");
 
-        submitAssessmentButton = new JButton("Submit Assessment");
-        submitAssessmentButton.setEnabled(false);
-        submitAssessmentButton.addActionListener(a -> PluginState.getInstance().submitAssessment());
-        assessmentPanel.add(submitAssessmentButton, "growx");
+        closeAssessmentButton = new JButton("Close Assessment");
+        closeAssessmentButton.setEnabled(false);
+        closeAssessmentButton.addActionListener(a -> {
+            var confirmed = MessageDialogBuilder.okCancel(
+                            "Close Assessment?",
+                            "Your assessment will be discarded, but you will keep the lock.")
+                    .guessWindowAndAsk();
 
-        reloadAssessmentButton = new JButton("Reload Assessment");
-        reloadAssessmentButton.setEnabled(false);
-        assessmentPanel.add(reloadAssessmentButton, "growx");
-
-        cancelAssessmentButton = new JButton("Cancel Assessment");
-        cancelAssessmentButton.setEnabled(false);
-        cancelAssessmentButton.addActionListener(a -> PluginState.getInstance().cancelAssessment());
-        assessmentPanel.add(cancelAssessmentButton, "growx");
+            if (confirmed) {
+                PluginState.getInstance().closeAssessment();
+            }
+        });
+        assessmentPanel.add(closeAssessmentButton, "growx");
 
         reRunAutograder = new JButton("Re-run Autograder");
         reRunAutograder.setEnabled(false);
@@ -205,11 +250,18 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     }
 
     private void createBacklogPanel() {
-        backlogPanel = new JBPanel<>().withBorder(new TitledBorder("Backlog"));
-        backlogPanel.setLayout(new MigLayout("", "[grow]"));
+        backlogPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow] []"))
+                .withBorder(new TitledBorder(new LineBorder(JBColor.border()), "Backlog"));
 
-        backlogList = new JBPanel<>(new MigLayout("wrap 3", "[][][grow]"));
-        backlogPanel.add(ScrollPaneFactory.createScrollPane(backlogList), "growx");
+        backlogList = new JBPanel<>(new MigLayout("wrap 3, gapx 30", "[][][grow]"));
+        backlogPanel.add(ScrollPaneFactory.createScrollPane(backlogList, true), "spanx 2, growx");
+
+        var refreshButton = new JButton(AllIcons.Actions.Refresh);
+        refreshButton.addActionListener(a -> {
+            updateBacklog();
+            ToolWindowManager.getInstance(EditorUtil.getActiveProject()).notifyByBalloon("Grading", MessageType.INFO, "Backlog updated");
+        });
+        backlogPanel.add(refreshButton, "skip 1, alignx right");
     }
 
     private void updateBacklog() {
@@ -217,23 +269,42 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         var exercise = PluginState.getInstance().getActiveExercise().get();
         try {
-            exercise.fetchSubmissions(0, true).forEach(submission -> {
-                backlogList.add(new JBLabel("12. 9. 2024"));
-                backlogList.add(new JBLabel("90%"));
+            exercise.fetchSubmissions(0, true)
+                    .stream()
+                    .sorted(Comparator.comparing(ProgrammingSubmission::getSubmissionDate))
+                    .forEach(submission -> {
+                        String dateText = submission.getSubmissionDate().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
+                        backlogList.add(new JBLabel(dateText), "alignx right");
 
-                JButton reopenButton;
-                if (submission.isSubmitted()) {
-                    reopenButton = new JButton("Reopen Assessment");
-                } else {
-                    reopenButton = new JButton("Continue Assessment");
-                }
-                reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
-                backlogList.add(reopenButton, "growx");
-            });
-        } catch (ArtemisNetworkException e) {
-            ArtemisUtils.displayGenericErrorBalloon("Failed to fetch backlog: " + e.getMessage());
+                        var latestResult = submission.getLatestResult();
+                        String resultText = "";
+                        if (submission.isSubmitted()) {
+                            resultText = latestResult.map(resultDTO -> "%.0f%%".formatted(resultDTO.score())).orElse("???");
+                        }
+                        backlogList.add(new JBLabel(resultText), "alignx right");
+
+                        JButton reopenButton;
+                        if (submission.isSubmitted()) {
+                            reopenButton = new JButton("Reopen Assessment");
+                        } else {
+                            reopenButton = new JButton("Continue Assessment");
+                            reopenButton.setForeground(JBColor.ORANGE);
+                        }
+                        reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
+                        backlogList.add(reopenButton, "growx");
+                    });
+        } catch (ArtemisNetworkException ex) {
+            LOG.error(ex);
+            ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch backlog", ex);
         }
 
         updateUI();
+    }
+
+    private record OptionalExam(Exam exam) {
+        @Override
+        public String toString() {
+            return exam == null ? "<No Exam>" : exam.toString();
+        }
     }
 }

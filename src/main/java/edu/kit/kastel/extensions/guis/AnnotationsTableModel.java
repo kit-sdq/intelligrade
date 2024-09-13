@@ -1,15 +1,13 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
 
+import com.intellij.DynamicBundle;
+import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
+
+import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
-import javax.swing.table.AbstractTableModel;
-
-import com.intellij.DynamicBundle;
-import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
-import edu.kit.kastel.state.PluginState;
 
 /**
  * The table model for the annotations table.
@@ -68,9 +66,8 @@ public class AnnotationsTableModel extends AbstractTableModel {
         this.annotations.clear();
     }
 
-    public void deleteItem(int itemIndex) {
-        Annotation annotation = this.annotations.get(itemIndex);
-        PluginState.getInstance().getActiveAssessment().orElseThrow().deleteAnnotation(annotation);
+    public Annotation get(int index) {
+        return annotations.get(index);
     }
 
     private String formatLines(Annotation annotation) {

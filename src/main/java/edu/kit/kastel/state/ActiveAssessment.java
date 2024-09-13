@@ -27,11 +27,14 @@ import javax.swing.SpinnerNumberModel;
 import java.awt.EventQueue;
 import java.awt.event.InputEvent;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ActiveAssessment {
+    public static final Path ASSIGNMENT_SUB_PATH = Path.of("assignment");
+
     private final List<Consumer<List<Annotation>>> annotationsUpdatedListener = new ArrayList<>();
 
     private final Assessment assessment;
@@ -63,15 +66,17 @@ public class ActiveAssessment {
 
         var selection = CodeSelection.fromCaret();
         if (selection.isEmpty()) {
-            ArtemisUtils.displayGenericErrorBalloon("No code selected");
+            ArtemisUtils.displayGenericErrorBalloon("Could not create annotation", "No code selected");
             return;
         }
-        var selectedText = selection.get().text();
 
         var editor = EditorUtil.getActiveEditor();
-        int startLine = editor.getDocument().getLineNumber(selectedText.getStartOffset());
-        int endLine = editor.getDocument().getLineNumber(selectedText.getEndOffset());
-        String path = selection.get().projectRelativePath().toString();
+        int startLine = editor.getDocument().getLineNumber(selection.get().startOffset());
+        int endLine = editor.getDocument().getLineNumber(selection.get().endOffset());
+        String path = Path.of(EditorUtil.getActiveProject().getBasePath())
+                .resolve(ASSIGNMENT_SUB_PATH)
+                .relativize(selection.get().path())
+                .toString();
 
         if (mistakeType.isCustomAnnotation()) {
             addCustomAnnotation(mistakeType, startLine, endLine, path);
@@ -124,10 +129,8 @@ public class ActiveAssessment {
         var customScore = new JSpinner(new SpinnerNumberModel(0.0, minValue, maxValue, 0.5));
         panel.add(customScore, "spanx 2, growx");
 
-        panel.add(new JSeparator(), "growx");
-
         var okButton = new JButton("Create");
-        panel.add(okButton, "tag ok");
+        panel.add(okButton, "skip 1, tag ok");
 
         var popup = JBPopupFactory.getInstance()
                 .createComponentPopupBuilder(panel, customMessage)

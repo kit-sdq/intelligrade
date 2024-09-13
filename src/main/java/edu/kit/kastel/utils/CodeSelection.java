@@ -8,17 +8,26 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 
-public record CodeSelection(TextRange text, PsiElement element) {
+public record CodeSelection(int startOffset, int endOffset, PsiElement element) {
 
     public static Optional<CodeSelection> fromCaret() {
         var editor = EditorUtil.getActiveEditor();
-        if (editor == null || !editor.getSelectionModel().hasSelection()) {
+        if (editor == null) {
             // no editor open or no selection made
             return Optional.empty();
         }
 
-        // get editor Selection
-        TextRange selectedText = editor.getCaretModel().getPrimaryCaret().getSelectionRange();
+        var caret = editor.getCaretModel().getPrimaryCaret();
+
+        int startOffset;
+        int endOffset;
+        if (caret.hasSelection()) {
+            startOffset = caret.getSelectionRange().getStartOffset();
+            endOffset = caret.getSelectionRange().getEndOffset();
+        } else {
+            startOffset = caret.getOffset();
+            endOffset = caret.getOffset();
+        }
 
         // only annotate if a selection has been made
         // get the currently selected element and the containing file
@@ -27,14 +36,10 @@ public record CodeSelection(TextRange text, PsiElement element) {
                 .findElementAt(editor.getCaretModel().getOffset())
                 .getContext();
 
-        return Optional.of(new CodeSelection(selectedText, selectedElement));
+        return Optional.of(new CodeSelection(startOffset, endOffset, selectedElement));
     }
 
     public Path path() {
         return Path.of(element.getContainingFile().getVirtualFile().getPath());
-    }
-
-    public Path projectRelativePath() {
-        return Path.of(element.getProject().getBasePath()).relativize(path());
     }
 }
