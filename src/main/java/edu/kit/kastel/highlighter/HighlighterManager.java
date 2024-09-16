@@ -1,8 +1,6 @@
 package edu.kit.kastel.highlighter;
 
 import com.intellij.DynamicBundle;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -35,7 +33,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class HighlighterManager {
     private static final Map<Editor, List<HighlighterWithAnnotation>> highlightersPerEditor = new IdentityHashMap<>();
@@ -50,37 +47,21 @@ public class HighlighterManager {
         messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
             @Override
             public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-                FileEditorManagerListener.super.fileOpened(source, file);
-
                 var editor = source.getSelectedTextEditor();
-                editor.getDocument().setReadOnly(true);
-                var filePath = Path.of(file.getPath());
-
-                var state = PluginState.getInstance();
-                if (state.isAssessing()) {
-                    for (var annotation : state.getActiveAssessment().get().getAssessment().getAnnotations()) {
-                        if (EditorUtil.getAnnotationPath(annotation).equals(filePath)) {
-                            createHighlighter(editor, annotation);
-                        }
-                    }
+                if (PluginState.getInstance().isAssessing()) {
+                    editor.getDocument().setReadOnly(true);
+                    updateHighlightersForEditor(editor);
                 }
             }
 
             @Override
             public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-                FileEditorManagerListener.super.fileClosed(source, file);
-
-                var editor = source.getSelectedTextEditor();
-                var highlighters = highlightersPerEditor.get(editor);
-                if (highlighters != null) {
-                    for (var highlighter : highlighters) {
-                        var highlightersForAnnotation = highlightersPerAnnotation.get(highlighter.annotation());
-                        if (highlightersForAnnotation != null) {
-                            highlightersForAnnotation.removeIf(h -> h.highlighter().equals(highlighter.highlighter()));
-                        }
-                    }
-                }
+                clearHighlightersForEditor(source.getSelectedTextEditor());
             }
+        });
+
+        PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
+            assessment.registerAnnotationsUpdatedListener(annotations -> updateHighlightersForAllEditors());
         });
 
         // When an assessment is closed, clear everything
@@ -89,45 +70,6 @@ public class HighlighterManager {
             highlightersPerEditor.clear();
             cancelLastPopup();
         });
-    }
-
-    public static void createHighlighter(Annotation annotation) {
-        var file = EditorUtil.getAnnotationFile(annotation);
-
-        // The file may be open in multiple editors
-        FileEditorManager.getInstance(EditorUtil.getActiveProject())
-                .getAllEditorList(file)
-                .forEach(editor -> createHighlighter(((TextEditor) editor).getEditor(), annotation));
-
-        // Invalidate all popups, since their content may need to change
-        cancelLastPopup();
-    }
-
-    public static void deleteHighlighter(Annotation annotation) {
-        var highlighters = highlightersPerAnnotation.get(annotation);
-        if (highlighters != null) {
-            // Delete the annotation -> highlighter mapping
-            highlightersPerAnnotation.remove(annotation);
-
-            // Also delete each highlighter from its editor
-            for (var highlighter : highlighters) {
-                var highlightersForEditor = highlightersPerEditor.get(highlighter.editor());
-                if (highlightersForEditor != null) {
-                    highlightersForEditor.removeIf(h -> {
-                        if (h.highlighter().equals(highlighter.highlighter())) {
-                            highlighter.editor().getMarkupModel().removeHighlighter(highlighter.highlighter());
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    });
-
-                }
-            }
-        }
-
-        // Invalidate all popups, since their content may need to change
-        cancelLastPopup();
     }
 
     public static void onMouseMovedInEditor(EditorMouseEvent e) {
@@ -212,6 +154,46 @@ public class HighlighterManager {
             lastPopupLine = -1;
             lastPopupEditor = null;
         }
+    }
+
+    private static void updateHighlightersForAllEditors() {
+        if (!PluginState.getInstance().isAssessing()) {
+            return;
+        }
+
+        for (var editor : FileEditorManager.getInstance(EditorUtil.getActiveProject()).getAllEditors()) {
+            updateHighlightersForEditor(((TextEditor) editor).getEditor());
+        }
+
+        cancelLastPopup();
+    }
+
+    private static void updateHighlightersForEditor(Editor editor) {
+        clearHighlightersForEditor(editor);
+
+        var filePath = Path.of(editor.getVirtualFile().getPath());
+        var state = PluginState.getInstance();
+        for (var annotation : state.getActiveAssessment().get().getAssessment().getAnnotations()) {
+            if (EditorUtil.getAnnotationPath(annotation).equals(filePath)) {
+                createHighlighter(editor, annotation);
+            }
+        }
+    }
+
+    private static void clearHighlightersForEditor(Editor editor) {
+        var highlighters = highlightersPerEditor.remove(editor);
+        if (highlighters == null) {
+            return;
+        }
+
+        for (var highlighter : highlighters) {
+            var highlightersForAnnotation = highlightersPerAnnotation.get(highlighter.annotation());
+            if (highlightersForAnnotation != null) {
+                highlightersForAnnotation.removeIf(h -> h.highlighter().equals(highlighter.highlighter()));
+            }
+        }
+
+        editor.getMarkupModel().removeAllHighlighters();
     }
 
     private record HighlighterWithAnnotation(RangeHighlighter highlighter, Annotation annotation) {

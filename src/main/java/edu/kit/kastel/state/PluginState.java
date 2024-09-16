@@ -1,14 +1,11 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.state;
 
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefCookie;
+import de.firemage.autograder.api.loader.AutograderLoader;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.login.CefUtils;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
@@ -27,6 +24,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigExceptio
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.EditorUtil;
 
+import javax.tools.ToolProvider;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -41,9 +39,6 @@ import java.util.function.Consumer;
 
 public class PluginState {
     private static final Logger LOG = Logger.getInstance(PluginState.class);
-
-    private static final String LOOSE_ASSESSMENT_MSG = "You already have an assessment loaded. Loading a new assessment"
-            + " will cause you to loose all unsaved gradings! Load new assessment anyway?";
 
     private static PluginState pluginState;
 
@@ -130,6 +125,14 @@ public class PluginState {
             var nextAssessment = activeExercise.tryLockNextSubmission(correctionRound, gradingConfig.get());
             if (nextAssessment.isPresent()) {
                 this.initializeAssessment(nextAssessment.get());
+
+                if (this.activeAssessment.getAssessment().getAnnotations().isEmpty()) {
+                    this.activeAssessment.runAutograder();
+                } else {
+                    ArtemisUtils.displayGenericInfoBalloon("Skipping Autograder", "The submission already has annotations. Skipping the Autograder.");
+                }
+
+                ArtemisUtils.displayGenericInfoBalloon("Assessment started", "You can now grade the submission. Please make sure that are familiar with all grading guidelines.");
             } else {
                 ArtemisUtils.displayGenericInfoBalloon("Could not start assessment", "There are no more submissions to assess. Thanks for your work :)");
             }
@@ -150,6 +153,7 @@ public class PluginState {
 
         try {
             activeAssessment.getAssessment().save();
+            ArtemisUtils.displayGenericInfoBalloon("Assessment saved", "The assessment has been saved.");
         } catch (ArtemisNetworkException e) {
             LOG.error(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not save assessment", e);

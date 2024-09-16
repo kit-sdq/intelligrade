@@ -18,7 +18,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.util.IdentityHashMap;
 import java.util.Locale;
@@ -65,9 +64,9 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
 
                 if (mistakeType.getReporting().shouldScore()) {
-                    button.setForeground(JBColor.GREEN);
+                    button.setForeground(JBColor.foreground());
                 } else {
-                    button.setBackground(JBColor.RED);
+                    button.setForeground(JBColor.LIGHT_GRAY);
                 }
 
                 button.addActionListener(a -> assessment.addAnnotationAtCaret(mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));

@@ -1,17 +1,24 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.state;
 
+import com.esotericsoftware.kryo.kryo5.minlog.Log;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.JBTextField;
+import de.firemage.autograder.api.loader.AutograderLoader;
 import edu.kit.kastel.highlighter.HighlighterManager;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.autograder.AutograderFailedException;
+import edu.kit.kastel.sdq.artemis4j.grading.autograder.AutograderRunner;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.utils.ArtemisUtils;
@@ -21,7 +28,6 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import java.awt.EventQueue;
@@ -30,9 +36,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public class ActiveAssessment {
+    private static final Logger LOG = Logger.getInstance(ActiveAssessment.class);
+
     public static final Path ASSIGNMENT_SUB_PATH = Path.of("assignment");
 
     private final List<Consumer<List<Annotation>>> annotationsUpdatedListener = new ArrayList<>();
@@ -84,15 +93,39 @@ public class ActiveAssessment {
             if (withCustomMessage) {
                 addPredefinedAnnotationWithCustomMessage(mistakeType, startLine, endLine, path);
             } else {
-                addAnnotation(assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, null));
+                assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, null);
+                this.notifyListeners();
             }
         }
     }
 
     public void deleteAnnotation(Annotation annotation) {
-        HighlighterManager.deleteHighlighter(annotation);
         this.assessment.removeAnnotation(annotation);
-        this.annotationsUpdatedListener.forEach(listener -> listener.accept(this.assessment.getAnnotations()));
+        this.notifyListeners();
+    }
+
+    public void runAutograder() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+                AutograderLoader.loadFromFile(Path.of("/home/flo/Private_Projects/autograder/autograder-cmd/target/autograder-cmd.jar"));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            try {
+                var statusConsumer = (Consumer<String>) status -> ArtemisUtils.displayGenericInfoBalloon("Autograder", status);
+
+                var stats = AutograderRunner.runAutograder(this.assessment, this.clonedSubmission, Locale.GERMANY, 2, statusConsumer);
+
+                ArtemisUtils.displayGenericInfoBalloon("Autograder", "Autograder completed its analysis successfully and made %d annotations. Please double-check all of them for false-positives!".formatted(stats.annotationsMade()));
+
+                // Notify listeners on event thread
+                ApplicationManager.getApplication().invokeLater(this::notifyListeners);
+            } catch (AutograderFailedException e) {
+                LOG.error(e);
+                ArtemisUtils.displayGenericErrorBalloon("Autograder Failed", e.getMessage());
+            }
+        });
     }
 
     public Assessment getAssessment() {
@@ -110,7 +143,8 @@ public class ActiveAssessment {
                 .setResizable(true)
                 .setNormalWindowLevel(true)
                 .setOkHandler(() -> {
-                    addAnnotation(this.assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, customMessage.getText()));
+                    this.assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, customMessage.getText());
+                    this.notifyListeners();
                 })
                 .createPopup();
         customMessage.addActionListener(a -> popup.closeOk((InputEvent) EventQueue.getCurrentEvent()));
@@ -140,7 +174,10 @@ public class ActiveAssessment {
                 .setMovable(true)
                 .setResizable(true)
                 .setNormalWindowLevel(true)
-                .setOkHandler(() -> addAnnotation(assessment.addCustomAnnotation(mistakeType, path, startLine, endLine, customMessage.getText(), (double) customScore.getValue())))
+                .setOkHandler(() -> {
+                    assessment.addCustomAnnotation(mistakeType, path, startLine, endLine, customMessage.getText(), (double) customScore.getValue());
+                    this.notifyListeners();
+                })
                 .createPopup();
 
         okButton.addActionListener(a -> popup.closeOk((InputEvent) EventQueue.getCurrentEvent()));
@@ -148,8 +185,7 @@ public class ActiveAssessment {
         popup.showCenteredInCurrentWindow(EditorUtil.getActiveProject());
     }
 
-    private void addAnnotation(Annotation annotation) {
-        HighlighterManager.createHighlighter(annotation);
+    private void notifyListeners() {
         this.annotationsUpdatedListener.forEach(listener -> listener.accept(this.assessment.getAnnotations()));
     }
 }
