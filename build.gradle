@@ -32,12 +32,7 @@ dependencies {
         bundledPlugin("org.jetbrains.idea.maven")
         instrumentationTools()
     }
-    implementation 'edu.kit.kastel.sdq:artemis4j:7.4.2-SNAPSHOT'
-//    implementation 'org.apache.commons:commons-io:1.3.2'
-//    implementation 'de.firemage.autograder:autograder-cmd:0.6.0'
-//    implementation 'de.firemage.autograder:autograder-core:0.6.0'
-//    implementation 'de.firemage.autograder:autograder-extra:0.6.0'
-
+    implementation 'edu.kit.kastel.sdq:artemis4j:7.5.0-SNAPSHOT'
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter-api:' + JUNIT_VERSION
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + JUNIT_VERSION
