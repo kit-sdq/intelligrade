@@ -35,6 +35,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.EditorUtil;
+import org.apache.commons.io.FileUtils;
 
 public class PluginState {
     private static final Logger LOG = Logger.getInstance(PluginState.class);
@@ -429,18 +430,19 @@ public class PluginState {
         }
 
         var rootPath = EditorUtil.getProjectRootDirectory();
+        // Delete all directory contents, but not the directory itself
         try {
             Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
+                    FileUtils.forceDelete(file.toFile());
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                     if (!dir.equals(rootPath)) {
-                        Files.delete(dir);
+                        FileUtils.forceDelete(dir.toFile());
                     }
                     return FileVisitResult.CONTINUE;
                 }
