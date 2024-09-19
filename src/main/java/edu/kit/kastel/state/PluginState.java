@@ -332,7 +332,7 @@ public class PluginState {
             }
 
             if (!JBCefApp.isSupported()) {
-               throw new CompletionException(new IllegalStateException("JCEF unavailable"));
+                throw new CompletionException(new IllegalStateException("JCEF unavailable"));
             }
 
             try {

@@ -1,9 +1,6 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.login;
 
-import java.awt.event.WindowEvent;
-
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import com.intellij.openapi.diagnostic.Logger;

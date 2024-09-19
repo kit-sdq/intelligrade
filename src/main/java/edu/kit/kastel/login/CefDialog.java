@@ -1,15 +1,17 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.login;
+
+import java.awt.GridLayout;
+
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.jcef.JBCefBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.Action;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.awt.GridLayout;
 
 public class CefDialog extends DialogWrapper {
     private final JBCefBrowser browser;
