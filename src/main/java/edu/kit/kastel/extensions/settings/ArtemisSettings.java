@@ -1,13 +1,14 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.settings;
 
+import java.util.Objects;
+
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JSeparator;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
@@ -24,8 +25,6 @@ import com.intellij.ui.components.JBTextField;
 import edu.kit.kastel.state.PluginState;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * This class implements the settings Dialog for this PlugIn.
@@ -126,7 +125,9 @@ public class ArtemisSettings implements Configurable {
         autograderButtonGroup.add(autograderPathButton);
         contentPanel.add(autograderPathButton, "span 2, growx");
         autograderPathField = new TextFieldWithBrowseButton();
-        var fileDescriptor = new TextBrowseFolderListener(new FileChooserDescriptor(true, false, true, true, false, false).withFileFilter(file -> "jar".equalsIgnoreCase(file.getExtension())));
+        var fileDescriptor =
+                new TextBrowseFolderListener(new FileChooserDescriptor(true, false, true, true, false, false)
+                        .withFileFilter(file -> "jar".equalsIgnoreCase(file.getExtension())));
         autograderPathField.addBrowseFolderListener(fileDescriptor);
         contentPanel.add(autograderPathField, "pad 0 40 0 0, span 2, growx");
 

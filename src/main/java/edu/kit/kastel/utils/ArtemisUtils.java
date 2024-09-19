@@ -1,6 +1,9 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.utils;
 
+import java.net.HttpURLConnection;
+import java.net.URI;
+
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -12,9 +15,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import org.jetbrains.annotations.Nullable;
-
-import java.net.HttpURLConnection;
-import java.net.URI;
 
 /**
  * Utility Class to handle Artemis related common tasks such as

@@ -1,6 +1,22 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
 
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.util.IdentityHashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLayer;
+import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
+import javax.swing.plaf.LayerUI;
+
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.JBColor;
@@ -17,21 +33,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.ThresholdPenaltyRule;
 import edu.kit.kastel.state.ActiveAssessment;
 import edu.kit.kastel.state.PluginState;
 import net.miginfocom.swing.MigLayout;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLayer;
-import javax.swing.JPanel;
-import javax.swing.border.TitledBorder;
-import javax.swing.plaf.LayerUI;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.util.IdentityHashMap;
-import java.util.Locale;
-import java.util.Map;
 
 public class AssessmentPanel extends SimpleToolWindowPanel {
     private static final Locale LOCALE = DynamicBundle.getLocale();
@@ -157,23 +158,29 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                         ratingGroup.getMinPenalty(),
                         ratingGroup.getMaxPenalty());
     }
-    private static String getAssessmentPointsTitle(double testPoints, double annotationPoints, double totalPoints, double maxPoints) {
+
+    private static String getAssessmentPointsTitle(
+            double testPoints, double annotationPoints, double totalPoints, double maxPoints) {
         if (annotationPoints > 0.0) {
             return """
-                    <html> <h2><span style="color: %s">%.1f</span> <span style="color: %s">%.1f</span> = %.1f of %.1f</h2></html>""".formatted(
-                    colorToCSS(JBColor.GREEN),
-                    testPoints,
-                    colorToCSS(JBColor.GREEN),
-                    Math.abs(annotationPoints),
-                    totalPoints, maxPoints);
+                    <html> <h2><span style="color: %s">%.1f</span> <span style="color: %s">%.1f</span> = %.1f of %.1f</h2></html>"""
+                    .formatted(
+                            colorToCSS(JBColor.GREEN),
+                            testPoints,
+                            colorToCSS(JBColor.GREEN),
+                            Math.abs(annotationPoints),
+                            totalPoints,
+                            maxPoints);
         } else {
-            return """ 
-                    <html> <h2><span style="color: %s">%.1f</span> <span style="color: %s">- %.1f</span> = %.1f of %.1f</h2></html>""".formatted(
-                    colorToCSS(JBColor.GREEN),
-                    testPoints,
-                    colorToCSS(JBColor.RED),
-                    Math.abs(annotationPoints),
-                    totalPoints, maxPoints);
+            return """
+                    <html> <h2><span style="color: %s">%.1f</span> <span style="color: %s">- %.1f</span> = %.1f of %.1f</h2></html>"""
+                    .formatted(
+                            colorToCSS(JBColor.GREEN),
+                            testPoints,
+                            colorToCSS(JBColor.RED),
+                            Math.abs(annotationPoints),
+                            totalPoints,
+                            maxPoints);
         }
     }
 
@@ -197,7 +204,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             if (textWidth < 0) {
                 textWidth = g.getFontMetrics().stringWidth(text);
                 baselineHeight = g.getFontMetrics().getMaxAscent();
-                textHeight = g.getFontMetrics().getMaxAscent() + g.getFontMetrics().getMaxDescent();
+                textHeight =
+                        g.getFontMetrics().getMaxAscent() + g.getFontMetrics().getMaxDescent();
             }
 
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);

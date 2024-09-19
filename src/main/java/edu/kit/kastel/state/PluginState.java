@@ -1,7 +1,19 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.state;
 
-import com.intellij.openapi.application.ApplicationManager;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
+
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.ui.jcef.JBCefApp;
@@ -22,22 +34,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.EditorUtil;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.function.Consumer;
 
 public class PluginState {
     private static final Logger LOG = Logger.getInstance(PluginState.class);
@@ -69,7 +65,9 @@ public class PluginState {
 
         String url = settings.getArtemisInstanceUrl();
         if (!ArtemisUtils.doesUrlExist(url)) {
-            ArtemisUtils.displayGenericErrorBalloon("Artemis URL not reachable", "The Artemis URL is not valid, or you do not have a working internet connection.");
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "Artemis URL not reachable",
+                    "The Artemis URL is not valid, or you do not have a working internet connection.");
             this.notifyConnectedListeners();
             return;
         }
@@ -90,21 +88,23 @@ public class PluginState {
             });
         }
 
-        connectionFuture.thenAcceptAsync(connection -> {
-            this.connection = connection;
-            try {
-                this.verifyLogin();
-                this.notifyConnectedListeners();
-            } catch (ArtemisClientException e) {
-                throw new CompletionException(e);
-            }
-        }).exceptionallyAsync(e -> {
-            LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon("Artemis Login failed", e.getMessage());
-            this.connection = null;
-            this.notifyConnectedListeners();
-            return null;
-        });
+        connectionFuture
+                .thenAcceptAsync(connection -> {
+                    this.connection = connection;
+                    try {
+                        this.verifyLogin();
+                        this.notifyConnectedListeners();
+                    } catch (ArtemisClientException e) {
+                        throw new CompletionException(e);
+                    }
+                })
+                .exceptionallyAsync(e -> {
+                    LOG.error(e);
+                    ArtemisUtils.displayGenericErrorBalloon("Artemis Login failed", e.getMessage());
+                    this.connection = null;
+                    this.notifyConnectedListeners();
+                    return null;
+                });
     }
 
     public boolean isConnected() {
@@ -330,7 +330,8 @@ public class PluginState {
         }
 
         if (!JBCefApp.isSupported()) {
-            return CompletableFuture.failedFuture(new CompletionException(new IllegalStateException("JCEF unavailable")));
+            return CompletableFuture.failedFuture(
+                    new CompletionException(new IllegalStateException("JCEF unavailable")));
         }
 
         var jwtCookieFuture = CefUtils.jcefBrowserLogin();

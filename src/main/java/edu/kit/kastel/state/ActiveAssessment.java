@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.JBColor;
@@ -79,7 +78,8 @@ public class ActiveAssessment {
 
         var selection = CodeSelection.fromCaret();
         if (selection.isEmpty()) {
-            ArtemisUtils.displayGenericErrorBalloon("No code selected", "Cannot create annotation without code selection");
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "No code selected", "Cannot create annotation without code selection");
             return;
         }
 
@@ -122,7 +122,9 @@ public class ActiveAssessment {
                 if (settings.getAutograderOption() == AutograderOption.FROM_FILE) {
                     var path = settings.getAutograderPath();
                     if (path == null || path.isBlank()) {
-                        ArtemisUtils.displayGenericErrorBalloon("No Autograder Path", "Please set the path to the Autograder JAR, or choose to download it from GitHub.");
+                        ArtemisUtils.displayGenericErrorBalloon(
+                                "No Autograder Path",
+                                "Please set the path to the Autograder JAR, or choose to download it from GitHub.");
                         return;
                     }
 
@@ -140,9 +142,15 @@ public class ActiveAssessment {
                     Consumer<String> statusConsumer = status -> indicator.setText("Autograder: " + status);
 
                     var stats = AutograderRunner.runAutograder(
-                            ActiveAssessment.this.assessment, ActiveAssessment.this.clonedSubmission, Locale.GERMANY, 2, statusConsumer);
+                            ActiveAssessment.this.assessment,
+                            ActiveAssessment.this.clonedSubmission,
+                            Locale.GERMANY,
+                            2,
+                            statusConsumer);
 
-                    String message = "Autograder made %d annotation(s). Please double-check all of them for false-positives!".formatted(stats.annotationsMade());
+                    String message =
+                            "Autograder made %d annotation(s). Please double-check all of them for false-positives!"
+                                    .formatted(stats.annotationsMade());
                     ApplicationManager.getApplication().invokeLater(() -> {
                         Messages.showMessageDialog(message, "Autograder Completed", AllIcons.Status.Success);
                     });
@@ -280,6 +288,5 @@ public class ActiveAssessment {
         popup.showCenteredInCurrentWindow(EditorUtil.getActiveProject());
     }
 
-    private record MessageWithPoints(String message, double points) {
-    }
+    private record MessageWithPoints(String message, double points) {}
 }

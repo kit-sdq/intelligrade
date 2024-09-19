@@ -168,7 +168,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             if (connection.isPresent()) {
                 // When a connection is established, update the course selector with the courses of the connection
                 try {
-                    connectedLabel.setText("✔ Connected to " + connection.get().getClient().getInstance().getDomain() + " as " + connection.get().getAssessor().getLogin());
+                    connectedLabel.setText("✔ Connected to "
+                            + connection.get().getClient().getInstance().getDomain() + " as "
+                            + connection.get().getAssessor().getLogin());
                     connectedLabel.setForeground(JBColor.GREEN);
                     connection.get().getCourses().forEach(courseSelector::addItem);
                 } catch (ArtemisNetworkException ex) {
@@ -176,7 +178,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                     ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
                 }
             } else {
-                connectedLabel.setText("❌ Not connected" );
+                connectedLabel.setText("❌ Not connected");
                 connectedLabel.setForeground(JBColor.RED);
             }
 

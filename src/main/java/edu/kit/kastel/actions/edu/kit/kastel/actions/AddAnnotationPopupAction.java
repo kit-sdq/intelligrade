@@ -1,8 +1,6 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.actions.edu.kit.kastel.actions;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.util.Locale;
 
 import com.intellij.DynamicBundle;
@@ -15,7 +13,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.components.JBLabel;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.state.PluginState;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +76,12 @@ public class AddAnnotationPopupAction extends AnAction {
 
         // create a popup with all possible mistakes
         JBPopupFactory.getInstance()
-                .createActionGroupPopup("Add Annotation", actions, DataContext.EMPTY_CONTEXT, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+                .createActionGroupPopup(
+                        "Add Annotation",
+                        actions,
+                        DataContext.EMPTY_CONTEXT,
+                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                        false)
                 .showInBestPositionFor(caret.getEditor());
     }
 

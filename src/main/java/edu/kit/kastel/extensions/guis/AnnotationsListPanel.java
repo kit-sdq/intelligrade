@@ -1,6 +1,19 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
 
+import java.awt.EventQueue;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.swing.SwingUtilities;
+import javax.swing.event.PopupMenuEvent;
+
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -14,18 +27,6 @@ import com.intellij.ui.table.JBTable;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.state.PluginState;
 import edu.kit.kastel.utils.EditorUtil;
-
-import javax.swing.SwingUtilities;
-import javax.swing.event.PopupMenuEvent;
-import java.awt.EventQueue;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
     private final List<Annotation> displayAnnotations = new ArrayList<>();

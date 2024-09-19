@@ -5,9 +5,6 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -21,8 +18,6 @@ import com.intellij.ui.jcef.JBCefClient;
 import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import org.cef.CefApp;
-import org.cef.CefClient;
-import org.cef.browser.CefBrowser;
 import org.cef.handler.CefFocusHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +74,7 @@ public final class CefUtils {
         browserClient.addLoadHandler(jwtRetriever, browser.getCefBrowser());
 
         var jwtFuture = new CompletableFuture<JBCefCookie>();
-        
+
         // Wait for CEF initialization
         CefApp.getInstance().onInitialization(state -> {
             jwtFuture.completeAsync(() -> {
@@ -98,10 +93,8 @@ public final class CefUtils {
         JFrame browserContainerWindow = new JFrame(BROWSER_LOGIN_TITLE);
         browserContainerWindow.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         browserContainerWindow.setSize(
-                (int) Math.ceil(
-                        Toolkit.getDefaultToolkit().getScreenSize().getWidth() * BROWSER_WINDOW_SCALE_FACTOR),
-                (int) Math.ceil(
-                        Toolkit.getDefaultToolkit().getScreenSize().getHeight() * BROWSER_WINDOW_SCALE_FACTOR));
+                (int) Math.ceil(Toolkit.getDefaultToolkit().getScreenSize().getWidth() * BROWSER_WINDOW_SCALE_FACTOR),
+                (int) Math.ceil(Toolkit.getDefaultToolkit().getScreenSize().getHeight() * BROWSER_WINDOW_SCALE_FACTOR));
         JPanel browserContainer = new JPanel(new GridLayout(1, 1));
         browserContainerWindow.add(browserContainer);
         browserContainer.add(browserToAdd.getComponent());
