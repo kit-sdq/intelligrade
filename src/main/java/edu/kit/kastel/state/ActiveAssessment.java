@@ -177,6 +177,7 @@ public class ActiveAssessment {
                     annotation.getCustomScore().orElseThrow(),
                     messageWithPoints -> {
                         annotation.setCustomMessage(messageWithPoints.message());
+                        annotation.setCustomScore(messageWithPoints.points());
                         this.notifyListeners();
                     });
         } else {

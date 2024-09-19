@@ -42,6 +42,8 @@ public class JwtRetriever extends CefLoadHandlerAdapter {
             while (true) {
                 // We may have been woken up because the cookie is available
                 if (jwtCookie != null) {
+                    // Can't use ApplicationManager.getApplication().invokeLater here,
+                    // as this is only called on application exit on Linux in this specific case (not sure why)
                     SwingUtilities.invokeLater(() -> {
                         window.performOKAction();
                         // window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
