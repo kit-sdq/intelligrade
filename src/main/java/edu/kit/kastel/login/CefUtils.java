@@ -8,9 +8,11 @@ import java.util.concurrent.CompletionException;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
@@ -58,33 +60,35 @@ public final class CefUtils {
         // TODO the following code deletes the jwt cookie, which is needed for a "fresh" login
         // TODO add this somewhere where it is useful
         // CefApp.getInstance().onInitialization(state -> {
-        //     browser.getJBCefCookieManager().deleteCookies(null, "jwt");
+        //     browser.getJBCefCookieManager().deleteCookies(null, null);
         // });
-
-        // add a handler to the Browser to be run if a page is loaded
 
         // set focus handler because it gets invoked sometimes and causes NullPE otherwise
         CefFocusHandler focusHandler = new CefWindowFocusHandler();
         browserClient.addFocusHandler(focusHandler, browser.getCefBrowser());
 
-        // create window, display it and navigate to log in URL
-        JFrame window = createWindow(browser);
-
-        JwtRetriever jwtRetriever = new JwtRetriever(browser, window);
-        browserClient.addLoadHandler(jwtRetriever, browser.getCefBrowser());
-
         var jwtFuture = new CompletableFuture<JBCefCookie>();
 
-        // Wait for CEF initialization
-        CefApp.getInstance().onInitialization(state -> {
-            jwtFuture.completeAsync(() -> {
-                try {
-                    return jwtRetriever.getJwtCookie();
-                } catch (Exception ex) {
-                    throw new CompletionException(ex);
-                }
+        SwingUtilities.invokeLater(() -> {
+            // create window, display it and navigate to log in URL
+            var window = new CefDialog(browser);
+            window.show();
+
+            JwtRetriever jwtRetriever = new JwtRetriever(browser, window);
+            browserClient.addLoadHandler(jwtRetriever, browser.getCefBrowser());
+
+            // Wait for CEF initialization
+            CefApp.getInstance().onInitialization(state -> {
+                jwtFuture.completeAsync(() -> {
+                    try {
+                        return jwtRetriever.getJwtCookie();
+                    } catch (Exception ex) {
+                        throw new CompletionException(ex);
+                    }
+                });
             });
         });
+
         return jwtFuture;
     }
 
@@ -96,9 +100,11 @@ public final class CefUtils {
                 (int) Math.ceil(Toolkit.getDefaultToolkit().getScreenSize().getWidth() * BROWSER_WINDOW_SCALE_FACTOR),
                 (int) Math.ceil(Toolkit.getDefaultToolkit().getScreenSize().getHeight() * BROWSER_WINDOW_SCALE_FACTOR));
         JPanel browserContainer = new JPanel(new GridLayout(1, 1));
-        browserContainerWindow.add(browserContainer);
         browserContainer.add(browserToAdd.getComponent());
+        browserContainerWindow.add(browserContainer);
+        browserContainerWindow.setAlwaysOnTop(true);
         browserContainerWindow.setVisible(true);
+        new CefDialog(browserToAdd).show();
         return browserContainerWindow;
     }
 }

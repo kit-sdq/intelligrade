@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -324,21 +325,24 @@ public class PluginState {
     private CompletableFuture<String> retrieveJWT() {
         var settings = ArtemisSettingsState.getInstance();
 
-        String previousJwt = settings.getArtemisAuthJWT();
-        if (previousJwt != null && !previousJwt.isBlank()) {
-            return CompletableFuture.completedFuture(previousJwt);
-        }
+        return CompletableFuture.supplyAsync(() -> {
+            String previousJwt = settings.getArtemisAuthJWT();
+            if (previousJwt != null && !previousJwt.isBlank()) {
+                return previousJwt;
+            }
 
-        if (!JBCefApp.isSupported()) {
-            return CompletableFuture.failedFuture(
-                    new CompletionException(new IllegalStateException("JCEF unavailable")));
-        }
+            if (!JBCefApp.isSupported()) {
+               throw new CompletionException(new IllegalStateException("JCEF unavailable"));
+            }
 
-        var jwtCookieFuture = CefUtils.jcefBrowserLogin();
-        return jwtCookieFuture.thenApplyAsync(cookie -> {
-            settings.setArtemisAuthJWT(cookie.getValue());
-            settings.setJwtExpiry(cookie.getExpires());
-            return cookie.getValue();
+            try {
+                var cookie = CefUtils.jcefBrowserLogin().get();
+                settings.setArtemisAuthJWT(cookie.getValue());
+                settings.setJwtExpiry(cookie.getExpires());
+                return cookie.getValue();
+            } catch (ExecutionException | InterruptedException ex) {
+                throw new CompletionException(ex);
+            }
         });
     }
 

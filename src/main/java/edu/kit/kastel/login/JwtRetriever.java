@@ -21,11 +21,11 @@ public class JwtRetriever extends CefLoadHandlerAdapter {
     private static final String JWT_COOKIE_KEY = "jwt";
 
     private final JBCefBrowser browser;
-    private final JFrame window;
+    private final CefDialog window;
 
     private volatile JBCefCookie jwtCookie;
 
-    public JwtRetriever(JBCefBrowser browser, JFrame window) {
+    public JwtRetriever(JBCefBrowser browser, CefDialog window) {
         this.browser = browser;
         this.window = window;
     }
@@ -46,7 +46,8 @@ public class JwtRetriever extends CefLoadHandlerAdapter {
                 // We may have been woken up because the cookie is available
                 if (jwtCookie != null) {
                     SwingUtilities.invokeLater(() -> {
-                        window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
+                        window.performOKAction();
+                        // window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
                         this.browser.getCefBrowser().close(true);
                     });
                     return jwtCookie;

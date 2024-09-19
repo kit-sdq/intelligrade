@@ -33,7 +33,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
     private boolean useTokenLogin = true;
     private String username = "";
-    private String artemisInstanceUrl = "https://artemis.praktomat.cs.kit.edu";
+    private String artemisInstanceUrl = "";
     private AutograderOption autograderOption = AutograderOption.FROM_GITHUB;
     private String autograderPath = null;
     private String selectedGradingConfigPath;

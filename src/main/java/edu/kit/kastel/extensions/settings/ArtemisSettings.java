@@ -82,6 +82,8 @@ public class ArtemisSettings implements Configurable {
 
         loginButton = new JButton("(Re-)Connect");
         loginButton.addActionListener(a -> {
+            ArtemisSettingsState.getInstance().setArtemisAuthJWT(null);
+            ArtemisSettingsState.getInstance().setJwtExpiry(null);
             this.apply();
             PluginState.getInstance().connect();
         });
