@@ -96,7 +96,9 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                         iconRenderer.paint((Graphics2D) g, c);
                     }
                 };
-                panel.add(new JLayer<>(button, layer));
+                JPanel buttonPanel = new JPanel();
+                buttonPanel.add(button);
+                panel.add(new JLayer<>(buttonPanel, layer));
 
                 button.addActionListener(a -> assessment.addAnnotationAtCaret(
                         mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
