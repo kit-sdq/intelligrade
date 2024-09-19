@@ -1,11 +1,10 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.state;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.ui.jcef.JBCefApp;
-import com.intellij.ui.jcef.JBCefCookie;
-import de.firemage.autograder.api.loader.AutograderLoader;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.login.CefUtils;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
@@ -24,8 +23,10 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigExceptio
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.EditorUtil;
 
-import javax.tools.ToolProvider;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +35,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 public class PluginState {
@@ -42,7 +44,7 @@ public class PluginState {
 
     private static PluginState pluginState;
 
-    private final List<Runnable> connectedListeners = new ArrayList<>();
+    private final List<Consumer<Optional<ArtemisConnection>>> connectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
 
@@ -60,45 +62,58 @@ public class PluginState {
         return pluginState;
     }
 
-    public boolean connect() {
-        try {
-            this.resetState();
+    public void connect() {
+        this.resetState();
 
-            var settings = ArtemisSettingsState.getInstance();
-            var instance = new ArtemisInstance(settings.getArtemisInstanceUrl());
+        var settings = ArtemisSettingsState.getInstance();
 
-            if (settings.getUsername() == null
-                    || settings.getUsername().isBlank()
-                    || settings.getArtemisPassword() == null
-                    || settings.getArtemisPassword().isBlank()) {
-                if (settings.getArtemisAuthJWT() == null
-                        || settings.getArtemisAuthJWT().isBlank()) {
-                    retrieveNewJWT();
-                }
-                this.connection = ArtemisConnection.fromToken(instance, settings.getArtemisAuthJWT());
-            } else {
-                this.connection = ArtemisConnection.connectWithUsernamePassword(
-                        instance, settings.getUsername(), settings.getArtemisPassword());
-            }
-
-            this.connectedListeners.forEach(Runnable::run);
-            return true;
-        } catch (ArtemisClientException e) {
-            LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon("Artemis login failed", e.getMessage());
-            return false;
+        String url = settings.getArtemisInstanceUrl();
+        if (!ArtemisUtils.doesUrlExist(url)) {
+            ArtemisUtils.displayGenericErrorBalloon("Artemis URL not reachable", "The Artemis URL is not valid, or you do not have a working internet connection.");
+            this.notifyConnectedListeners();
+            return;
         }
+
+        var instance = new ArtemisInstance(settings.getArtemisInstanceUrl());
+
+        CompletableFuture<ArtemisConnection> connectionFuture;
+        if (settings.isUseTokenLogin()) {
+            connectionFuture = retrieveJWT().thenApplyAsync(token -> ArtemisConnection.fromToken(instance, token));
+        } else {
+            connectionFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return ArtemisConnection.connectWithUsernamePassword(
+                            instance, settings.getUsername(), settings.getArtemisPassword());
+                } catch (ArtemisClientException e) {
+                    throw new CompletionException(e);
+                }
+            });
+        }
+
+        connectionFuture.thenAcceptAsync(connection -> {
+            this.connection = connection;
+            try {
+                this.verifyLogin();
+                this.notifyConnectedListeners();
+            } catch (ArtemisClientException e) {
+                throw new CompletionException(e);
+            }
+        }).exceptionallyAsync(e -> {
+            LOG.error(e);
+            ArtemisUtils.displayGenericErrorBalloon("Artemis Login failed", e.getMessage());
+            this.connection = null;
+            this.notifyConnectedListeners();
+            return null;
+        });
     }
 
     public boolean isConnected() {
         return connection != null;
     }
 
-    public void registerConnectedListener(Runnable listener) {
+    public void registerConnectedListener(Consumer<Optional<ArtemisConnection>> listener) {
         this.connectedListeners.add(listener);
-        if (this.isConnected()) {
-            listener.run();
-        }
+        listener.accept(Optional.ofNullable(this.connection));
     }
 
     public boolean isAssessing() {
@@ -129,19 +144,26 @@ public class PluginState {
                 if (this.activeAssessment.getAssessment().getAnnotations().isEmpty()) {
                     this.activeAssessment.runAutograder();
                 } else {
-                    ArtemisUtils.displayGenericInfoBalloon("Skipping Autograder", "The submission already has annotations. Skipping the Autograder.");
+                    ArtemisUtils.displayGenericInfoBalloon(
+                            "Skipping Autograder", "The submission already has annotations. Skipping the Autograder.");
                 }
 
-                ArtemisUtils.displayGenericInfoBalloon("Assessment started", "You can now grade the submission. Please make sure that are familiar with all grading guidelines.");
+                ArtemisUtils.displayGenericInfoBalloon(
+                        "Assessment started",
+                        "You can now grade the submission. Please make sure that are familiar with all grading guidelines.");
             } else {
-                ArtemisUtils.displayGenericInfoBalloon("Could not start assessment", "There are no more submissions to assess. Thanks for your work :)");
+                ArtemisUtils.displayGenericInfoBalloon(
+                        "Could not start assessment",
+                        "There are no more submissions to assess. Thanks for your work :)");
             }
         } catch (ArtemisNetworkException e) {
             LOG.error(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
         } catch (AnnotationMappingException e) {
             LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon("Could not parse assessment", "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "Could not parse assessment",
+                    "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
         }
     }
 
@@ -159,7 +181,9 @@ public class PluginState {
             ArtemisUtils.displayNetworkErrorBalloon("Could not save assessment", e);
         } catch (AnnotationMappingException e) {
             LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon("Could not save assessment", "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "Could not save assessment",
+                    "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
         }
     }
 
@@ -177,7 +201,9 @@ public class PluginState {
             ArtemisUtils.displayNetworkErrorBalloon("Could not submit assessment", e);
         } catch (AnnotationMappingException e) {
             LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon("Could not submit assessment", "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "Could not submit assessment",
+                    "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
         }
     }
 
@@ -226,17 +252,21 @@ public class PluginState {
             if (assessment.isPresent()) {
                 this.initializeAssessment(assessment.get());
             } else {
-                ArtemisUtils.displayGenericErrorBalloon("Failed to reopen assessment", "Most likely, your lock has been taken by someone else.");
+                ArtemisUtils.displayGenericErrorBalloon(
+                        "Failed to reopen assessment", "Most likely, your lock has been taken by someone else.");
             }
         } catch (ArtemisNetworkException e) {
             LOG.error(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
         } catch (AnnotationMappingException e) {
             LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon("Could not parse assessment", "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "Could not parse assessment",
+                    "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
         } catch (MoreRecentSubmissionException e) {
             LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon("Could not reopen assessment", "The student has submitted a newer version of his code.");
+            ArtemisUtils.displayGenericErrorBalloon(
+                    "Could not reopen assessment", "The student has submitted a newer version of his code.");
         }
     }
 
@@ -291,23 +321,33 @@ public class PluginState {
         activeAssessment = null;
     }
 
-    private void retrieveNewJWT() throws ArtemisClientException {
+    private CompletableFuture<String> retrieveJWT() {
         var settings = ArtemisSettingsState.getInstance();
 
-        try {
-            if (!JBCefApp.isSupported()) {
-                throw new ArtemisClientException(
-                        "Embedded browser unavailable. Please log in using username and password.");
-            }
-
-            JBCefCookie jwtCookie = CefUtils.jcefBrowserLogin().get();
-            settings.setArtemisAuthJWT(jwtCookie.getValue());
-            settings.setJwtExpiry(jwtCookie.getExpires());
-        } catch (ExecutionException e) {
-            throw new ArtemisClientException("Interrupted while attempting to get login token", e);
-        } catch (InterruptedException e) {
-            throw new ArtemisClientException("Error retrieving JWT", e);
+        String previousJwt = settings.getArtemisAuthJWT();
+        if (previousJwt != null && !previousJwt.isBlank()) {
+            return CompletableFuture.completedFuture(previousJwt);
         }
+
+        if (!JBCefApp.isSupported()) {
+            return CompletableFuture.failedFuture(new CompletionException(new IllegalStateException("JCEF unavailable")));
+        }
+
+        var jwtCookieFuture = CefUtils.jcefBrowserLogin();
+        return jwtCookieFuture.thenApplyAsync(cookie -> {
+            settings.setArtemisAuthJWT(cookie.getValue());
+            settings.setJwtExpiry(cookie.getExpires());
+            return cookie.getValue();
+        });
+    }
+
+    private void verifyLogin() throws ArtemisClientException {
+        // This triggers a request and forces a connection error if the token is invalid
+        this.connection.getAssessor();
+    }
+
+    private void notifyConnectedListeners() {
+        this.connectedListeners.forEach(l -> l.accept(Optional.ofNullable(this.connection)));
     }
 
     private void initializeAssessment(Assessment assessment) {
@@ -379,7 +419,7 @@ public class PluginState {
     private void cleanupProjectDirectory() {
         // Close all open editors
         var editorManager = FileEditorManager.getInstance(EditorUtil.getActiveProject());
-        for (var editor : editorManager.getAllEditors())  {
+        for (var editor : editorManager.getAllEditors()) {
             editorManager.closeFile(editor.getFile());
         }
 

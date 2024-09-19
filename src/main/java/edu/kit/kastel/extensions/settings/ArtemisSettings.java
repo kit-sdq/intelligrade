@@ -1,45 +1,56 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.settings;
 
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
+import javax.swing.JSeparator;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
-import edu.kit.kastel.extensions.guis.SettingsContent;
+import com.intellij.ui.JBIntSpinner;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBPasswordField;
+import com.intellij.ui.components.JBRadioButton;
+import com.intellij.ui.components.JBTextField;
 import edu.kit.kastel.state.PluginState;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * This class implements the settings Dialog for this PlugIn.
  * Everything directly related to the Setting UI should be in here.
  */
 public class ArtemisSettings implements Configurable {
+    private JBPanel<?> contentPanel;
 
-    private static final String SETTINGS_DIALOG_NAME = "IntelliGrade Settings";
-    private static final String LOGIN_ERROR_DIALOG_TITLE = "Error logging in!";
+    private JBTextField artemisURLField;
+    private JButton loginButton;
 
-    // set up automated GUI and generate necessary bindings
-    private final JPanel contentPanel = new JPanel();
-    private final SettingsContent generatedMenu = new SettingsContent();
-    private final JPasswordField pwdInput = generatedMenu.getInputPwd();
-    private final JTextField usernameField = generatedMenu.getInputUsername();
-    private final JLabel loggedInLabel = generatedMenu.getLoggedInLabel();
-    private final JTextField artemisUrlField = generatedMenu.getArtemisUrlInput();
+    private JBLabel usernameLabel;
+    private JBRadioButton useTokenLoginButton;
+    private JBLabel passwordLabel;
+    private JBRadioButton usePasswordLoginButton;
+    private JBTextField usernameField;
+    private JBPasswordField passwordField;
 
-    private final JSpinner numColsSpinner = generatedMenu.getNumColsSlider();
+    private JBRadioButton autograderDownloadButton;
+    private JBRadioButton autograderPathButton;
+    private TextFieldWithBrowseButton autograderPathField;
+    private JBRadioButton autograderSkipButton;
 
-    private final ColorPanel annotationColorSelector = generatedMenu.getAnnotationColorPicker();
+    private JBIntSpinner columnsPerRatingGroupSpinner;
+    private ColorPanel highlighterColorChooser;
 
     /**
      * Returns the visible name of the configurable component.
@@ -51,7 +62,7 @@ public class ArtemisSettings implements Configurable {
      */
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
-        return SETTINGS_DIALOG_NAME;
+        return "IntelliGrade Settings";
     }
 
     /**
@@ -64,37 +75,78 @@ public class ArtemisSettings implements Configurable {
      */
     @Override
     public @Nullable JComponent createComponent() {
-        contentPanel.setLayout(new GridLayout());
-        contentPanel.add(generatedMenu);
-        // add action listener to login Button
-        generatedMenu.getBtnLogin().addActionListener(this::loginButtonListener);
-        // add action listener to log out button
-        generatedMenu.getBtnLogout().addActionListener(this::logOutButtonListener);
+        contentPanel = new JBPanel<>(new MigLayout("wrap 2", "[] [grow]"));
+
+        contentPanel.add(new JBLabel("Artemis URL:"));
+        artemisURLField = new JBTextField();
+        contentPanel.add(artemisURLField, "growx");
+
+        loginButton = new JButton("(Re-)Connect");
+        loginButton.addActionListener(a -> {
+            this.apply();
+            PluginState.getInstance().connect();
+        });
+        contentPanel.add(loginButton, "span 2, growx");
+
+        // Login options
+        contentPanel.add(new JSeparator(), "span 2, growx");
+        var loginButtonGroup = new ButtonGroup();
+
+        useTokenLoginButton = new JBRadioButton("Token Login (Preferred)");
+        useTokenLoginButton.addActionListener(a -> updateLoginType());
+        loginButtonGroup.add(useTokenLoginButton);
+        contentPanel.add(useTokenLoginButton, "span 2, growx");
+
+        usePasswordLoginButton = new JBRadioButton("Password Login");
+        usePasswordLoginButton.addActionListener(a -> updateLoginType());
+        loginButtonGroup.add(usePasswordLoginButton);
+        contentPanel.add(usePasswordLoginButton, "span 2, growx");
+
+        usernameLabel = new JBLabel("Username:");
+        contentPanel.add(usernameLabel, "pad 0 40 0 0, growx");
+        usernameField = new JBTextField();
+        contentPanel.add(usernameField, "growx");
+
+        passwordLabel = new JBLabel("Password:");
+        contentPanel.add(passwordLabel, "pad 0 40 0 0, growx");
+        passwordField = new JBPasswordField();
+        contentPanel.add(passwordField, "growx");
+
+        // Autograder options
+        contentPanel.add(new JSeparator(), "span 2, growx");
+        ButtonGroup autograderButtonGroup = new ButtonGroup();
+
+        autograderDownloadButton = new JBRadioButton("Download latest Autograder release from GitHub");
+        autograderDownloadButton.addActionListener(a -> updateAutograderOptions());
+        autograderButtonGroup.add(autograderDownloadButton);
+        contentPanel.add(autograderDownloadButton, "span 2, growx");
+
+        autograderPathButton = new JBRadioButton("Use local Autograder JAR");
+        autograderPathButton.addActionListener(a -> updateAutograderOptions());
+        autograderButtonGroup.add(autograderPathButton);
+        contentPanel.add(autograderPathButton, "span 2, growx");
+        autograderPathField = new TextFieldWithBrowseButton();
+        var fileDescriptor = new TextBrowseFolderListener(new FileChooserDescriptor(true, false, true, true, false, false).withFileFilter(file -> "jar".equalsIgnoreCase(file.getExtension())));
+        autograderPathField.addBrowseFolderListener(fileDescriptor);
+        contentPanel.add(autograderPathField, "pad 0 40 0 0, span 2, growx");
+
+        autograderSkipButton = new JBRadioButton("Skip Autograder");
+        autograderSkipButton.addActionListener(a -> updateAutograderOptions());
+        autograderButtonGroup.add(autograderSkipButton);
+        contentPanel.add(autograderSkipButton, "span 2, growx");
+
+        // UI options
+        contentPanel.add(new JSeparator(), "span 2, growx");
+        contentPanel.add(new JBLabel("Columns per rating group:"));
+        columnsPerRatingGroupSpinner = new JBIntSpinner(3, 1, 50);
+        contentPanel.add(columnsPerRatingGroupSpinner, "growx");
+
+        contentPanel.add(new JBLabel("Highlighter color:"));
+        highlighterColorChooser = new ColorPanel();
+        highlighterColorChooser.setSelectedColor(new JBColor(0x9b3636, 0x662323));
+        contentPanel.add(highlighterColorChooser, "growx");
 
         return contentPanel;
-    }
-
-    /**
-     * Listener Method that gets called when the login Button is pressed.
-     * This method will Log in the User.
-     *
-     * @param actionEvent The Event passed by AWT is the Button is pressed
-     */
-    private void loginButtonListener(ActionEvent actionEvent) {
-        // set label if login was successful
-        setLabelOnLoginSuccess();
-    }
-
-    private void logOutButtonListener(ActionEvent actionEvent) {
-        // reset username, password and token
-        ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
-        settings.setUsername("");
-        settings.setArtemisPassword("");
-        settings.setArtemisAuthJWT("");
-
-        // blank input fields
-        this.pwdInput.setText("");
-        this.usernameField.setText("");
     }
 
     /**
@@ -107,12 +159,12 @@ public class ArtemisSettings implements Configurable {
     public boolean isModified() {
         ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
         // check if all three parameters are equal
-        String password = new String(pwdInput.getPassword());
-        boolean modified = !password.equals(settings.getArtemisPassword());
+        boolean modified = !new String(passwordField.getPassword()).equals(settings.getArtemisPassword());
         modified |= !usernameField.getText().equals(settings.getUsername());
-        modified |= !artemisUrlField.getText().equals(settings.getArtemisInstanceUrl());
-        modified |= !numColsSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
-        modified |= !annotationColorSelector.getSelectedColor().equals(settings.getAnnotationColor());
+        modified |= !artemisURLField.getText().equals(settings.getArtemisInstanceUrl());
+        modified |= !columnsPerRatingGroupSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
+        modified |= !Objects.equals(highlighterColorChooser.getSelectedColor(), settings.getAnnotationColor());
+        modified |= useTokenLoginButton.isSelected() != settings.isUseTokenLogin();
         return modified;
     }
 
@@ -126,12 +178,25 @@ public class ArtemisSettings implements Configurable {
     public void apply() {
         // store all settings persistently
         ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
-        settings.setArtemisInstanceUrl(artemisUrlField.getText());
+
+        settings.setArtemisInstanceUrl(artemisURLField.getText());
+
+        settings.setUseTokenLogin(useTokenLoginButton.isSelected());
         settings.setUsername(usernameField.getText());
-        settings.setArtemisPassword(new String(pwdInput.getPassword()));
+        settings.setArtemisPassword(new String(passwordField.getPassword()));
+
+        if (autograderDownloadButton.isSelected()) {
+            settings.setAutograderOption(AutograderOption.FROM_GITHUB);
+        } else if (autograderPathButton.isSelected()) {
+            settings.setAutograderOption(AutograderOption.FROM_FILE);
+        } else {
+            settings.setAutograderOption(AutograderOption.SKIP);
+        }
+        settings.setAutograderPath(autograderPathField.getText());
+
         settings.setColumnsPerRatingGroup(
-                Integer.parseInt(numColsSpinner.getValue().toString()));
-        settings.setAnnotationColor(annotationColorSelector.getSelectedColor());
+                Integer.parseInt(columnsPerRatingGroupSpinner.getValue().toString()));
+        settings.setAnnotationColor(highlighterColorChooser.getSelectedColor());
     }
 
     /**
@@ -141,31 +206,36 @@ public class ArtemisSettings implements Configurable {
     @Override
     public void reset() {
         ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
-        artemisUrlField.setText(settings.getArtemisInstanceUrl());
-        usernameField.setText(settings.getUsername());
-        pwdInput.setText(settings.getArtemisPassword());
-        numColsSpinner.setValue(settings.getColumnsPerRatingGroup());
-        annotationColorSelector.setSelectedColor(settings.getAnnotationColor());
 
-        setLabelOnLoginSuccess();
+        artemisURLField.setText(settings.getArtemisInstanceUrl());
+
+        useTokenLoginButton.setSelected(settings.isUseTokenLogin());
+        usernameField.setText(settings.getUsername());
+        passwordField.setText(settings.getArtemisPassword());
+
+        switch (settings.getAutograderOption()) {
+            case FROM_GITHUB -> autograderDownloadButton.setSelected(true);
+            case FROM_FILE -> autograderPathButton.setSelected(true);
+            case SKIP -> autograderSkipButton.setSelected(true);
+        }
+        autograderPathField.setText(settings.getAutograderPath());
+
+        columnsPerRatingGroupSpinner.setValue(settings.getColumnsPerRatingGroup());
+        highlighterColorChooser.setSelectedColor(settings.getAnnotationColor());
+
+        updateLoginType();
+        updateAutograderOptions();
     }
 
-    /**
-     * This method will create a new Connection to Artemis and try to log in.
-     * If login was successful the label in the settings dialog will be set
-     */
-    private void setLabelOnLoginSuccess() {
-        // try logging in and display error iff error occurred
-        if (PluginState.getInstance().connect()) {
-            if (usernameField.getText().isBlank() || new String(pwdInput.getPassword()).isBlank()) {
-                loggedInLabel.setText("✓ (via token)");
-            } else {
-                loggedInLabel.setText("✓ (via username/password)");
-            }
-            loggedInLabel.setForeground(JBColor.GREEN);
-        } else {
-            loggedInLabel.setText("❌");
-            loggedInLabel.setForeground(JBColor.RED);
-        }
+    private void updateLoginType() {
+        var useToken = useTokenLoginButton.isSelected();
+        usernameLabel.setEnabled(!useToken);
+        passwordLabel.setEnabled(!useToken);
+        usernameField.setEnabled(!useToken);
+        passwordField.setEnabled(!useToken);
+    }
+
+    private void updateAutograderOptions() {
+        autograderPathField.setEnabled(autograderPathButton.isSelected());
     }
 }

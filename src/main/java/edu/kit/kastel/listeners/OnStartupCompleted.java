@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.listeners;
 
 import com.intellij.openapi.project.DumbAware;

@@ -17,7 +17,11 @@ import org.jetbrains.annotations.NotNull;
 public class MainToolWindowFactory implements ToolWindowFactory, DumbAware {
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-        toolWindow.getContentManager().addContent(ContentFactory.getInstance().createContent(new ExercisePanel(), "Exercise", false));
-        toolWindow.getContentManager().addContent(ContentFactory.getInstance().createContent(new AssessmentPanel(), "Grading", false));
+        toolWindow
+                .getContentManager()
+                .addContent(ContentFactory.getInstance().createContent(new ExercisePanel(), "Exercise", false));
+        toolWindow
+                .getContentManager()
+                .addContent(ContentFactory.getInstance().createContent(new AssessmentPanel(), "Grading", false));
     }
 }

@@ -31,9 +31,12 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
     private static final String JWT_STORE_KEY = "artemisAuthJWT";
 
+    private boolean useTokenLogin = true;
     private String username = "";
     private String artemisInstanceUrl = "https://artemis.praktomat.cs.kit.edu";
-    private @Nullable String selectedGradingConfigPath;
+    private AutograderOption autograderOption = AutograderOption.FROM_GITHUB;
+    private String autograderPath = null;
+    private String selectedGradingConfigPath;
     private int columnsPerRatingGroup = 2;
 
     private Date jwtExpiry = new Date(Long.MAX_VALUE);
@@ -76,6 +79,14 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
     @Contract("_ -> new")
     private @NotNull CredentialAttributes createCredentialAttributes(String key) {
         return new CredentialAttributes(CredentialAttributesKt.generateServiceName(CREDENTIALS_PATH, key));
+    }
+
+    public boolean isUseTokenLogin() {
+        return useTokenLogin;
+    }
+
+    public void setUseTokenLogin(boolean useTokenLogin) {
+        this.useTokenLogin = useTokenLogin;
     }
 
     public String getUsername() {
@@ -158,5 +169,21 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
     public void setJwtExpiry(Date jwtExpiry) {
         this.jwtExpiry = jwtExpiry;
+    }
+
+    public AutograderOption getAutograderOption() {
+        return autograderOption;
+    }
+
+    public void setAutograderOption(AutograderOption autograderOption) {
+        this.autograderOption = autograderOption;
+    }
+
+    public String getAutograderPath() {
+        return autograderPath;
+    }
+
+    public void setAutograderPath(String autograderPath) {
+        this.autograderPath = autograderPath;
     }
 }

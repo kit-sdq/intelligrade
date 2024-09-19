@@ -1,9 +1,11 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.highlighter;
 
-import com.intellij.ui.WidthBasedLayout;
+import java.awt.*;
 
 import javax.swing.*;
-import java.awt.*;
+
+import com.intellij.ui.WidthBasedLayout;
 
 final class WrapperPanel extends JPanel implements WidthBasedLayout {
 
@@ -19,7 +21,7 @@ final class WrapperPanel extends JPanel implements WidthBasedLayout {
     }
 
     private JComponent getComponent() {
-        return (JComponent)getComponent(0);
+        return (JComponent) getComponent(0);
     }
 
     @Override

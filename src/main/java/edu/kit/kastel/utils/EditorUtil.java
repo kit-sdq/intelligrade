@@ -34,7 +34,8 @@ public class EditorUtil {
     }
 
     public static void forceFilesSync(Runnable afterSyncAction) {
-        var rootVirtualFile = Objects.requireNonNull(VfsUtil.findFileByIoFile(getProjectRootDirectory().toFile(), true));
+        var rootVirtualFile = Objects.requireNonNull(
+                VfsUtil.findFileByIoFile(getProjectRootDirectory().toFile(), true));
         var session = RefreshQueue.getInstance().createSession(true, true, afterSyncAction);
         session.addFile(rootVirtualFile);
         session.launch();

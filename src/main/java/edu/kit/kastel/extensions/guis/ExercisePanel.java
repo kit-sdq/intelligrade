@@ -1,4 +1,16 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
+
+import java.awt.event.ItemEvent;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Comparator;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,20 +39,12 @@ import edu.kit.kastel.utils.EditorUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import java.awt.event.ItemEvent;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.Comparator;
-
 public class ExercisePanel extends SimpleToolWindowPanel {
     private static final Logger LOG = Logger.getInstance(ExercisePanel.class);
 
     private final JPanel content = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
+
+    private JBLabel connectedLabel;
 
     private ComboBox<Course> courseSelector;
     private ComboBox<OptionalExam> examSelector;
@@ -64,6 +68,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     public ExercisePanel() {
         super(true, true);
 
+        connectedLabel = new JBLabel();
+        content.add(connectedLabel, "span 2, alignx center");
+
         content.add(new JBLabel("Course:"));
         courseSelector = new ComboBox<>();
         content.add(courseSelector, "growx");
@@ -78,7 +85,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         content.add(new JBLabel("Grading Config:"));
         gradingConfigPathInput = new TextFieldWithBrowseButton();
-        gradingConfigPathInput.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
+        gradingConfigPathInput.addBrowseFolderListener(
+                new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
         gradingConfigPathInput.setText(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath());
         gradingConfigPathInput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
@@ -129,11 +137,11 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                     } else {
                         courseSelector.getItem().getProgrammingExercises().forEach(exerciseSelector::addItem);
                     }
-                    updateUI();
                 } catch (ArtemisNetworkException ex) {
                     LOG.error(ex);
                     ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
                 }
+                updateUI();
             }
         });
 
@@ -154,22 +162,32 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             }
         });
 
-        PluginState.getInstance().registerConnectedListener(() -> {
-            // When a connection is established, update the course selector with the courses of the connection
-            try {
-                courseSelector.removeAllItems();
-                PluginState.getInstance().getConnection().get().getCourses().forEach(courseSelector::addItem);
-                updateUI();
-            } catch (ArtemisNetworkException ex) {
-                LOG.error(ex);
-                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
+        PluginState.getInstance().registerConnectedListener(connection -> {
+            courseSelector.removeAllItems();
+
+            if (connection.isPresent()) {
+                // When a connection is established, update the course selector with the courses of the connection
+                try {
+                    connectedLabel.setText("✔ Connected to " + connection.get().getClient().getInstance().getDomain() + " as " + connection.get().getAssessor().getLogin());
+                    connectedLabel.setForeground(JBColor.GREEN);
+                    connection.get().getCourses().forEach(courseSelector::addItem);
+                } catch (ArtemisNetworkException ex) {
+                    LOG.error(ex);
+                    ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
+                }
+            } else {
+                connectedLabel.setText("❌ Not connected" );
+                connectedLabel.setForeground(JBColor.RED);
             }
+
+            updateUI();
         });
 
         PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
             assessmentPanel.setEnabled(true);
             submitAssessmentButton.setEnabled(true);
-            cancelAssessmentButton.setEnabled(!assessment.getAssessment().getSubmission().isSubmitted());
+            cancelAssessmentButton.setEnabled(
+                    !assessment.getAssessment().getSubmission().isSubmitted());
             saveAssessmentButton.setEnabled(true);
             closeAssessmentButton.setEnabled(true);
             reRunAutograder.setEnabled(true);
@@ -192,11 +210,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         generalPanel.setLayout(new MigLayout("wrap 1", "[grow]"));
 
         startGradingRound1Button = new JButton("Start Grading Round 1");
-        startGradingRound1Button.addActionListener(a -> PluginState.getInstance().startNextAssessment(0));
+        startGradingRound1Button.addActionListener(
+                a -> PluginState.getInstance().startNextAssessment(0));
         generalPanel.add(startGradingRound1Button, "growx");
 
         startGradingRound2Button = new JButton("Start Grading Round 2");
-        startGradingRound2Button.addActionListener(a -> PluginState.getInstance().startNextAssessment(1));
+        startGradingRound2Button.addActionListener(
+                a -> PluginState.getInstance().startNextAssessment(1));
         generalPanel.add(startGradingRound2Button, "growx");
     }
 
@@ -215,8 +235,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         cancelAssessmentButton.setEnabled(false);
         cancelAssessmentButton.addActionListener(a -> {
             var confirmed = MessageDialogBuilder.okCancel(
-                            "Cancel Assessment?",
-                            "Your assessment will be discarded, and the lock will be freed.")
+                            "Cancel Assessment?", "Your assessment will be discarded, and the lock will be freed.")
                     .guessWindowAndAsk();
 
             if (confirmed) {
@@ -234,8 +253,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         closeAssessmentButton.setEnabled(false);
         closeAssessmentButton.addActionListener(a -> {
             var confirmed = MessageDialogBuilder.okCancel(
-                            "Close Assessment?",
-                            "Your assessment will be discarded, but you will keep the lock.")
+                            "Close Assessment?", "Your assessment will be discarded, but you will keep the lock.")
                     .guessWindowAndAsk();
 
             if (confirmed) {
@@ -246,6 +264,15 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         reRunAutograder = new JButton("Re-run Autograder");
         reRunAutograder.setEnabled(false);
+        reRunAutograder.addActionListener(a -> {
+            var confirmed = MessageDialogBuilder.okCancel(
+                            "Re-Run Autograder?", "This may create duplicate annotations!")
+                    .guessWindowAndAsk();
+
+            if (confirmed) {
+                PluginState.getInstance().getActiveAssessment().orElseThrow().runAutograder();
+            }
+        });
         assessmentPanel.add(reRunAutograder, "spanx 2, growx");
     }
 
@@ -259,7 +286,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
         refreshButton.addActionListener(a -> {
             updateBacklog();
-            ToolWindowManager.getInstance(EditorUtil.getActiveProject()).notifyByBalloon("Grading", MessageType.INFO, "Backlog updated");
+            ToolWindowManager.getInstance(EditorUtil.getActiveProject())
+                    .notifyByBalloon("Grading", MessageType.INFO, "Backlog updated");
         });
         backlogPanel.add(refreshButton, "skip 1, alignx right");
     }
@@ -269,17 +297,20 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         var exercise = PluginState.getInstance().getActiveExercise().get();
         try {
-            exercise.fetchSubmissions(0, true)
-                    .stream()
+            exercise.fetchSubmissions(0, true).stream()
                     .sorted(Comparator.comparing(ProgrammingSubmission::getSubmissionDate))
                     .forEach(submission -> {
-                        String dateText = submission.getSubmissionDate().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
+                        String dateText = submission
+                                .getSubmissionDate()
+                                .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
                         backlogList.add(new JBLabel(dateText), "alignx right");
 
                         var latestResult = submission.getLatestResult();
                         String resultText = "";
                         if (submission.isSubmitted()) {
-                            resultText = latestResult.map(resultDTO -> "%.0f%%".formatted(resultDTO.score())).orElse("???");
+                            resultText = latestResult
+                                    .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
+                                    .orElse("???");
                         }
                         backlogList.add(new JBLabel(resultText), "alignx right");
 
@@ -290,7 +321,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                             reopenButton = new JButton("Continue Assessment");
                             reopenButton.setForeground(JBColor.ORANGE);
                         }
-                        reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
+                        reopenButton.addActionListener(
+                                a -> PluginState.getInstance().reopenAssessment(submission));
                         backlogList.add(reopenButton, "growx");
                     });
         } catch (ArtemisNetworkException ex) {

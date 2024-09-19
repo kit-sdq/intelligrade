@@ -3,17 +3,26 @@ package edu.kit.kastel.login;
 
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefClient;
 import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import org.cef.CefApp;
+import org.cef.CefClient;
+import org.cef.browser.CefBrowser;
 import org.cef.handler.CefFocusHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,47 +31,81 @@ public final class CefUtils {
     private static final double BROWSER_WINDOW_SCALE_FACTOR = 0.75f;
     private static final String BROWSER_LOGIN_TITLE = "Artemis log in";
 
+    private static JBCefClient browserClient = JBCefApp.getInstance().createClient();
+
+    static {
+        // TODO choose a different disposer, see
+        // https://plugins.jetbrains.com/docs/intellij/disposers.html?from=IncorrectParentDisposable#choosing-a-disposable-parent
+        Disposer.register(ApplicationManager.getApplication(), browserClient);
+    }
+
     private CefUtils() {
         throw new IllegalAccessError("Utility Class");
     }
 
     /**
-     * Create and display a Window containing a JBCef Window to request login.
+     * Create and display a Window containing a JBCef Window to request login. Call this on the EDT!
      *
-     * @return A future on the JWT Cookie to log in
+     * @return A future on the JWT Cookie to log in. Don't await it on the EDT.
      */
-    public static @NotNull Future<JBCefCookie> jcefBrowserLogin() throws InterruptedException {
+    public static CompletableFuture<JBCefCookie> jcefBrowserLogin() {
 
-        // create browser and browser Client
-        JBCefClient browserClient = JBCefApp.getInstance().createClient();
+        if (browserClient == null) {
+            browserClient = JBCefApp.getInstance().createClient();
+        }
+
         JBCefBrowser browser = JBCefBrowser.createBuilder()
                 .setClient(browserClient)
+                .setOffScreenRendering(false)
                 .setUrl(ArtemisSettingsState.getInstance().getArtemisInstanceUrl())
                 .build();
 
+        // TODO the following code deletes the jwt cookie, which is needed for a "fresh" login
+        // TODO add this somewhere where it is useful
+        // CefApp.getInstance().onInitialization(state -> {
+        //     browser.getJBCefCookieManager().deleteCookies(null, "jwt");
+        // });
+
         // add a handler to the Browser to be run if a page is loaded
-        CefWindowLoadHandler loadHandler = new CefWindowLoadHandler(browser);
-        browserClient.addLoadHandler(loadHandler, browser.getCefBrowser());
 
         // set focus handler because it gets invoked sometimes and causes NullPE otherwise
         CefFocusHandler focusHandler = new CefWindowFocusHandler();
         browserClient.addFocusHandler(focusHandler, browser.getCefBrowser());
 
         // create window, display it and navigate to log in URL
-        createWindow(browser);
-        return loadHandler.getCookieFuture();
+        JFrame window = createWindow(browser);
+
+        JwtRetriever jwtRetriever = new JwtRetriever(browser, window);
+        browserClient.addLoadHandler(jwtRetriever, browser.getCefBrowser());
+
+        var jwtFuture = new CompletableFuture<JBCefCookie>();
+        
+        // Wait for CEF initialization
+        CefApp.getInstance().onInitialization(state -> {
+            jwtFuture.completeAsync(() -> {
+                try {
+                    return jwtRetriever.getJwtCookie();
+                } catch (Exception ex) {
+                    throw new CompletionException(ex);
+                }
+            });
+        });
+        return jwtFuture;
     }
 
-    private static void createWindow(@NotNull JBCefBrowser browserToAdd) {
-        // build and display browser window
+    private static JFrame createWindow(@NotNull JBCefBrowser browserToAdd) {
+        // Make sure to do all the GUI work on the EDT
         JFrame browserContainerWindow = new JFrame(BROWSER_LOGIN_TITLE);
         browserContainerWindow.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         browserContainerWindow.setSize(
-                (int) Math.ceil(Toolkit.getDefaultToolkit().getScreenSize().getWidth() * BROWSER_WINDOW_SCALE_FACTOR),
-                (int) Math.ceil(Toolkit.getDefaultToolkit().getScreenSize().getHeight() * BROWSER_WINDOW_SCALE_FACTOR));
+                (int) Math.ceil(
+                        Toolkit.getDefaultToolkit().getScreenSize().getWidth() * BROWSER_WINDOW_SCALE_FACTOR),
+                (int) Math.ceil(
+                        Toolkit.getDefaultToolkit().getScreenSize().getHeight() * BROWSER_WINDOW_SCALE_FACTOR));
         JPanel browserContainer = new JPanel(new GridLayout(1, 1));
         browserContainerWindow.add(browserContainer);
         browserContainer.add(browserToAdd.getComponent());
         browserContainerWindow.setVisible(true);
+        return browserContainerWindow;
     }
 }

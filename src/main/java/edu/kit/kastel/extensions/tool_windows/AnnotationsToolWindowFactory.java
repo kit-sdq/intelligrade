@@ -16,6 +16,7 @@ public class AnnotationsToolWindowFactory implements ToolWindowFactory {
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         var content = ContentFactory.getInstance().createContent(new AnnotationsListPanel(), null, false);
+        toolWindow.show();
         toolWindow.getContentManager().addContent(content);
     }
 }

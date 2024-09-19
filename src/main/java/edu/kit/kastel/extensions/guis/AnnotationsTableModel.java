@@ -1,13 +1,14 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
 
-import com.intellij.DynamicBundle;
-import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
-
-import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import javax.swing.table.AbstractTableModel;
+
+import com.intellij.DynamicBundle;
+import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 
 /**
  * The table model for the annotations table.
@@ -36,24 +37,21 @@ public class AnnotationsTableModel extends AbstractTableModel {
     }
 
     @Override
-    public Object getValueAt(int i, int i1) {
-        Annotation annotation = annotations.get(i);
+    public Object getValueAt(int row, int column) {
+        Annotation annotation = annotations.get(row);
 
         if (annotation == null) {
             return "";
         }
 
-        return switch (i1) {
+        return switch (column) {
             case 0 -> annotation.getMistakeType().getButtonText().translateTo(LOCALE);
             case 1 -> formatLines(annotation);
             case 2 -> annotation.getFilePath();
             case 3 -> annotation.getSource();
             case 4 -> annotation.getCustomMessage().orElse("");
-            case 5 -> annotation.getCustomScore().orElse(0.0);
-            default -> {
-                System.err.printf("No table data at index %d:%d\n", i, i1);
-                yield "n.A.";
-            }
+            case 5 -> annotation.getCustomScore().map(String::valueOf).orElse("");
+            default -> throw new IllegalStateException("No table data at index %d:%d".formatted(row, column));
         };
     }
 

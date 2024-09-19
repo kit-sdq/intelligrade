@@ -13,6 +13,9 @@ import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.HttpURLConnection;
+import java.net.URI;
+
 /**
  * Utility Class to handle Artemis related common tasks such as
  * creating a new client and logging in or creating Error messages.
@@ -27,7 +30,15 @@ public final class ArtemisUtils {
     private static ProgrammingExercise activeExercise;
     private static Assessment activeAssessment;
 
-    private ArtemisUtils() {
+    private ArtemisUtils() {}
+
+    public static boolean doesUrlExist(String url) {
+        try {
+            var connection = (HttpURLConnection) new URI(url).toURL().openConnection();
+            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     /**
@@ -88,6 +99,8 @@ public final class ArtemisUtils {
     }
 
     public static void displayFinishAssessmentFirstBalloon() {
-        displayGenericWarningBalloon("Finish assessment first", "Please finish the current assessment first. If you do not want to, please cancel it.");
+        displayGenericWarningBalloon(
+                "Finish assessment first",
+                "Please finish the current assessment first. If you do not want to, please cancel it.");
     }
 }

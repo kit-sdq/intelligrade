@@ -1,6 +1,8 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.actions.edu.kit.kastel.actions;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.util.Locale;
 
 import com.intellij.DynamicBundle;
@@ -8,8 +10,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.AnActionButton;
 import com.intellij.ui.components.JBLabel;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.state.PluginState;
@@ -50,13 +55,31 @@ public class AddAnnotationPopupAction extends AnAction {
                 .getGradingConfig()
                 .getMistakeTypes();
 
+        var actions = new DefaultActionGroup();
+        for (var mistakeType : mistakeTypes) {
+            actions.add(new AnActionButton(mistakeType.getButtonText().translateTo(LOCALE)) {
+                // TODO figure out CTRL+select, e.g. via updateButton method
+
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                    addQuickAnnotation(mistakeType);
+                }
+
+                @Override
+                public @NotNull ActionUpdateThread getActionUpdateThread() {
+                    return ActionUpdateThread.EDT;
+                }
+
+                @Override
+                public boolean isDumbAware() {
+                    return true;
+                }
+            });
+        }
+
         // create a popup with all possible mistakes
         JBPopupFactory.getInstance()
-                .createPopupChooserBuilder(mistakeTypes)
-                .setRenderer((list, mistakeType, index, isSelected, cellHasFocus) ->
-                        new JBLabel(mistakeType.getButtonText().translateTo(LOCALE)))
-                .setItemChosenCallback(this::addQuickAnnotation)
-                .createPopup()
+                .createActionGroupPopup("Add Annotation", actions, DataContext.EMPTY_CONTEXT, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
                 .showInBestPositionFor(caret.getEditor());
     }
 
