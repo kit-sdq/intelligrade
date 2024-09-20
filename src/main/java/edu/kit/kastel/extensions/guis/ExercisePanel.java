@@ -328,11 +328,12 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                             // Submission Date
                             String dateText = submission
                                     .getSubmissionDate()
-                                    .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
+                                    .format(DateTimeFormatter.ofLocalizedDateTime(
+                                            FormatStyle.SHORT, FormatStyle.SHORT));
                             backlogList.add(new JBLabel(dateText), "alignx right");
 
                             // Correction Round
-                            backlogList.add(new JBLabel( "Round " + (submission.getCorrectionRound() + 1)));
+                            backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
 
                             // Score in percent
                             var latestResult = submission.getLatestResult();
@@ -348,7 +349,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                             JButton reopenButton;
                             if (submission.isSubmitted()) {
                                 reopenButton = new JButton("Reopen Assessment");
-                            } else if (latestResult.isPresent() && latestResult.get().assessmentType() != AssessmentType.AUTOMATIC) {
+                            } else if (latestResult.isPresent()
+                                    && latestResult.get().assessmentType() != AssessmentType.AUTOMATIC) {
                                 reopenButton = new JButton("Continue Assessment");
                                 reopenButton.setForeground(JBColor.ORANGE);
                             } else {
