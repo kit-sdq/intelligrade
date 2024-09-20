@@ -36,6 +36,7 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.JBColor;
 import edu.kit.kastel.extensions.guis.AnnotationsListPanel;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.icons.ArtemisIcons;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.state.PluginState;
 import edu.kit.kastel.utils.EditorUtil;
@@ -178,7 +179,12 @@ public class HighlighterManager {
 
             @Override
             public @NotNull Icon getIcon() {
-                return AllIcons.Actions.Edit;
+                return switch (annotations.size()) {
+                    case 1 -> ArtemisIcons.AnnotationsGutter1;
+                    case 2 -> ArtemisIcons.AnnotationsGutter2;
+                    case 3 -> ArtemisIcons.AnnotationsGutter3;
+                    default -> ArtemisIcons.AnnotationsGutter4;
+                };
             }
 
             @Override
