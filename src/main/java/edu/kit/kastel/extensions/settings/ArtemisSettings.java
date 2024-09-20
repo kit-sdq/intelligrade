@@ -1,6 +1,13 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.settings;
 
+import java.util.Objects;
+
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JSeparator;
+
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -18,12 +25,6 @@ import com.intellij.ui.components.JBTextField;
 import edu.kit.kastel.state.PluginState;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JSeparator;
-import java.util.Objects;
 
 /**
  * This class implements the settings Dialog for this PlugIn.

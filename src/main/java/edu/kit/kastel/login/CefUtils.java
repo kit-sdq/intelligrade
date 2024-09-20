@@ -1,6 +1,11 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.login;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import javax.swing.SwingUtilities;
+
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.jcef.JBCefApp;
@@ -10,10 +15,6 @@ import com.intellij.ui.jcef.JBCefCookie;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import org.cef.CefApp;
 import org.cef.handler.CefFocusHandler;
-
-import javax.swing.SwingUtilities;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 public final class CefUtils {
     private static JBCefClient browserClient = JBCefApp.getInstance().createClient();

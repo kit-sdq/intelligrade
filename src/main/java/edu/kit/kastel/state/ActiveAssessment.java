@@ -138,7 +138,9 @@ public class ActiveAssessment {
                             return;
                         }
                     } else {
-                        ArtemisUtils.displayGenericWarningBalloon("Autograder Already Loaded", "Not reloading it from the specified file. Restart the IDE to reload it.");
+                        ArtemisUtils.displayGenericWarningBalloon(
+                                "Autograder Already Loaded",
+                                "Not reloading it from the specified file. Restart the IDE to reload it.");
                     }
                 }
 

@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.settings;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -62,7 +63,7 @@ public final class ArtemisCredentialsProvider {
     }
 
     private void waitForInitialization() {
-        synchronized(this) {
+        synchronized (this) {
             while (!initialized) {
                 try {
                     this.wait();
