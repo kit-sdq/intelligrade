@@ -1,4 +1,7 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
+
+import javax.swing.JPanel;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -7,8 +10,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import edu.kit.kastel.state.PluginState;
 import net.miginfocom.swing.MigLayout;
-
-import javax.swing.JPanel;
 
 public class TestCasePanel extends SimpleToolWindowPanel {
     private final JPanel content;
@@ -32,7 +33,9 @@ public class TestCasePanel extends SimpleToolWindowPanel {
             for (var result : testResults) {
                 String tooltip = result.getDetailText().orElse("No details available");
 
-                var icon = result.getPoints() != 0.0 ? AllIcons.RunConfigurations.TestPassed : AllIcons.RunConfigurations.TestFailed;
+                var icon = result.getPoints() != 0.0
+                        ? AllIcons.RunConfigurations.TestPassed
+                        : AllIcons.RunConfigurations.TestFailed;
                 var iconLabel = new JBLabel(icon);
                 iconLabel.setToolTipText(tooltip);
                 testCasePanel.add(iconLabel);
