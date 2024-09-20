@@ -114,7 +114,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             // Exercise selected: Update plugin state, enable/disable grading buttons, update backlog
             if (e.getStateChange() != ItemEvent.DESELECTED) {
                 var exercise = (ProgrammingExercise) e.getItem();
-                startGradingRound2Button.setEnabled(exercise.hasSecondCorrectionRound());
+                startGradingRound2Button.setEnabled(!PluginState.getInstance().isAssessing() && exercise.hasSecondCorrectionRound());
 
                 PluginState.getInstance().setActiveCourse(courseSelector.getItem());
                 PluginState.getInstance().setActiveExam(examSelector.getItem().exam());
@@ -189,6 +189,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         });
 
         PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
+            startGradingRound1Button.setEnabled(false);
+            startGradingRound2Button.setEnabled(false);
+
             assessmentPanel.setEnabled(true);
             submitAssessmentButton.setEnabled(true);
             cancelAssessmentButton.setEnabled(
@@ -199,6 +202,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         });
 
         PluginState.getInstance().registerAssessmentClosedListener(() -> {
+            startGradingRound1Button.setEnabled(true);
+            startGradingRound2Button.setEnabled(exerciseSelector.getItem().hasSecondCorrectionRound());
+
             assessmentPanel.setEnabled(false);
             submitAssessmentButton.setEnabled(false);
             cancelAssessmentButton.setEnabled(false);
@@ -215,11 +221,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         generalPanel.setLayout(new MigLayout("wrap 1", "[grow]"));
 
         startGradingRound1Button = new JButton("Start Grading Round 1");
+        startGradingRound1Button.setForeground(JBColor.GREEN);
         startGradingRound1Button.addActionListener(
                 a -> PluginState.getInstance().startNextAssessment(0));
         generalPanel.add(startGradingRound1Button, "growx");
 
         startGradingRound2Button = new JButton("Start Grading Round 2");
+        startGradingRound2Button.setForeground(JBColor.GREEN);
         startGradingRound2Button.addActionListener(
                 a -> PluginState.getInstance().startNextAssessment(1));
         generalPanel.add(startGradingRound2Button, "growx");

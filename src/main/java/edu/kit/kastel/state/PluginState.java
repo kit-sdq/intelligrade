@@ -19,6 +19,8 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -42,6 +44,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigExceptio
 import edu.kit.kastel.utils.ArtemisUtils;
 import edu.kit.kastel.utils.EditorUtil;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class PluginState {
     private static final Logger LOG = Logger.getInstance(PluginState.class);
@@ -145,35 +148,42 @@ public class PluginState {
             return;
         }
 
-        try {
-            var nextAssessment = activeExercise.tryLockNextSubmission(correctionRound, gradingConfig.get());
-            if (nextAssessment.isPresent()) {
-                this.initializeAssessment(nextAssessment.get());
+        new Task.Modal(EditorUtil.getActiveProject(), "Starting Assessment", false) {
+            @Override
+            public void run(@NotNull ProgressIndicator progressIndicator) {
+                try {
+                    progressIndicator.setText("Locking...");
+                    var nextAssessment = activeExercise.tryLockNextSubmission(correctionRound, gradingConfig.get());
+                    if (nextAssessment.isPresent()) {
+                        progressIndicator.setText("Cloning...");
+                        initializeAssessment(nextAssessment.get());
 
-                if (this.activeAssessment.getAssessment().getAnnotations().isEmpty()) {
-                    this.activeAssessment.runAutograder();
-                } else {
-                    ArtemisUtils.displayGenericInfoBalloon(
-                            "Skipping Autograder", "The submission already has annotations. Skipping the Autograder.");
+                        if (activeAssessment.getAssessment().getAnnotations().isEmpty()) {
+                            activeAssessment.runAutograder();
+                        } else {
+                            ArtemisUtils.displayGenericInfoBalloon(
+                                    "Skipping Autograder", "The submission already has annotations. Skipping the Autograder.");
+                        }
+
+                        ArtemisUtils.displayGenericInfoBalloon(
+                                "Assessment started",
+                                "You can now grade the submission. Please make sure that are familiar with all grading guidelines.");
+                    } else {
+                        ArtemisUtils.displayGenericInfoBalloon(
+                                "Could not start assessment",
+                                "There are no more submissions to assess. Thanks for your work :)");
+                    }
+                } catch (ArtemisNetworkException e) {
+                    LOG.error(e);
+                    ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
+                } catch (AnnotationMappingException e) {
+                    LOG.error(e);
+                    ArtemisUtils.displayGenericErrorBalloon(
+                            "Could not parse assessment",
+                            "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
                 }
-
-                ArtemisUtils.displayGenericInfoBalloon(
-                        "Assessment started",
-                        "You can now grade the submission. Please make sure that are familiar with all grading guidelines.");
-            } else {
-                ArtemisUtils.displayGenericInfoBalloon(
-                        "Could not start assessment",
-                        "There are no more submissions to assess. Thanks for your work :)");
             }
-        } catch (ArtemisNetworkException e) {
-            LOG.error(e);
-            ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
-        } catch (AnnotationMappingException e) {
-            LOG.error(e);
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Could not parse assessment",
-                    "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
-        }
+        }.queue();
     }
 
     public void saveAssessment() {

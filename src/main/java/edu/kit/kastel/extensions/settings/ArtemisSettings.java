@@ -222,6 +222,7 @@ public class ArtemisSettings implements Configurable {
         artemisURLField.setText(settings.getArtemisInstanceUrl());
 
         useTokenLoginButton.setSelected(settings.isUseTokenLogin());
+        usePasswordLoginButton.setSelected(!settings.isUseTokenLogin());
         usernameField.setText(settings.getUsername());
         passwordField.setText(credentials.getArtemisPassword());
 
