@@ -133,7 +133,7 @@ public class ActiveAssessment {
                         try {
                             AutograderLoader.loadFromFile(Path.of(settings.getAutograderPath()));
                         } catch (IOException e) {
-                            LOG.error(e);
+                            LOG.warn(e);
                             ArtemisUtils.displayGenericErrorBalloon("Could not load Autograder", e.getMessage());
                             return;
                         }
@@ -164,7 +164,7 @@ public class ActiveAssessment {
                     // Notify listeners on event thread
                     ApplicationManager.getApplication().invokeLater(ActiveAssessment.this::notifyListeners);
                 } catch (AutograderFailedException e) {
-                    LOG.error(e);
+                    LOG.warn(e);
                     ArtemisUtils.displayGenericErrorBalloon("Autograder Failed", e.getMessage());
                 }
             }

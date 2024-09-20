@@ -5,6 +5,7 @@ import java.awt.event.ItemEvent;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Comparator;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -13,6 +14,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.ComboBox;
@@ -29,6 +31,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
+import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
@@ -139,7 +142,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                         courseSelector.getItem().getProgrammingExercises().forEach(exerciseSelector::addItem);
                     }
                 } catch (ArtemisNetworkException ex) {
-                    LOG.error(ex);
+                    LOG.warn(ex);
                     ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
                 }
                 updateUI();
@@ -157,7 +160,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                     course.getExams().forEach(exam -> examSelector.addItem(new OptionalExam(exam)));
                     updateUI();
                 } catch (ArtemisNetworkException ex) {
-                    LOG.error(ex);
+                    LOG.warn(ex);
                     ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exam info", ex);
                 }
             }
@@ -175,7 +178,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                     connectedLabel.setForeground(JBColor.GREEN);
                     connection.get().getCourses().forEach(courseSelector::addItem);
                 } catch (ArtemisNetworkException ex) {
-                    LOG.error(ex);
+                    LOG.warn(ex);
                     ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
                 }
             } else {
@@ -292,57 +295,77 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         backlogPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow] []"))
                 .withBorder(new TitledBorder(new LineBorder(JBColor.border()), "Backlog"));
 
-        backlogList = new JBPanel<>(new MigLayout("wrap 3, gapx 30", "[][][grow]"));
+        backlogList = new JBPanel<>(new MigLayout("wrap 4, gapx 30", "[][][][grow]"));
         backlogPanel.add(ScrollPaneFactory.createScrollPane(backlogList, true), "spanx 2, growx");
 
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
-        refreshButton.addActionListener(a -> {
-            updateBacklog();
-            ToolWindowManager.getInstance(EditorUtil.getActiveProject())
-                    .notifyByBalloon("Grading", MessageType.INFO, "Backlog updated");
-        });
+        refreshButton.addActionListener(a -> updateBacklog());
         backlogPanel.add(refreshButton, "skip 1, alignx right");
     }
 
     private void updateBacklog() {
-        backlogList.removeAll();
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var exercise = PluginState.getInstance().getActiveExercise().orElseThrow();
 
-        var exercise = PluginState.getInstance().getActiveExercise().get();
-        try {
-            exercise.fetchSubmissions(0, true).stream()
-                    .sorted(Comparator.comparing(ProgrammingSubmission::getSubmissionDate))
-                    .forEach(submission -> {
-                        String dateText = submission
-                                .getSubmissionDate()
-                                .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
-                        backlogList.add(new JBLabel(dateText), "alignx right");
+            List<ProgrammingSubmission> submissions;
+            try {
+                submissions = exercise.fetchSubmissions();
+            } catch (ArtemisNetworkException ex) {
+                LOG.warn(ex);
+                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch backlog", ex);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    backlogList.removeAll();
+                    this.updateUI();
+                });
+                return;
+            }
 
-                        var latestResult = submission.getLatestResult();
-                        String resultText = "";
-                        if (submission.isSubmitted()) {
-                            resultText = latestResult
-                                    .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
-                                    .orElse("???");
-                        }
-                        backlogList.add(new JBLabel(resultText), "alignx right");
+            ApplicationManager.getApplication().invokeLater(() -> {
+                backlogList.removeAll();
+                submissions.stream()
+                        .sorted(Comparator.comparing(ProgrammingSubmission::getSubmissionDate))
+                        .forEach(submission -> {
+                            // Submission Date
+                            String dateText = submission
+                                    .getSubmissionDate()
+                                    .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
+                            backlogList.add(new JBLabel(dateText), "alignx right");
 
-                        JButton reopenButton;
-                        if (submission.isSubmitted()) {
-                            reopenButton = new JButton("Reopen Assessment");
-                        } else {
-                            reopenButton = new JButton("Continue Assessment");
-                            reopenButton.setForeground(JBColor.ORANGE);
-                        }
-                        reopenButton.addActionListener(
-                                a -> PluginState.getInstance().reopenAssessment(submission));
-                        backlogList.add(reopenButton, "growx");
-                    });
-        } catch (ArtemisNetworkException ex) {
-            LOG.error(ex);
-            ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch backlog", ex);
-        }
+                            // Correction Round
+                            backlogList.add(new JBLabel( "Round " + (submission.getCorrectionRound() + 1)));
 
-        updateUI();
+                            // Score in percent
+                            var latestResult = submission.getLatestResult();
+                            String resultText = "";
+                            if (submission.isSubmitted()) {
+                                resultText = latestResult
+                                        .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
+                                        .orElse("???");
+                            }
+                            backlogList.add(new JBLabel(resultText), "alignx right");
+
+                            // Action Button
+                            JButton reopenButton;
+                            if (submission.isSubmitted()) {
+                                reopenButton = new JButton("Reopen Assessment");
+                            } else if (latestResult.isPresent() && latestResult.get().assessmentType() != AssessmentType.AUTOMATIC) {
+                                reopenButton = new JButton("Continue Assessment");
+                                reopenButton.setForeground(JBColor.ORANGE);
+                            } else {
+                                reopenButton = new JButton("Start Assessment");
+                            }
+                            reopenButton.addActionListener(
+                                    a -> PluginState.getInstance().reopenAssessment(submission));
+                            backlogList.add(reopenButton, "growx");
+                        });
+
+                updateUI();
+
+                // Tell the user that we've done something
+                ToolWindowManager.getInstance(EditorUtil.getActiveProject())
+                        .notifyByBalloon("Artemis", MessageType.INFO, "Backlog updated");
+            });
+        });
     }
 
     private record OptionalExam(Exam exam) {

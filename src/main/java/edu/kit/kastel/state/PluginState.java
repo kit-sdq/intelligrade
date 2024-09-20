@@ -106,7 +106,7 @@ public class PluginState {
                     }
                 })
                 .exceptionallyAsync(e -> {
-                    LOG.error(e);
+                    LOG.warn(e);
                     ArtemisUtils.displayGenericErrorBalloon("Artemis Login failed", e.getMessage());
                     this.connection = null;
                     this.notifyConnectedListeners();
@@ -170,10 +170,10 @@ public class PluginState {
                                 "There are no more submissions to assess. Thanks for your work :)");
                     }
                 } catch (ArtemisNetworkException e) {
-                    LOG.error(e);
+                    LOG.warn(e);
                     ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
                 } catch (AnnotationMappingException e) {
-                    LOG.error(e);
+                    LOG.warn(e);
                     ArtemisUtils.displayGenericErrorBalloon(
                             "Could not parse assessment",
                             "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
@@ -192,10 +192,10 @@ public class PluginState {
             activeAssessment.getAssessment().save();
             ArtemisUtils.displayGenericInfoBalloon("Assessment saved", "The assessment has been saved.");
         } catch (ArtemisNetworkException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not save assessment", e);
         } catch (AnnotationMappingException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon(
                     "Could not save assessment",
                     "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
@@ -212,10 +212,10 @@ public class PluginState {
             activeAssessment.getAssessment().submit();
             this.cleanupAssessment();
         } catch (ArtemisNetworkException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not submit assessment", e);
         } catch (AnnotationMappingException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon(
                     "Could not submit assessment",
                     "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
@@ -232,7 +232,7 @@ public class PluginState {
             activeAssessment.getAssessment().cancel();
             this.cleanupAssessment();
         } catch (ArtemisNetworkException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not submit assessment", e);
         }
     }
@@ -271,15 +271,15 @@ public class PluginState {
                         "Failed to reopen assessment", "Most likely, your lock has been taken by someone else.");
             }
         } catch (ArtemisNetworkException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
         } catch (AnnotationMappingException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon(
                     "Could not parse assessment",
                     "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
         } catch (MoreRecentSubmissionException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon(
                     "Could not reopen assessment", "The student has submitted a newer version of his code.");
         }
@@ -376,14 +376,14 @@ public class PluginState {
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
             this.assessmentStartedListeners.forEach(listener -> listener.accept(activeAssessment));
         } catch (IOException | ArtemisClientException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Error cloning submission", e.getMessage());
 
             // Cancel the assessment to prevent spurious locks
             try {
                 assessment.cancel();
             } catch (ArtemisNetworkException ex) {
-                LOG.error(ex);
+                LOG.warn(ex);
                 ArtemisUtils.displayGenericErrorBalloon("Failed to free the assessment lock", ex.getMessage());
             }
         }
@@ -417,7 +417,7 @@ public class PluginState {
             return Optional.of(
                     GradingConfig.readFromString(Files.readString(Path.of(gradingConfigPath)), activeExercise));
         } catch (IOException | InvalidGradingConfigException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
             return Optional.empty();
         }
@@ -449,7 +449,7 @@ public class PluginState {
                 }
             });
         } catch (IOException e) {
-            LOG.error(e);
+            LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Error cleaning up project directory", e.getMessage());
         }
     }
