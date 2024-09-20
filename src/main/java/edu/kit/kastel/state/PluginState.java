@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.ui.jcef.JBCefApp;
+import edu.kit.kastel.extensions.settings.ArtemisCredentialsProvider;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.login.CefUtils;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
@@ -64,6 +65,7 @@ public class PluginState {
         this.resetState();
 
         var settings = ArtemisSettingsState.getInstance();
+        var credentials = ArtemisCredentialsProvider.getInstance();
 
         String url = settings.getArtemisInstanceUrl();
         if (!ArtemisUtils.doesUrlExist(url)) {
@@ -83,7 +85,7 @@ public class PluginState {
             connectionFuture = CompletableFuture.supplyAsync(() -> {
                 try {
                     return ArtemisConnection.connectWithUsernamePassword(
-                            instance, settings.getUsername(), settings.getArtemisPassword());
+                            instance, settings.getUsername(), credentials.getArtemisPassword());
                 } catch (ArtemisClientException e) {
                     throw new CompletionException(e);
                 }
@@ -272,20 +274,8 @@ public class PluginState {
         }
     }
 
-    public Optional<ArtemisConnection> getConnection() {
-        return Optional.ofNullable(connection);
-    }
-
-    public Optional<Course> getActiveCourse() {
-        return Optional.ofNullable(activeCourse);
-    }
-
     public void setActiveCourse(Course course) {
         this.activeCourse = course;
-    }
-
-    public Optional<Exam> getActiveExam() {
-        return Optional.ofNullable(activeExam);
     }
 
     public void setActiveExam(Exam exam) {
@@ -325,9 +315,10 @@ public class PluginState {
 
     private CompletableFuture<String> retrieveJWT() {
         var settings = ArtemisSettingsState.getInstance();
+        var credentials = ArtemisCredentialsProvider.getInstance();
 
         return CompletableFuture.supplyAsync(() -> {
-            String previousJwt = settings.getArtemisAuthJWT();
+            String previousJwt = credentials.getJwt();
             if (previousJwt != null && !previousJwt.isBlank()) {
                 return previousJwt;
             }
@@ -338,7 +329,7 @@ public class PluginState {
 
             try {
                 var cookie = CefUtils.jcefBrowserLogin().get();
-                settings.setArtemisAuthJWT(cookie.getValue());
+                credentials.setJwt(cookie.getValue());
                 settings.setJwtExpiry(cookie.getExpires());
                 return cookie.getValue();
             } catch (ExecutionException | InterruptedException ex) {

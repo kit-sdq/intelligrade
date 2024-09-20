@@ -25,12 +25,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(name = "edu.kit.kastel.extensions.ArtemisSettingsState", storages = @Storage("IntelliGradeSettings.xml"))
 public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSettingsState> {
-
-    private static final String PASSWORD_STORE_KEY = "artemisPassword";
-    private static final String CREDENTIALS_PATH = "edu.kit.kastel.intelligrade.artemisCredentials";
-
-    private static final String JWT_STORE_KEY = "artemisAuthJWT";
-
     private boolean useTokenLogin = true;
     private String username = "";
     private String artemisInstanceUrl = "";
@@ -76,11 +70,6 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         XmlSerializerUtil.copyBean(state, this);
     }
 
-    @Contract("_ -> new")
-    private @NotNull CredentialAttributes createCredentialAttributes(String key) {
-        return new CredentialAttributes(CredentialAttributesKt.generateServiceName(CREDENTIALS_PATH, key));
-    }
-
     public boolean isUseTokenLogin() {
         return useTokenLogin;
     }
@@ -97,45 +86,13 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         this.username = username;
     }
 
-    /**
-     * Get the password for the Artemis instance from the IDEs CredentialStore.
-     *
-     * @return the Password stored under the key {@value PASSWORD_STORE_KEY}
-     */
-    public String getArtemisPassword() {
-        CredentialAttributes credentialAttributes = createCredentialAttributes(PASSWORD_STORE_KEY);
-        return PasswordSafe.getInstance().getPassword(credentialAttributes);
-    }
-
-    /**
-     * Store the provided Password securely into the IDEs
-     * Credential Store under the key {@value PASSWORD_STORE_KEY}.
-     *
-     * @param artemisPassword the password to be stored
-     */
-    public void setArtemisPassword(String artemisPassword) {
-        CredentialAttributes credentialAttributes = createCredentialAttributes(PASSWORD_STORE_KEY);
-        Credentials credentials = new Credentials(username, artemisPassword);
-        PasswordSafe.getInstance().set(credentialAttributes, credentials);
-    }
-
-    public synchronized void setArtemisAuthJWT(String jwt) {
-        CredentialAttributes credentialAttributes = createCredentialAttributes(JWT_STORE_KEY);
-        PasswordSafe.getInstance().setPassword(credentialAttributes, jwt);
-    }
-
-    public synchronized String getArtemisAuthJWT() {
-        CredentialAttributes credentialAttributes = createCredentialAttributes(JWT_STORE_KEY);
-        return PasswordSafe.getInstance().getPassword(credentialAttributes);
-    }
-
     public String getArtemisInstanceUrl() {
         return artemisInstanceUrl;
     }
 
     public void setArtemisInstanceUrl(String artemisInstanceUrl) {
         // invalidate JWT if URL changed
-        this.setArtemisAuthJWT("");
+        ArtemisCredentialsProvider.getInstance().setJwt("");
         this.artemisInstanceUrl = artemisInstanceUrl;
     }
 

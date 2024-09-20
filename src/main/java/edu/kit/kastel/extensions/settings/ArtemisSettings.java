@@ -1,13 +1,6 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.settings;
 
-import java.util.Objects;
-
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JSeparator;
-
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -25,6 +18,12 @@ import com.intellij.ui.components.JBTextField;
 import edu.kit.kastel.state.PluginState;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JSeparator;
+import java.util.Objects;
 
 /**
  * This class implements the settings Dialog for this PlugIn.
@@ -82,7 +81,7 @@ public class ArtemisSettings implements Configurable {
 
         loginButton = new JButton("(Re-)Connect");
         loginButton.addActionListener(a -> {
-            ArtemisSettingsState.getInstance().setArtemisAuthJWT(null);
+            ArtemisCredentialsProvider.getInstance().setJwt(null);
             ArtemisSettingsState.getInstance().setJwtExpiry(null);
             this.apply();
             PluginState.getInstance().connect();
@@ -160,9 +159,10 @@ public class ArtemisSettings implements Configurable {
      */
     @Override
     public boolean isModified() {
-        ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
-        // check if all three parameters are equal
-        boolean modified = !new String(passwordField.getPassword()).equals(settings.getArtemisPassword());
+        var settings = ArtemisSettingsState.getInstance();
+        var credentials = ArtemisCredentialsProvider.getInstance();
+
+        boolean modified = !new String(passwordField.getPassword()).equals(credentials.getArtemisPassword());
         modified |= !usernameField.getText().equals(settings.getUsername());
         modified |= !artemisURLField.getText().equals(settings.getArtemisInstanceUrl());
         modified |= !columnsPerRatingGroupSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
@@ -179,14 +179,14 @@ public class ArtemisSettings implements Configurable {
      */
     @Override
     public void apply() {
-        // store all settings persistently
-        ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
+        var settings = ArtemisSettingsState.getInstance();
+        var credentials = ArtemisCredentialsProvider.getInstance();
 
         settings.setArtemisInstanceUrl(artemisURLField.getText());
 
         settings.setUseTokenLogin(useTokenLoginButton.isSelected());
         settings.setUsername(usernameField.getText());
-        settings.setArtemisPassword(new String(passwordField.getPassword()));
+        credentials.setArtemisPassword(new String(passwordField.getPassword()));
 
         if (autograderDownloadButton.isSelected()) {
             settings.setAutograderOption(AutograderOption.FROM_GITHUB);
@@ -208,13 +208,14 @@ public class ArtemisSettings implements Configurable {
      */
     @Override
     public void reset() {
-        ArtemisSettingsState settings = ArtemisSettingsState.getInstance();
+        var settings = ArtemisSettingsState.getInstance();
+        var credentials = ArtemisCredentialsProvider.getInstance();
 
         artemisURLField.setText(settings.getArtemisInstanceUrl());
 
         useTokenLoginButton.setSelected(settings.isUseTokenLogin());
         usernameField.setText(settings.getUsername());
-        passwordField.setText(settings.getArtemisPassword());
+        passwordField.setText(credentials.getArtemisPassword());
 
         switch (settings.getAutograderOption()) {
             case FROM_GITHUB -> autograderDownloadButton.setSelected(true);

@@ -6,6 +6,7 @@ import javax.swing.SwingUtilities;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefCookie;
+import edu.kit.kastel.extensions.settings.ArtemisCredentialsProvider;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -35,8 +36,11 @@ public class JwtRetriever extends CefLoadHandlerAdapter {
     }
 
     public JBCefCookie getJwtCookie() throws Exception {
-        var settingsStore = ArtemisSettingsState.getInstance();
-        String url = settingsStore.getArtemisInstanceUrl();
+        var settings = ArtemisSettingsState.getInstance();
+        var credentials = ArtemisCredentialsProvider.getInstance();
+
+        String url = settings.getArtemisInstanceUrl();
+        String jwt = credentials.getJwt();
 
         synchronized (this) {
             while (true) {
@@ -56,7 +60,7 @@ public class JwtRetriever extends CefLoadHandlerAdapter {
                 try {
                     CefCookieManager.getGlobalManager().visitUrlCookies(url, true, (cookie, count, total, delete) -> {
                         if (cookie.name.equals(JWT_COOKIE_KEY)) {
-                            if (!cookie.value.equals(settingsStore.getArtemisAuthJWT())) {
+                            if (!cookie.value.equals(jwt)) {
                                 synchronized (JwtRetriever.this) {
                                     jwtCookie = new JBCefCookie(cookie);
                                     this.notifyAll();

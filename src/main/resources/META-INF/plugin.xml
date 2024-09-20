@@ -19,10 +19,10 @@
                 parentId="tools"
                 instance="edu.kit.kastel.extensions.settings.ArtemisSettings"
                 id="edu.kit.kastel.extensions.settings.ArtemisSettings"
-                displayName="IntelliGrade Settings"/>
+                displayName="Artemis (IntelliGrade)"/>
         <applicationService
                 serviceImplementation="edu.kit.kastel.extensions.settings.ArtemisSettingsState"/>
-        <toolWindow id="Grading" secondary="true" anchor="right" icon="AllIcons.Actions.Edit"
+        <toolWindow id="Artemis" secondary="true" anchor="right" icon="AllIcons.Actions.Edit"
                     factoryClass="edu.kit.kastel.extensions.tool_windows.MainToolWindowFactory"/>
         <toolWindow factoryClass="edu.kit.kastel.extensions.tool_windows.AnnotationsToolWindowFactory" id="Annotations"
                     anchor="bottom" icon="AllIcons.Actions.Annotate"/>

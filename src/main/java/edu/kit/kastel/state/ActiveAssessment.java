@@ -120,21 +120,25 @@ public class ActiveAssessment {
 
                 // Load Autograder from file
                 if (settings.getAutograderOption() == AutograderOption.FROM_FILE) {
-                    var path = settings.getAutograderPath();
-                    if (path == null || path.isBlank()) {
-                        ArtemisUtils.displayGenericErrorBalloon(
-                                "No Autograder Path",
-                                "Please set the path to the Autograder JAR, or choose to download it from GitHub.");
-                        return;
-                    }
+                    if (!AutograderLoader.isAutograderLoaded()) {
+                        var path = settings.getAutograderPath();
+                        if (path == null || path.isBlank()) {
+                            ArtemisUtils.displayGenericErrorBalloon(
+                                    "No Autograder Path",
+                                    "Please set the path to the Autograder JAR, or choose to download it from GitHub.");
+                            return;
+                        }
 
-                    indicator.setText("Loading Autograder");
-                    try {
-                        AutograderLoader.loadFromFile(Path.of(settings.getAutograderPath()));
-                    } catch (IOException e) {
-                        LOG.error(e);
-                        ArtemisUtils.displayGenericErrorBalloon("Could not load Autograder", e.getMessage());
-                        return;
+                        indicator.setText("Loading Autograder");
+                        try {
+                            AutograderLoader.loadFromFile(Path.of(settings.getAutograderPath()));
+                        } catch (IOException e) {
+                            LOG.error(e);
+                            ArtemisUtils.displayGenericErrorBalloon("Could not load Autograder", e.getMessage());
+                            return;
+                        }
+                    } else {
+                        ArtemisUtils.displayGenericWarningBalloon("Autograder Already Loaded", "Not reloading it from the specified file. Restart the IDE to reload it.");
                     }
                 }
 
