@@ -12,7 +12,6 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 
-import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -23,8 +22,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -114,7 +111,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             // Exercise selected: Update plugin state, enable/disable grading buttons, update backlog
             if (e.getStateChange() != ItemEvent.DESELECTED) {
                 var exercise = (ProgrammingExercise) e.getItem();
-                startGradingRound2Button.setEnabled(!PluginState.getInstance().isAssessing() && exercise.hasSecondCorrectionRound());
+                startGradingRound2Button.setEnabled(
+                        !PluginState.getInstance().isAssessing() && exercise.hasSecondCorrectionRound());
 
                 PluginState.getInstance().setActiveCourse(courseSelector.getItem());
                 PluginState.getInstance().setActiveExam(examSelector.getItem().exam());

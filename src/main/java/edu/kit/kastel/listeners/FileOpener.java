@@ -1,3 +1,4 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.listeners;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -67,15 +68,19 @@ public final class FileOpener implements DumbService.DumbModeListener {
                 var project = EditorUtil.getActiveProject();
 
                 // Only look in assignment/, we aren't interested in test classes
-                var directory = VirtualFileManager.getInstance().findFileByNioPath(EditorUtil.getProjectRootDirectory().resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH));
+                var directory = VirtualFileManager.getInstance()
+                        .findFileByNioPath(
+                                EditorUtil.getProjectRootDirectory().resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH));
                 var scope = GlobalSearchScopes.directoryScope(project, directory, true);
                 var mainMethods = PsiShortNamesCache.getInstance(project).getMethodsByName("main", scope);
 
-                PsiType stringType = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
+                PsiType stringType =
+                        PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
                 for (var method : mainMethods) {
                     // Is public & static
                     var modifiers = method.getModifierList();
-                    if (!modifiers.hasExplicitModifier(PsiModifier.PUBLIC) || !modifiers.hasExplicitModifier(PsiModifier.STATIC)) {
+                    if (!modifiers.hasExplicitModifier(PsiModifier.PUBLIC)
+                            || !modifiers.hasExplicitModifier(PsiModifier.STATIC)) {
                         continue;
                     }
 
@@ -106,7 +111,8 @@ public final class FileOpener implements DumbService.DumbModeListener {
                     var file = method.getContainingFile().getVirtualFile();
                     ApplicationManager.getApplication().invokeLater(() -> {
                         // Open the file in an editor, and place the caret at the main method's declaration
-                        FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, method.getTextOffset()), true);
+                        FileEditorManager.getInstance(project)
+                                .openTextEditor(new OpenFileDescriptor(project, file, method.getTextOffset()), true);
 
                         // Expand the project view and select the file
                         ProjectView.getInstance(EditorUtil.getActiveProject()).select(null, file, true);

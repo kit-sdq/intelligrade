@@ -20,7 +20,7 @@ public class OnStartupCompleted implements ProjectActivity, DumbAware {
         HighlighterManager.initialize();
 
         project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, FileOpener.getInstance());
-        
+
         // Open the Artemis tool window
         ApplicationManager.getApplication().invokeLater(() -> ToolWindowManager.getInstance(project)
                 .getToolWindow("Artemis")

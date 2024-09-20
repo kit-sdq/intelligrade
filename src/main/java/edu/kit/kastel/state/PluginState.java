@@ -15,15 +15,10 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.jcef.JBCefApp;
 import edu.kit.kastel.extensions.settings.ArtemisCredentialsProvider;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
@@ -162,7 +157,8 @@ public class PluginState {
                             activeAssessment.runAutograder();
                         } else {
                             ArtemisUtils.displayGenericInfoBalloon(
-                                    "Skipping Autograder", "The submission already has annotations. Skipping the Autograder.");
+                                    "Skipping Autograder",
+                                    "The submission already has annotations. Skipping the Autograder.");
                         }
 
                         ArtemisUtils.displayGenericInfoBalloon(
