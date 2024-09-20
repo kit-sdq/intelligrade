@@ -12,6 +12,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 
+import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -22,6 +23,8 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -247,6 +250,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         assessmentPanel.add(cancelAssessmentButton, "growx");
 
         saveAssessmentButton = new JButton("Save Assessment");
+
         saveAssessmentButton.setEnabled(false);
         saveAssessmentButton.addActionListener(a -> PluginState.getInstance().saveAssessment());
         assessmentPanel.add(saveAssessmentButton, "growx");

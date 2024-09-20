@@ -15,8 +15,13 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.ui.jcef.JBCefApp;
 import edu.kit.kastel.extensions.settings.ArtemisCredentialsProvider;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
@@ -364,7 +369,6 @@ public class PluginState {
 
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
             this.assessmentStartedListeners.forEach(listener -> listener.accept(activeAssessment));
-
         } catch (IOException | ArtemisClientException e) {
             LOG.error(e);
             ArtemisUtils.displayGenericErrorBalloon("Error cloning submission", e.getMessage());

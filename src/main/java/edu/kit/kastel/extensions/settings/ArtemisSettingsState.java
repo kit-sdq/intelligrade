@@ -25,6 +25,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
     private String artemisInstanceUrl = "";
     private AutograderOption autograderOption = AutograderOption.FROM_GITHUB;
     private String autograderPath = null;
+    private boolean autoOpenMainClass = true;
     private String selectedGradingConfigPath;
     private int columnsPerRatingGroup = 2;
 
@@ -137,5 +138,13 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
     public void setAutograderPath(String autograderPath) {
         this.autograderPath = autograderPath;
+    }
+
+    public boolean isAutoOpenMainClass() {
+        return autoOpenMainClass;
+    }
+
+    public void setAutoOpenMainClass(boolean autoOpenMainClass) {
+        this.autoOpenMainClass = autoOpenMainClass;
     }
 }

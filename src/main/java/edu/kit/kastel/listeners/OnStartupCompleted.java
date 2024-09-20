@@ -3,6 +3,7 @@ package edu.kit.kastel.listeners;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.ProjectActivity;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -18,6 +19,8 @@ public class OnStartupCompleted implements ProjectActivity, DumbAware {
     public Object execute(@NotNull Project project, @NotNull Continuation<? super Unit> continuation) {
         HighlighterManager.initialize();
 
+        project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, FileOpener.getInstance());
+        
         // Open the Artemis tool window
         ApplicationManager.getApplication().invokeLater(() -> ToolWindowManager.getInstance(project)
                 .getToolWindow("Artemis")

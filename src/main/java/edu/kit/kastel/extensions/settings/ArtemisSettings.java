@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBIntSpinner;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBPasswordField;
@@ -48,6 +49,7 @@ public class ArtemisSettings implements Configurable {
     private TextFieldWithBrowseButton autograderPathField;
     private JBRadioButton autograderSkipButton;
 
+    private JBCheckBox autoOpenMainClassCheckBox;
     private JBIntSpinner columnsPerRatingGroupSpinner;
     private ColorPanel highlighterColorChooser;
 
@@ -61,7 +63,7 @@ public class ArtemisSettings implements Configurable {
      */
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
-        return "IntelliGrade Settings";
+        return "Artemis (IntelliGrade)";
     }
 
     /**
@@ -138,8 +140,11 @@ public class ArtemisSettings implements Configurable {
         autograderButtonGroup.add(autograderSkipButton);
         contentPanel.add(autograderSkipButton, "span 2, growx");
 
-        // UI options
+        // UI / General options
         contentPanel.add(new JSeparator(), "span 2, growx");
+        autoOpenMainClassCheckBox = new JBCheckBox("Auto-open main class");
+        contentPanel.add(autoOpenMainClassCheckBox, "span 2, growx");
+
         contentPanel.add(new JBLabel("Columns per rating group:"));
         columnsPerRatingGroupSpinner = new JBIntSpinner(3, 1, 50);
         contentPanel.add(columnsPerRatingGroupSpinner, "growx");
@@ -169,6 +174,7 @@ public class ArtemisSettings implements Configurable {
         modified |= !columnsPerRatingGroupSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
         modified |= !Objects.equals(highlighterColorChooser.getSelectedColor(), settings.getAnnotationColor());
         modified |= useTokenLoginButton.isSelected() != settings.isUseTokenLogin();
+        modified |= autoOpenMainClassCheckBox.isSelected() != settings.isAutoOpenMainClass();
         return modified;
     }
 
@@ -198,6 +204,7 @@ public class ArtemisSettings implements Configurable {
         }
         settings.setAutograderPath(autograderPathField.getText());
 
+        settings.setAutoOpenMainClass(autoOpenMainClassCheckBox.isSelected());
         settings.setColumnsPerRatingGroup(
                 Integer.parseInt(columnsPerRatingGroupSpinner.getValue().toString()));
         settings.setAnnotationColor(highlighterColorChooser.getSelectedColor());
@@ -225,6 +232,7 @@ public class ArtemisSettings implements Configurable {
         }
         autograderPathField.setText(settings.getAutograderPath());
 
+        autoOpenMainClassCheckBox.setSelected(settings.isAutoOpenMainClass());
         columnsPerRatingGroupSpinner.setValue(settings.getColumnsPerRatingGroup());
         highlighterColorChooser.setSelectedColor(settings.getAnnotationColor());
 
