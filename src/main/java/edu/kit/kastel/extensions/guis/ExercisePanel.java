@@ -255,7 +255,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         closeAssessmentButton.setEnabled(false);
         closeAssessmentButton.addActionListener(a -> {
             var confirmed = MessageDialogBuilder.okCancel(
-                            "Close Assessment?", "Your assessment will be discarded, but you will keep the lock.")
+                            "Close Assessment?", "Your will loose any unsaved progress, but you will keep the lock.")
                     .guessWindowAndAsk();
 
             if (confirmed) {

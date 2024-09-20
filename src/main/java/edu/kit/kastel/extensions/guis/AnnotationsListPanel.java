@@ -1,7 +1,6 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
 
-import java.awt.EventQueue;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -12,21 +11,23 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.SwingUtilities;
-import javax.swing.event.PopupMenuEvent;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.ui.JBMenuItem;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.PopupMenuListenerAdapter;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.state.PluginState;
 import edu.kit.kastel.utils.EditorUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
     private final List<Annotation> displayAnnotations = new ArrayList<>();
@@ -47,6 +48,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         table = new JBTable(model);
         setContent(ScrollPaneFactory.createScrollPane(table));
 
+        // Delete annotation on delete key press
         table.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -67,8 +69,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
             }
         });
 
-        table.setComponentPopupMenu(getPopupMenu());
-
+        // Jump to line of annotation on double click
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -84,6 +85,9 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 }
             }
         });
+
+        // Add the right-click menu
+        addPopupMenu();
 
         PluginState.getInstance()
                 .registerAssessmentStartedListener(
@@ -114,32 +118,49 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         }
     }
 
-    private JBPopupMenu getPopupMenu() {
-        var popupMenu = new JBPopupMenu();
+    private void addPopupMenu() {
+        var group = new DefaultActionGroup();
 
-        var editCustomText = new JBMenuItem("Edit custom message/score");
-        editCustomText.setEnabled(false);
-        editCustomText.addActionListener(e -> {
-            var row = table.getSelectedRow();
-            if (row >= 0) {
-                PluginState.getInstance().getActiveAssessment().orElseThrow().changeCustomMessage(model.get(row));
-            }
-        });
-        popupMenu.add(editCustomText);
-
-        // Select the row under the cursor when opening the popup menu, and enable/disable the popup menu items
-        popupMenu.addPopupMenuListener(new PopupMenuListenerAdapter() {
+        var editButton = new AnActionButton("Edit Custom Message/Score") {
             @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                int row = table.rowAtPoint(((MouseEvent) EventQueue.getCurrentEvent()).getPoint());
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                var row = table.getSelectedRow();
                 if (row >= 0) {
-                    editCustomText.setEnabled(true);
-                    table.setRowSelectionInterval(row, row);
-                } else {
-                    editCustomText.setEnabled(false);
+                    PluginState.getInstance()
+                            .getActiveAssessment()
+                            .orElseThrow()
+                            .changeCustomMessage(model.get(row));
                 }
             }
-        });
-        return popupMenu;
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+                return ActionUpdateThread.EDT;
+            }
+        };
+        editButton.setEnabled(false);
+        group.addAction(editButton);
+
+        var deleteButton = new AnActionButton("Delete") {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                var row = table.getSelectedRow();
+                if (row >= 0) {
+                    PluginState.getInstance()
+                            .getActiveAssessment()
+                            .orElseThrow()
+                            .deleteAnnotation(model.get(row));
+                }
+            }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+                return ActionUpdateThread.EDT;
+            }
+        };
+        deleteButton.setEnabled(false);
+        group.addAction(deleteButton);
+
+        PopupHandler.installPopupMenu(table, group, "popup@AnnotationsListPanel");
     }
 }
