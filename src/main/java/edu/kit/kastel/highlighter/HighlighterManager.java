@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import javax.swing.Icon;
 
 import com.intellij.DynamicBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;

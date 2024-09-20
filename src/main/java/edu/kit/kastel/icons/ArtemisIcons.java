@@ -1,8 +1,9 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.icons;
 
-import com.intellij.openapi.util.IconLoader;
-
 import javax.swing.Icon;
+
+import com.intellij.openapi.util.IconLoader;
 
 // This class follows IntelliJ's code style conventions
 public final class ArtemisIcons {
