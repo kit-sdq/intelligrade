@@ -3,10 +3,7 @@ package edu.kit.kastel.extensions.settings;
 
 import java.util.Objects;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JSeparator;
+import javax.swing.*;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
@@ -17,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBIntSpinner;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
@@ -43,6 +41,8 @@ public class ArtemisSettings implements Configurable {
     private JBRadioButton usePasswordLoginButton;
     private JBTextField usernameField;
     private JBPasswordField passwordField;
+    private JBRadioButton useVcsSSH;
+    private JBRadioButton useVcsToken;
 
     private JBRadioButton autograderDownloadButton;
     private JBRadioButton autograderPathButton;
@@ -92,7 +92,7 @@ public class ArtemisSettings implements Configurable {
         contentPanel.add(loginButton, "span 2, growx");
 
         // Login options
-        contentPanel.add(new JSeparator(), "span 2, growx");
+        contentPanel.add(new TitledSeparator("Login Options"), "span 2, growx");
         var loginButtonGroup = new ButtonGroup();
 
         useTokenLoginButton = new JBRadioButton("Token Login (Preferred)");
@@ -115,8 +115,20 @@ public class ArtemisSettings implements Configurable {
         passwordField = new JBPasswordField();
         contentPanel.add(passwordField, "growx");
 
+        // VCS Access
+        contentPanel.add(new TitledSeparator("VCS Access"), "span 2, grow x");
+        ButtonGroup vcsAccessButtonGroup = new ButtonGroup();
+
+        useVcsSSH = new JBRadioButton("SSH");
+        contentPanel.add(useVcsSSH);
+        vcsAccessButtonGroup.add(useVcsSSH);
+
+        useVcsToken = new JBRadioButton("VCS Token");
+        contentPanel.add(useVcsToken);
+        vcsAccessButtonGroup.add(useVcsToken);
+
         // Autograder options
-        contentPanel.add(new JSeparator(), "span 2, growx");
+        contentPanel.add(new TitledSeparator("Autograder"), "span 2, growx");
         ButtonGroup autograderButtonGroup = new ButtonGroup();
 
         autograderDownloadButton = new JBRadioButton("Download latest Autograder release from GitHub");
@@ -141,7 +153,7 @@ public class ArtemisSettings implements Configurable {
         contentPanel.add(autograderSkipButton, "span 2, growx");
 
         // UI / General options
-        contentPanel.add(new JSeparator(), "span 2, growx");
+        contentPanel.add(new TitledSeparator("General"), "span 2, growx");
         autoOpenMainClassCheckBox = new JBCheckBox("Auto-open main class");
         contentPanel.add(autoOpenMainClassCheckBox, "span 2, growx");
 
@@ -174,7 +186,9 @@ public class ArtemisSettings implements Configurable {
         modified |= !columnsPerRatingGroupSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
         modified |= !Objects.equals(highlighterColorChooser.getSelectedColor(), settings.getAnnotationColor());
         modified |= useTokenLoginButton.isSelected() != settings.isUseTokenLogin();
+        modified |= getSelectedAutograderOption() != settings.getAutograderOption();
         modified |= autoOpenMainClassCheckBox.isSelected() != settings.isAutoOpenMainClass();
+        modified |= getSelectedVcsOption() != settings.getVcsAccessOption();
         return modified;
     }
 
@@ -195,13 +209,9 @@ public class ArtemisSettings implements Configurable {
         settings.setUsername(usernameField.getText());
         credentials.setArtemisPassword(new String(passwordField.getPassword()));
 
-        if (autograderDownloadButton.isSelected()) {
-            settings.setAutograderOption(AutograderOption.FROM_GITHUB);
-        } else if (autograderPathButton.isSelected()) {
-            settings.setAutograderOption(AutograderOption.FROM_FILE);
-        } else {
-            settings.setAutograderOption(AutograderOption.SKIP);
-        }
+        settings.setVcsAccessOption(getSelectedVcsOption());
+
+        settings.setAutograderOption(getSelectedAutograderOption());
         settings.setAutograderPath(autograderPathField.getText());
 
         settings.setAutoOpenMainClass(autoOpenMainClassCheckBox.isSelected());
@@ -225,6 +235,11 @@ public class ArtemisSettings implements Configurable {
         usePasswordLoginButton.setSelected(!settings.isUseTokenLogin());
         usernameField.setText(settings.getUsername());
         passwordField.setText(credentials.getArtemisPassword());
+
+        switch (settings.getVcsAccessOption()) {
+            case SSH -> useVcsSSH.setSelected(true);
+            case TOKEN -> useVcsToken.setSelected(true);
+        }
 
         switch (settings.getAutograderOption()) {
             case FROM_GITHUB -> autograderDownloadButton.setSelected(true);
@@ -251,5 +266,23 @@ public class ArtemisSettings implements Configurable {
 
     private void updateAutograderOptions() {
         autograderPathField.setEnabled(autograderPathButton.isSelected());
+    }
+
+    private AutograderOption getSelectedAutograderOption() {
+        if (autograderDownloadButton.isSelected()) {
+            return AutograderOption.FROM_GITHUB;
+        } else if (autograderPathButton.isSelected()) {
+            return AutograderOption.FROM_FILE;
+        } else {
+            return AutograderOption.SKIP;
+        }
+    }
+
+    private VCSAccessOption getSelectedVcsOption() {
+        if (useVcsSSH.isSelected()) {
+            return VCSAccessOption.SSH;
+        } else {
+            return VCSAccessOption.TOKEN;
+        }
     }
 }

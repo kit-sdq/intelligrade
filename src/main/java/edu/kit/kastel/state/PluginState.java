@@ -15,6 +15,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -151,19 +152,29 @@ public class PluginState {
                     var nextAssessment = activeExercise.tryLockNextSubmission(correctionRound, gradingConfig.get());
                     if (nextAssessment.isPresent()) {
                         progressIndicator.setText("Cloning...");
-                        initializeAssessment(nextAssessment.get());
+                        try {
+                            initializeAssessment(nextAssessment.get());
 
-                        if (activeAssessment.getAssessment().getAnnotations().isEmpty()) {
-                            activeAssessment.runAutograder();
-                        } else {
+                            // Now everything is done - the submission is properly locked, and the repository is cloned
+                            if (activeAssessment
+                                    .getAssessment()
+                                    .getAnnotations()
+                                    .isEmpty()) {
+                                activeAssessment.runAutograder();
+                            } else {
+                                ArtemisUtils.displayGenericInfoBalloon(
+                                        "Skipping Autograder",
+                                        "The submission already has annotations. Skipping the Autograder.");
+                            }
+
                             ArtemisUtils.displayGenericInfoBalloon(
-                                    "Skipping Autograder",
-                                    "The submission already has annotations. Skipping the Autograder.");
+                                    "Assessment started",
+                                    "You can now grade the submission. Please make sure that are familiar with all "
+                                            + "grading guidelines.");
+                        } catch (IOException | ArtemisClientException e) {
+                            // ignored; already handled by initializeAssessment()
+                            // We just want to skip the Autograder, which is why the exception is rethrown there
                         }
-
-                        ArtemisUtils.displayGenericInfoBalloon(
-                                "Assessment started",
-                                "You can now grade the submission. Please make sure that are familiar with all grading guidelines.");
                     } else {
                         ArtemisUtils.displayGenericInfoBalloon(
                                 "Could not start assessment",
@@ -176,7 +187,8 @@ public class PluginState {
                     LOG.warn(e);
                     ArtemisUtils.displayGenericErrorBalloon(
                             "Could not parse assessment",
-                            "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
+                            "Could not parse previous assessment. This is a serious bug; please contact the "
+                                    + "Übungsleitung!");
                 }
             }
         }.queue();
@@ -262,27 +274,41 @@ public class PluginState {
             return;
         }
 
-        try {
-            var assessment = submission.tryLock(gradingConfig.get());
-            if (assessment.isPresent()) {
-                this.initializeAssessment(assessment.get());
-            } else {
-                ArtemisUtils.displayGenericErrorBalloon(
-                        "Failed to reopen assessment", "Most likely, your lock has been taken by someone else.");
+        new Task.Modal(EditorUtil.getActiveProject(), "Reopening Assessment", false) {
+            @Override
+            public void run(@NotNull ProgressIndicator progressIndicator) {
+                try {
+                    progressIndicator.setText("Locking...");
+                    var assessment = submission.tryLock(gradingConfig.get());
+                    if (assessment.isPresent()) {
+                        try {
+                            progressIndicator.setText("Cloning...");
+                            initializeAssessment(assessment.get());
+                        } catch (IOException | ArtemisClientException e) {
+                            // ignored; see reasoning in startNextAssessment()
+                        }
+                    } else {
+                        ArtemisUtils.displayGenericErrorBalloon(
+                                "Failed to reopen assessment",
+                                "Most likely, your lock has been taken by someone else.");
+                    }
+
+                } catch (ArtemisNetworkException e) {
+                    LOG.warn(e);
+                    ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
+                } catch (AnnotationMappingException e) {
+                    LOG.warn(e);
+                    ArtemisUtils.displayGenericErrorBalloon(
+                            "Could not parse assessment",
+                            "Could not parse previous assessment. This is a serious bug; please contact the "
+                                    + "Übungsleitung!");
+                } catch (MoreRecentSubmissionException e) {
+                    LOG.warn(e);
+                    ArtemisUtils.displayGenericErrorBalloon(
+                            "Could not reopen assessment", "The student has submitted a newer version of his code.");
+                }
             }
-        } catch (ArtemisNetworkException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
-        } catch (AnnotationMappingException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Could not parse assessment",
-                    "Could not parse previous assessment. This is a serious bug; please contact the Übungsleitung!");
-        } catch (MoreRecentSubmissionException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Could not reopen assessment", "The student has submitted a newer version of his code.");
-        }
+        }.queue();
     }
 
     public void setActiveCourse(Course course) {
@@ -355,17 +381,39 @@ public class PluginState {
     }
 
     private void notifyConnectedListeners() {
-        this.connectedListeners.forEach(l -> l.accept(Optional.ofNullable(this.connection)));
+        ApplicationManager.getApplication()
+                .invokeLater(
+                        () -> this.connectedListeners.forEach(l -> l.accept(Optional.ofNullable(this.connection))));
     }
 
-    private void initializeAssessment(Assessment assessment) {
+    private void initializeAssessment(Assessment assessment) throws ArtemisClientException, IOException {
         try {
             // Cleanup first, in case there are files left from a previous assessment
             this.cleanupProjectDirectory();
 
             // Clone the new submission
             var clonedSubmission =
-                    assessment.getSubmission().cloneViaVCSTokenInto(EditorUtil.getProjectRootDirectory(), null);
+                    switch (ArtemisSettingsState.getInstance().getVcsAccessOption()) {
+                        case SSH -> {
+                            // We need to switch the classloader here (same as
+                            // https://plugins.jetbrains.com/docs/intellij/plugin-class-loaders.html#using-serviceloader)
+                            // Somewhere deep in the auth libs, an instanceof check is performed, which returns false in
+                            // some cases where the same class was loaded with two different class loaders (the plugin
+                            // and the platform ones)
+                            Thread currentThread = Thread.currentThread();
+                            ClassLoader originalClassLoader = currentThread.getContextClassLoader();
+                            ClassLoader pluginClassLoader = this.getClass().getClassLoader();
+                            try {
+                                currentThread.setContextClassLoader(pluginClassLoader);
+                                yield assessment.getSubmission().cloneViaSSHInto(EditorUtil.getProjectRootDirectory());
+                            } finally {
+                                currentThread.setContextClassLoader(originalClassLoader);
+                            }
+                        }
+                        case TOKEN -> assessment
+                                .getSubmission()
+                                .cloneViaVCSTokenInto(EditorUtil.getProjectRootDirectory(), null);
+                    };
 
             // Refresh all files, so that they are up-to-date for the maven update
             EditorUtil.forceFilesSync(() -> {
@@ -386,6 +434,8 @@ public class PluginState {
                 LOG.warn(ex);
                 ArtemisUtils.displayGenericErrorBalloon("Failed to free the assessment lock", ex.getMessage());
             }
+
+            throw e;
         }
     }
 
