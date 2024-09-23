@@ -2,7 +2,6 @@
 package edu.kit.kastel.highlighter;
 
 import java.awt.Font;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
