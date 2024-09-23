@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "edu.kit.kastel.extensions.ArtemisSettingsState", storages = @Storage("IntelliGradeSettings.xml"))
 public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSettingsState> {
     private boolean useTokenLogin = true;
-    private VCSAccessOption vcsAccessOption = VCSAccessOption.SSH;
+    private VCSAccessOption vcsAccessOption = VCSAccessOption.TOKEN;
     private String username = "";
     private String artemisInstanceUrl = "";
     private AutograderOption autograderOption = AutograderOption.FROM_GITHUB;

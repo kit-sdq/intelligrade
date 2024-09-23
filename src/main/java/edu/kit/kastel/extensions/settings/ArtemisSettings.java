@@ -119,13 +119,13 @@ public class ArtemisSettings implements Configurable {
         contentPanel.add(new TitledSeparator("VCS Access"), "span 2, grow x");
         ButtonGroup vcsAccessButtonGroup = new ButtonGroup();
 
-        useVcsSSH = new JBRadioButton("SSH");
-        contentPanel.add(useVcsSSH);
-        vcsAccessButtonGroup.add(useVcsSSH);
-
         useVcsToken = new JBRadioButton("VCS Token");
         contentPanel.add(useVcsToken);
         vcsAccessButtonGroup.add(useVcsToken);
+
+        useVcsSSH = new JBRadioButton("SSH");
+        contentPanel.add(useVcsSSH);
+        vcsAccessButtonGroup.add(useVcsSSH);
 
         // Autograder options
         contentPanel.add(new TitledSeparator("Autograder"), "span 2, growx");

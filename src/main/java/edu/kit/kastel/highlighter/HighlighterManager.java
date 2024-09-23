@@ -233,7 +233,7 @@ public class HighlighterManager {
     private static void updateHighlightersForEditor(Editor editor) {
         clearHighlightersForEditor(editor);
 
-        var filePath = Path.of(editor.getVirtualFile().getPath());
+        var filePath = editor.getVirtualFile().toNioPath();
         var state = PluginState.getInstance();
         var assessment = state.getActiveAssessment().orElseThrow().getAssessment();
         var annotationsByLine = assessment.getAnnotations().stream()

@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 
-public record CodeSelection(int startOffset, int endOffset, PsiElement element) {
+public record CodeSelection(int startOffset, int endOffset, Path path) {
 
     public static Optional<CodeSelection> fromCaret() {
         var editor = EditorUtil.getActiveEditor();
@@ -28,17 +28,7 @@ public record CodeSelection(int startOffset, int endOffset, PsiElement element) 
             endOffset = caret.getOffset();
         }
 
-        // only annotate if a selection has been made
-        // get the currently selected element and the containing file
-        PsiElement selectedElement = PsiDocumentManager.getInstance(EditorUtil.getActiveProject())
-                .getPsiFile(editor.getDocument())
-                .findElementAt(editor.getCaretModel().getOffset())
-                .getContext();
-
-        return Optional.of(new CodeSelection(startOffset, endOffset, selectedElement));
-    }
-
-    public Path path() {
-        return Path.of(element.getContainingFile().getVirtualFile().getPath());
+        var path = editor.getVirtualFile().toNioPath();
+        return Optional.of(new CodeSelection(startOffset, endOffset, path));
     }
 }
