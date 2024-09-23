@@ -138,7 +138,6 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 return ActionUpdateThread.EDT;
             }
         };
-        editButton.setEnabled(false);
         group.addAction(editButton);
 
         var deleteButton = new AnActionButton("Delete") {
@@ -158,7 +157,6 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 return ActionUpdateThread.EDT;
             }
         };
-        deleteButton.setEnabled(false);
         group.addAction(deleteButton);
 
         PopupHandler.installPopupMenu(table, group, "popup@AnnotationsListPanel");
