@@ -71,6 +71,12 @@ public final class FileOpener implements DumbService.DumbModeListener {
                 var directory = VirtualFileManager.getInstance()
                         .findFileByNioPath(
                                 EditorUtil.getProjectRootDirectory().resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH));
+
+                if (directory == null) {
+                    LOG.warn("Can't resolve assessment directory");
+                    return;
+                }
+
                 var scope = GlobalSearchScopes.directoryScope(project, directory, true);
                 var mainMethods = PsiShortNamesCache.getInstance(project).getMethodsByName("main", scope);
 

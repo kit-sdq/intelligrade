@@ -76,7 +76,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 continue;
             }
 
-            var panel = new JBPanel<>(new MigLayout("wrap " + buttonsPerRow));
+            var panel = new JBPanel<>(new MigLayout("fill, wrap " + buttonsPerRow));
 
             var border = BorderFactory.createTitledBorder(
                     BorderFactory.createLineBorder(JBColor.border()),
@@ -96,9 +96,9 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                         iconRenderer.paint((Graphics2D) g, c);
                     }
                 };
-                JPanel buttonPanel = new JPanel();
-                buttonPanel.add(button);
-                panel.add(new JLayer<>(buttonPanel, layer));
+                JPanel buttonPanel = new JPanel(new MigLayout("fill"));
+                buttonPanel.add(button, "growx");
+                panel.add(new JLayer<>(buttonPanel, layer), "growx, sizegroup main");
 
                 button.addActionListener(a -> assessment.addAnnotationAtCaret(
                         mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
