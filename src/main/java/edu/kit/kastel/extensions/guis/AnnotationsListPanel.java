@@ -45,7 +45,10 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         super(true, true);
 
         model = new AnnotationsTableModel();
+
         table = new JBTable(model);
+        table.setAutoCreateRowSorter(true);
+
         setContent(ScrollPaneFactory.createScrollPane(table));
 
         // Delete annotation on delete key press
@@ -56,6 +59,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                     // First collect all annotations to delete, then delete them
                     // If delete them one by one, the row indices change and the wrong annotations are deleted
                     var annotationsToDelete = Arrays.stream(table.getSelectedRows())
+                            .map(table::convertRowIndexToModel)
                             .filter(row -> row >= 0)
                             .mapToObj(model::get)
                             .toList();
@@ -100,6 +104,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
 
                             AnnotationsTableModel model = ((AnnotationsTableModel) table.getModel());
                             model.setAnnotations(displayAnnotations);
+                            table.revalidate();
                             table.updateUI();
                         }));
 
@@ -112,9 +117,10 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
     }
 
     public void selectAnnotation(Annotation annotation) {
-        var index = displayAnnotations.indexOf(annotation);
-        if (index >= 0) {
-            table.setRowSelectionInterval(index, index);
+        var row = displayAnnotations.indexOf(annotation);
+        if (row >= 0) {
+            int viewRow = table.convertRowIndexToView(row);
+            table.setRowSelectionInterval(viewRow, viewRow);
         }
     }
 
@@ -124,7 +130,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         var editButton = new AnActionButton("Edit Custom Message/Score") {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                var row = table.getSelectedRow();
+                var row = table.convertRowIndexToModel(table.getSelectedRow());
                 if (row >= 0) {
                     PluginState.getInstance()
                             .getActiveAssessment()
@@ -143,7 +149,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         var deleteButton = new AnActionButton("Delete") {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                var row = table.getSelectedRow();
+                var row = table.convertRowIndexToModel(table.getSelectedRow());
                 if (row >= 0) {
                     PluginState.getInstance()
                             .getActiveAssessment()

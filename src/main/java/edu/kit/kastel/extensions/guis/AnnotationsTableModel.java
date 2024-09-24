@@ -58,10 +58,12 @@ public class AnnotationsTableModel extends AbstractTableModel {
     public void setAnnotations(List<Annotation> annotations) {
         this.annotations.clear();
         this.annotations.addAll(annotations);
+        fireTableDataChanged();
     }
 
     public void clearAnnotations() {
         this.annotations.clear();
+        fireTableDataChanged();
     }
 
     public Annotation get(int index) {
