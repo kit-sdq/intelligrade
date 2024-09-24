@@ -73,17 +73,17 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
             }
         });
 
-        // Double clicks on the table
+        // Double-clicks on the table
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                int row = table.convertRowIndexToModel(table.rowAtPoint(e.getPoint()));
-                int column = table.convertColumnIndexToModel(table.columnAtPoint(e.getPoint()));
+                int row = table.rowAtPoint(e.getPoint());
+                int column = table.columnAtPoint(e.getPoint());
 
                 if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2 && row >= 0) {
-                    var annotation = model.get(row);
+                    var annotation = model.get(table.convertRowIndexToModel(row));
 
-                    if (column == AnnotationsTableModel.CUSTOM_MESSAGE_COLUMN) {
+                    if (table.convertColumnIndexToModel(column) == AnnotationsTableModel.CUSTOM_MESSAGE_COLUMN) {
                         // Edit the custom message
                         PluginState.getInstance()
                                 .getActiveAssessment()

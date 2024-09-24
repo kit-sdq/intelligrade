@@ -73,7 +73,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 continue;
             }
 
-            var panel = new JBPanel<>(new MigLayout("fill, wrap " + buttonsPerRow));
+            var panel = new JBPanel<>(new MigLayout("fill, gap 0, wrap " + buttonsPerRow));
 
             var border = BorderFactory.createTitledBorder(
                     BorderFactory.createLineBorder(JBColor.border()),
@@ -84,8 +84,9 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
             for (var mistakeType : ratingGroup.getMistakeTypes()) {
                 var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
-                var iconRenderer = new MistakeTypeIconRenderer();
+                button.setToolTipText(mistakeType.getMessage().translateTo(LOCALE));
 
+                var iconRenderer = new MistakeTypeIconRenderer();
                 var layer = new LayerUI<>() {
                     @Override
                     public void paint(Graphics g, JComponent c) {
