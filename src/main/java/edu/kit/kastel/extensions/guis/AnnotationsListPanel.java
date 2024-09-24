@@ -73,19 +73,31 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
             }
         });
 
-        // Jump to line of annotation on double click
+        // Double clicks on the table
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                int row = table.rowAtPoint(e.getPoint());
+                int row = table.convertRowIndexToModel(table.rowAtPoint(e.getPoint()));
+                int column = table.convertColumnIndexToModel(table.columnAtPoint(e.getPoint()));
 
                 if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2 && row >= 0) {
                     var annotation = model.get(row);
-                    var file = EditorUtil.getAnnotationFile(annotation);
-                    var document = FileDocumentManager.getInstance().getDocument(file);
-                    int offset = document.getLineStartOffset(annotation.getStartLine());
-                    FileEditorManager.getInstance(EditorUtil.getActiveProject())
-                            .openTextEditor(new OpenFileDescriptor(EditorUtil.getActiveProject(), file, offset), true);
+
+                    if (column == AnnotationsTableModel.CUSTOM_MESSAGE_COLUMN) {
+                        // Edit the custom message
+                        PluginState.getInstance()
+                                .getActiveAssessment()
+                                .orElseThrow()
+                                .changeCustomMessage(annotation);
+                    } else {
+                        // Jump to the line in the editor
+                        var file = EditorUtil.getAnnotationFile(annotation);
+                        var document = FileDocumentManager.getInstance().getDocument(file);
+                        int offset = document.getLineStartOffset(annotation.getStartLine());
+                        FileEditorManager.getInstance(EditorUtil.getActiveProject())
+                                .openTextEditor(
+                                        new OpenFileDescriptor(EditorUtil.getActiveProject(), file, offset), true);
+                    }
                 }
             }
         });

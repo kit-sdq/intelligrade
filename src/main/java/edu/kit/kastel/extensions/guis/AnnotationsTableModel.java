@@ -15,7 +15,16 @@ import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
  */
 public class AnnotationsTableModel extends AbstractTableModel {
 
-    private static final String[] HEADINGS = {"Mistake type", "Line(s)", "File", "Source", "Message", "Custom Penalty"};
+    public static final int MISTAKE_TYPE_COLUMN = 0;
+    public static final int LINES_COLUMN = 1;
+    public static final int FILE_COLUMN = 2;
+    public static final int SOURCE_COLUMN = 3;
+    public static final int CUSTOM_MESSAGE_COLUMN = 4;
+    public static final int CUSTOM_PENALTY_COLUMN = 5;
+
+    private static final String[] HEADINGS = {
+        "Mistake type", "Line(s)", "File", "Source", "Custom Message", "Custom Penalty"
+    };
 
     private static final Locale LOCALE = DynamicBundle.getLocale();
 
@@ -45,12 +54,18 @@ public class AnnotationsTableModel extends AbstractTableModel {
         }
 
         return switch (column) {
-            case 0 -> annotation.getMistakeType().getButtonText().translateTo(LOCALE);
-            case 1 -> formatLines(annotation);
-            case 2 -> annotation.getFilePath();
-            case 3 -> annotation.getSource();
-            case 4 -> annotation.getCustomMessage().orElse("");
-            case 5 -> annotation.getCustomScore().map(String::valueOf).orElse("");
+            case MISTAKE_TYPE_COLUMN -> annotation
+                    .getMistakeType()
+                    .getButtonText()
+                    .translateTo(LOCALE);
+            case LINES_COLUMN -> formatLines(annotation);
+            case FILE_COLUMN -> annotation.getFilePath();
+            case SOURCE_COLUMN -> annotation.getSource();
+            case CUSTOM_MESSAGE_COLUMN -> annotation.getCustomMessage().orElse("");
+            case CUSTOM_PENALTY_COLUMN -> annotation
+                    .getCustomScore()
+                    .map(String::valueOf)
+                    .orElse("");
             default -> throw new IllegalStateException("No table data at index %d:%d".formatted(row, column));
         };
     }
