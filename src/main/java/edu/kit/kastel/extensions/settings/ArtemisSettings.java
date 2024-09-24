@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorPanel;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.JBIntSpinner;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
@@ -52,6 +51,9 @@ public class ArtemisSettings implements Configurable {
     private JBCheckBox autoOpenMainClassCheckBox;
     private JBIntSpinner columnsPerRatingGroupSpinner;
     private ColorPanel highlighterColorChooser;
+    private ColorPanel activeAssessmentButtonColorChooser;
+    private ColorPanel finishedAssessmentButtonColorChooser;
+    private ColorPanel reportingAssessmentButtonColorChooser;
 
     /**
      * Returns the visible name of the configurable component.
@@ -163,8 +165,19 @@ public class ArtemisSettings implements Configurable {
 
         contentPanel.add(new JBLabel("Highlighter color:"));
         highlighterColorChooser = new ColorPanel();
-        highlighterColorChooser.setSelectedColor(new JBColor(0x9b3636, 0x662323));
         contentPanel.add(highlighterColorChooser, "growx");
+
+        contentPanel.add(new JBLabel("Scoring grading button:"));
+        activeAssessmentButtonColorChooser = new ColorPanel();
+        contentPanel.add(activeAssessmentButtonColorChooser, "growx");
+
+        contentPanel.add(new JBLabel("Scoring grading button (limit reached):"));
+        finishedAssessmentButtonColorChooser = new ColorPanel();
+        contentPanel.add(finishedAssessmentButtonColorChooser, "growx");
+
+        contentPanel.add(new JBLabel("Reporting grading button:"));
+        reportingAssessmentButtonColorChooser = new ColorPanel();
+        contentPanel.add(reportingAssessmentButtonColorChooser, "growx");
 
         return contentPanel;
     }
@@ -189,6 +202,12 @@ public class ArtemisSettings implements Configurable {
         modified |= getSelectedAutograderOption() != settings.getAutograderOption();
         modified |= autoOpenMainClassCheckBox.isSelected() != settings.isAutoOpenMainClass();
         modified |= getSelectedVcsOption() != settings.getVcsAccessOption();
+        modified |= !Objects.equals(
+                activeAssessmentButtonColorChooser.getSelectedColor(), settings.getActiveAssessmentButtonColor());
+        modified |= !Objects.equals(
+                finishedAssessmentButtonColorChooser.getSelectedColor(), settings.getFinishedAssessmentButtonColor());
+        modified |= !Objects.equals(
+                reportingAssessmentButtonColorChooser.getSelectedColor(), settings.getReportingAssessmentButtonColor());
         return modified;
     }
 
@@ -218,6 +237,9 @@ public class ArtemisSettings implements Configurable {
         settings.setColumnsPerRatingGroup(
                 Integer.parseInt(columnsPerRatingGroupSpinner.getValue().toString()));
         settings.setAnnotationColor(highlighterColorChooser.getSelectedColor());
+        settings.setActiveAssessmentButtonColor(activeAssessmentButtonColorChooser.getSelectedColor());
+        settings.setFinishedAssessmentButtonColor(finishedAssessmentButtonColorChooser.getSelectedColor());
+        settings.setReportingAssessmentButtonColor(reportingAssessmentButtonColorChooser.getSelectedColor());
     }
 
     /**
@@ -251,6 +273,9 @@ public class ArtemisSettings implements Configurable {
         autoOpenMainClassCheckBox.setSelected(settings.isAutoOpenMainClass());
         columnsPerRatingGroupSpinner.setValue(settings.getColumnsPerRatingGroup());
         highlighterColorChooser.setSelectedColor(settings.getAnnotationColor());
+        activeAssessmentButtonColorChooser.setSelectedColor(settings.getActiveAssessmentButtonColor());
+        finishedAssessmentButtonColorChooser.setSelectedColor(settings.getFinishedAssessmentButtonColor());
+        reportingAssessmentButtonColorChooser.setSelectedColor(settings.getReportingAssessmentButtonColor());
 
         updateLoginType();
         updateAutograderOptions();

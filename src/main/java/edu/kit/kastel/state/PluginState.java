@@ -476,9 +476,11 @@ public class PluginState {
     private void cleanupProjectDirectory() {
         // Close all open editors
         var editorManager = FileEditorManager.getInstance(EditorUtil.getActiveProject());
-        for (var editor : editorManager.getAllEditors()) {
-            editorManager.closeFile(editor.getFile());
-        }
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+            for (var editor : editorManager.getAllEditors()) {
+                editorManager.closeFile(editor.getFile());
+            }
+        });
 
         var rootPath = EditorUtil.getProjectRootDirectory();
         // Delete all directory contents, but not the directory itself

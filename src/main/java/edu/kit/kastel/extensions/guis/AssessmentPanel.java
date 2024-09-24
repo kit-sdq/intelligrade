@@ -1,19 +1,16 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.guis;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.font.TextAttribute;
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLayer;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.LayerUI;
 
@@ -40,7 +37,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     private final JPanel content;
     private final JBLabel pointsLabel;
     private final Map<RatingGroup, TitledBorder> ratingGroupBorders = new IdentityHashMap<>();
-    private final Map<MistakeType, MistakeTypeIconRenderer> mistakeTypeIcons = new IdentityHashMap<>();
+    private final List<AssessmentButton> assessmentButtons = new ArrayList<>();
 
     public AssessmentPanel() {
         super(true, true);
@@ -102,7 +99,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
                 button.addActionListener(a -> assessment.addAnnotationAtCaret(
                         mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
-                this.mistakeTypeIcons.put(mistakeType, iconRenderer);
+                this.assessmentButtons.add(new AssessmentButton(mistakeType, button, iconRenderer));
             }
 
             this.content.add(panel, "growx");
@@ -119,23 +116,40 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             }
 
             // Update button icons
-            this.mistakeTypeIcons.forEach((mistakeType, renderer) -> {
+            this.assessmentButtons.forEach(assessmentButton -> {
+                var settings = ArtemisSettingsState.getInstance();
+                var mistakeType = assessmentButton.mistakeType();
+
                 String iconText;
+                Color color;
+                Font font = JBFont.regular();
+
                 if (mistakeType.getReporting().shouldScore()) {
                     int count = a.getAnnotations(mistakeType).size();
                     var rule = mistakeType.getRule();
                     if (rule instanceof ThresholdPenaltyRule thresholdRule) {
                         iconText = count + "/" + thresholdRule.getThreshold();
+                        if (count >= thresholdRule.getThreshold()) {
+                            color = settings.getActiveAssessmentButtonColor();
+                            font = font.deriveFont(Map.of(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON));
+                        } else {
+                            color = settings.getFinishedAssessmentButtonColor();
+                        }
                     } else if (rule instanceof CustomPenaltyRule) {
                         iconText = "C";
+                        color = settings.getActiveAssessmentButtonColor();
                     } else {
                         iconText = String.valueOf(count);
+                        color = settings.getActiveAssessmentButtonColor();
                     }
                 } else {
                     iconText = "R";
+                    color = settings.getReportingAssessmentButtonColor();
                 }
 
-                renderer.setText(iconText);
+                assessmentButton.iconRenderer().update(iconText, color);
+                assessmentButton.button().setForeground(color);
+                assessmentButton.button().setFont(font);
             });
         });
 
@@ -144,7 +158,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
     private void showNoActiveAssessment() {
         this.ratingGroupBorders.clear();
-        this.mistakeTypeIcons.clear();
+        this.assessmentButtons.clear();
 
         content.removeAll();
         content.add(new JBLabel("No active assessment"), "growx");
@@ -192,17 +206,18 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
     private static class MistakeTypeIconRenderer {
         private String text;
+        private Color bgColor;
 
         private int textWidth;
         private int baselineHeight;
         private int textHeight;
 
         public MistakeTypeIconRenderer() {
-            this.setText("");
+            this.update("", JBColor.foreground());
         }
 
         public void paint(Graphics2D g, JComponent component) {
-            g.setFont(JBFont.small());
+            g.setFont(JBFont.regular());
             if (textWidth < 0) {
                 textWidth = g.getFontMetrics().stringWidth(text);
                 baselineHeight = g.getFontMetrics().getMaxAscent();
@@ -212,7 +227,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-            g.setColor(JBColor.foreground());
+            g.setColor(bgColor);
             g.fillRoundRect(component.getWidth() - textWidth - 5, 0, textWidth + 2, textHeight, 2, 2);
 
             g.setColor(JBColor.background());
@@ -220,9 +235,12 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             g.drawString(text, component.getWidth() - textWidth - 4, baselineHeight);
         }
 
-        private void setText(String text) {
+        private void update(String text, Color bgColor) {
             this.text = text;
+            this.bgColor = bgColor;
             this.textWidth = -1;
         }
     }
+
+    private record AssessmentButton(MistakeType mistakeType, JButton button, MistakeTypeIconRenderer iconRenderer) {}
 }

@@ -1,7 +1,7 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.extensions.settings;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Date;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,20 +19,27 @@ import org.jetbrains.annotations.Nullable;
  * Secrets (such as the Artemis password) are handled by the IntelliJ secrets provider
  */
 @State(name = "edu.kit.kastel.extensions.ArtemisSettingsState", storages = @Storage("IntelliGradeSettings.xml"))
-public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSettingsState> {
-    private boolean useTokenLogin = true;
-    private VCSAccessOption vcsAccessOption = VCSAccessOption.TOKEN;
-    private String username = "";
-    private String artemisInstanceUrl = "";
-    private AutograderOption autograderOption = AutograderOption.FROM_GITHUB;
-    private String autograderPath = null;
-    private boolean autoOpenMainClass = true;
-    private String selectedGradingConfigPath;
-    private int columnsPerRatingGroup = 2;
+public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSettingsState.InternalState> {
+    private final InternalState state = new InternalState();
 
-    private Date jwtExpiry = new Date(Long.MAX_VALUE);
+    public static class InternalState {
+        public boolean useTokenLogin = true;
+        public VCSAccessOption vcsAccessOption = VCSAccessOption.TOKEN;
+        public String username = "";
+        public String artemisInstanceUrl = "";
+        public AutograderOption autograderOption = AutograderOption.FROM_GITHUB;
+        public String autograderPath = null;
+        public boolean autoOpenMainClass = true;
+        public String selectedGradingConfigPath;
+        public int columnsPerRatingGroup = 2;
 
-    private Color annotationColor = new JBColor(new Color(155, 54, 54), new Color(155, 54, 54));
+        public Date jwtExpiry = new Date(Long.MAX_VALUE);
+
+        public int annotationColor = new JBColor(new Color(155, 54, 54), new Color(155, 54, 54)).getRGB();
+        public int activeAssessmentButtonColor = JBColor.YELLOW.getRGB();
+        public int finishedAssessmentButtonColor = JBColor.MAGENTA.getRGB();
+        public int reportingAssessmentButtonColor = JBColor.GREEN.getRGB();
+    }
 
     public static ArtemisSettingsState getInstance() {
         return ApplicationManager.getApplication().getService(ArtemisSettingsState.class);
@@ -41,7 +48,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
     /**
      * Gets the Settings state.
      *
-     * @return a component state.
+     * @return state.a component state.
      * All properties, public and annotated fields are serialized.
      * Only values which differ from the default (i.e. the value of newly instantiated class)
      * are serialized. {@code null} value indicates that the returned state won't be stored,
@@ -49,8 +56,8 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
      * @see XmlSerializer
      */
     @Override
-    public @Nullable ArtemisSettingsState getState() {
-        return this;
+    public @Nullable InternalState getState() {
+        return state;
     }
 
     /**
@@ -63,97 +70,121 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
      * @see XmlSerializerUtil#copyBean(Object, Object)
      */
     @Override
-    public void loadState(@NotNull ArtemisSettingsState state) {
-        XmlSerializerUtil.copyBean(state, this);
+    public void loadState(@NotNull InternalState state) {
+        XmlSerializerUtil.copyBean(state, this.state);
     }
 
     public boolean isUseTokenLogin() {
-        return useTokenLogin;
+        return state.useTokenLogin;
     }
 
     public void setUseTokenLogin(boolean useTokenLogin) {
-        this.useTokenLogin = useTokenLogin;
+        state.useTokenLogin = useTokenLogin;
     }
 
     public String getUsername() {
-        return username;
+        return state.username;
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        state.username = username;
     }
 
     public String getArtemisInstanceUrl() {
-        return artemisInstanceUrl;
+        return state.artemisInstanceUrl;
     }
 
     public void setArtemisInstanceUrl(String artemisInstanceUrl) {
         // invalidate JWT if URL changed
         ArtemisCredentialsProvider.getInstance().setJwt("");
-        this.artemisInstanceUrl = artemisInstanceUrl;
+        state.artemisInstanceUrl = artemisInstanceUrl;
     }
 
     public @Nullable String getSelectedGradingConfigPath() {
-        return selectedGradingConfigPath;
-    }
-
-    public int getColumnsPerRatingGroup() {
-        return columnsPerRatingGroup;
-    }
-
-    public void setColumnsPerRatingGroup(int columnsPerRatingGroup) {
-        this.columnsPerRatingGroup = columnsPerRatingGroup;
+        return state.selectedGradingConfigPath;
     }
 
     public void setSelectedGradingConfigPath(@Nullable String selectedGradingConfigPath) {
-        this.selectedGradingConfigPath = selectedGradingConfigPath;
+        state.selectedGradingConfigPath = selectedGradingConfigPath;
+    }
+
+    public int getColumnsPerRatingGroup() {
+        return state.columnsPerRatingGroup;
+    }
+
+    public void setColumnsPerRatingGroup(int columnsPerRatingGroup) {
+        state.columnsPerRatingGroup = columnsPerRatingGroup;
     }
 
     public Color getAnnotationColor() {
-        return annotationColor;
+        return new Color(state.annotationColor);
     }
 
     public void setAnnotationColor(Color annotationColor) {
-        this.annotationColor = annotationColor;
+        state.annotationColor = annotationColor.getRGB();
     }
 
     public Date getJwtExpiry() {
-        return jwtExpiry;
+        return state.jwtExpiry;
     }
 
     public void setJwtExpiry(Date jwtExpiry) {
-        this.jwtExpiry = jwtExpiry;
+        state.jwtExpiry = jwtExpiry;
     }
 
     public AutograderOption getAutograderOption() {
-        return autograderOption;
+        return state.autograderOption;
     }
 
     public void setAutograderOption(AutograderOption autograderOption) {
-        this.autograderOption = autograderOption;
+        state.autograderOption = autograderOption;
     }
 
     public String getAutograderPath() {
-        return autograderPath;
+        return state.autograderPath;
     }
 
     public void setAutograderPath(String autograderPath) {
-        this.autograderPath = autograderPath;
+        state.autograderPath = autograderPath;
     }
 
     public boolean isAutoOpenMainClass() {
-        return autoOpenMainClass;
+        return state.autoOpenMainClass;
     }
 
     public void setAutoOpenMainClass(boolean autoOpenMainClass) {
-        this.autoOpenMainClass = autoOpenMainClass;
+        state.autoOpenMainClass = autoOpenMainClass;
     }
 
     public VCSAccessOption getVcsAccessOption() {
-        return vcsAccessOption;
+        return state.vcsAccessOption;
     }
 
     public void setVcsAccessOption(VCSAccessOption vcsAccessOption) {
-        this.vcsAccessOption = vcsAccessOption;
+        state.vcsAccessOption = vcsAccessOption;
+    }
+
+    public Color getActiveAssessmentButtonColor() {
+        return new Color(state.activeAssessmentButtonColor);
+    }
+
+    public void setActiveAssessmentButtonColor(Color activeAssessmentButtonColor) {
+        state.activeAssessmentButtonColor = activeAssessmentButtonColor.getRGB();
+    }
+
+    public Color getFinishedAssessmentButtonColor() {
+        return new Color(state.finishedAssessmentButtonColor);
+    }
+
+    public void setFinishedAssessmentButtonColor(Color finishedAssessmentButtonColor) {
+        state.finishedAssessmentButtonColor = finishedAssessmentButtonColor.getRGB();
+    }
+
+    public Color getReportingAssessmentButtonColor() {
+        return new Color(state.reportingAssessmentButtonColor);
+    }
+
+    public void setReportingAssessmentButtonColor(Color reportingAssessmentButtonColor) {
+        state.reportingAssessmentButtonColor = reportingAssessmentButtonColor.getRGB();
     }
 }
