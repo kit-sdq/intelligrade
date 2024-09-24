@@ -31,7 +31,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         public String autograderPath = null;
         public boolean autoOpenMainClass = true;
         public String selectedGradingConfigPath;
-        public int columnsPerRatingGroup = 2;
+        public int columnsPerRatingGroup = 3;
 
         public Date jwtExpiry = new Date(Long.MAX_VALUE);
 
