@@ -139,7 +139,10 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                             }
                         }
                     } else {
-                        courseSelector.getItem().getProgrammingExercises().forEach(exerciseSelector::addItem);
+                        for (ProgrammingExercise programmingExercise :
+                                courseSelector.getItem().getProgrammingExercises()) {
+                            exerciseSelector.addItem(programmingExercise);
+                        }
                     }
                 } catch (ArtemisNetworkException ex) {
                     LOG.warn(ex);
@@ -157,7 +160,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                     var course = (Course) e.getItem();
                     examSelector.removeAllItems();
                     examSelector.addItem(new OptionalExam(null));
-                    course.getExams().forEach(exam -> examSelector.addItem(new OptionalExam(exam)));
+                    for (Exam exam : course.getExams()) {
+                        examSelector.addItem(new OptionalExam(exam));
+                    }
                     updateUI();
                 } catch (ArtemisNetworkException ex) {
                     LOG.warn(ex);
@@ -176,7 +181,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                             + connection.get().getClient().getInstance().getDomain() + " as "
                             + connection.get().getAssessor().getLogin());
                     connectedLabel.setForeground(JBColor.GREEN);
-                    connection.get().getCourses().forEach(courseSelector::addItem);
+                    for (Course course : connection.get().getCourses()) {
+                        courseSelector.addItem(course);
+                    }
                 } catch (ArtemisNetworkException ex) {
                     LOG.warn(ex);
                     ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);

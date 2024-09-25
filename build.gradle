@@ -36,6 +36,8 @@ dependencies {
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter-api:' + JUNIT_VERSION
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + JUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit-junit5:' + ARCHUNIT_VERSION
 }
 
 intellijPlatform {

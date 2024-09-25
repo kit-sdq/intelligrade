@@ -251,7 +251,7 @@ public class HighlighterManager {
 
     private static ActionGroup getGutterPopupActions(List<Annotation> annotations) {
         var group = new DefaultActionGroup();
-        annotations.forEach(annotation -> {
+        for (Annotation annotation : annotations) {
             String text = annotation.getMistakeType().getButtonText().translateTo(DynamicBundle.getLocale());
             if (annotation.getCustomMessage().isPresent()) {
                 text += ": "
@@ -275,7 +275,7 @@ public class HighlighterManager {
                     return ActionUpdateThread.EDT;
                 }
             });
-        });
+        }
         return group;
     }
 

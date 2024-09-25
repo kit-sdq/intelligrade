@@ -213,7 +213,9 @@ public class ActiveAssessment {
     }
 
     private void notifyListeners() {
-        this.annotationsUpdatedListener.forEach(listener -> listener.accept(this.assessment.getAnnotations()));
+        for (Consumer<List<Annotation>> listener : this.annotationsUpdatedListener) {
+            listener.accept(this.assessment.getAnnotations());
+        }
     }
 
     private void showCustomMessageDialog(String initialMessage, Consumer<String> onOk) {

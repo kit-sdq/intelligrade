@@ -384,9 +384,11 @@ public class PluginState {
     }
 
     private void notifyConnectedListeners() {
-        ApplicationManager.getApplication()
-                .invokeLater(
-                        () -> this.connectedListeners.forEach(l -> l.accept(Optional.ofNullable(this.connection))));
+        ApplicationManager.getApplication().invokeLater(() -> {
+            for (Consumer<Optional<ArtemisConnection>> l : this.connectedListeners) {
+                l.accept(Optional.ofNullable(this.connection));
+            }
+        });
     }
 
     private void initializeAssessment(Assessment assessment) throws ArtemisClientException, IOException {
@@ -425,7 +427,9 @@ public class PluginState {
             });
 
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
-            this.assessmentStartedListeners.forEach(listener -> listener.accept(activeAssessment));
+            for (Consumer<ActiveAssessment> listener : this.assessmentStartedListeners) {
+                listener.accept(activeAssessment);
+            }
         } catch (ArtemisClientException e) {
             LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Error cloning submission", e.getMessage());
@@ -456,7 +460,9 @@ public class PluginState {
             EditorUtil.getVcsManager().fireDirectoryMappingsChanged();
         });
 
-        this.assessmentClosedListeners.forEach(Runnable::run);
+        for (Runnable assessmentClosedListener : this.assessmentClosedListeners) {
+            assessmentClosedListener.run();
+        }
     }
 
     private Optional<GradingConfig> createGradingConfig() {
