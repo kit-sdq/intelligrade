@@ -68,6 +68,7 @@ public final class ArtemisCredentialsProvider {
                 try {
                     this.wait();
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     throw new IllegalStateException(e);
                 }
             }

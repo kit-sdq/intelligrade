@@ -369,8 +369,11 @@ public class PluginState {
                 credentials.setJwt(cookie.getValue());
                 settings.setJwtExpiry(cookie.getExpires());
                 return cookie.getValue();
-            } catch (ExecutionException | InterruptedException ex) {
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
                 throw new CompletionException(ex);
+            } catch (ExecutionException e) {
+                throw new CompletionException(e);
             }
         });
     }
