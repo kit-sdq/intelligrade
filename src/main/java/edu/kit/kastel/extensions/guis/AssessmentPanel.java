@@ -130,11 +130,11 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                         case ThresholdPenaltyRule thresholdRule -> {
                             iconText = count + "/" + thresholdRule.getThreshold();
                             if (count >= thresholdRule.getThreshold()) {
-                                color = settings.getActiveAssessmentButtonColor();
+                                color = settings.getFinishedAssessmentButtonColor();
                                 font = font.deriveFont(
                                         Map.of(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON));
                             } else {
-                                color = settings.getFinishedAssessmentButtonColor();
+                                color = settings.getActiveAssessmentButtonColor();
                             }
                         }
                         case CustomPenaltyRule customPenaltyRule -> {

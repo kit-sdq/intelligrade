@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiManager;
@@ -68,12 +69,10 @@ public final class FileOpener implements DumbService.DumbModeListener {
                 var project = EditorUtil.getActiveProject();
 
                 // Only look in assignment/, we aren't interested in test classes
-                var directory = VirtualFileManager.getInstance()
-                        .findFileByNioPath(
-                                EditorUtil.getProjectRootDirectory().resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH));
+                var directory = VfsUtil.findFile(EditorUtil.getProjectRootDirectory().resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH), true);
 
                 if (directory == null) {
-                    LOG.warn("Can't resolve assessment directory");
+                    LOG.warn("Can't resolve assignment directory");
                     return;
                 }
 
