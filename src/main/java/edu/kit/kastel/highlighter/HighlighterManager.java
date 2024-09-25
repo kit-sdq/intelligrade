@@ -70,9 +70,9 @@ public class HighlighterManager {
             }
         });
 
-        PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
-            assessment.registerAnnotationsUpdatedListener(annotations -> updateHighlightersForAllEditors());
-        });
+        PluginState.getInstance()
+                .registerAssessmentStartedListener(assessment -> assessment.registerAnnotationsUpdatedListener(
+                        annotations -> updateHighlightersForAllEditors()));
 
         // When an assessment is closed, clear everything
         PluginState.getInstance().registerAssessmentClosedListener(() -> {
@@ -82,6 +82,7 @@ public class HighlighterManager {
     }
 
     public static void onMouseMovedInEditor(EditorMouseEvent e) {
+        // TODO Later implement feature
         // var highlighters = highlightersPerEditor.get(e.getEditor());
         // if (highlighters == null) {
         //     return;

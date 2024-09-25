@@ -68,15 +68,14 @@ public final class CefUtils {
             browserClient.addLoadHandler(jwtRetriever, browser.getCefBrowser());
 
             // Wait for CEF initialization
-            CefApp.getInstance().onInitialization(state -> {
-                jwtFuture.completeAsync(() -> {
-                    try {
-                        return jwtRetriever.getJwtCookie();
-                    } catch (Exception ex) {
-                        throw new CompletionException(ex);
-                    }
-                });
-            });
+            CefApp.getInstance()
+                    .onInitialization(state -> jwtFuture.completeAsync(() -> {
+                        try {
+                            return jwtRetriever.getJwtCookie();
+                        } catch (Exception ex) {
+                            throw new CompletionException(ex);
+                        }
+                    }));
         });
 
         return jwtFuture;

@@ -32,7 +32,6 @@ import com.intellij.util.ui.JBFont;
 import de.firemage.autograder.api.loader.AutograderLoader;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.extensions.settings.AutograderOption;
-import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
@@ -56,8 +55,7 @@ public class ActiveAssessment {
     private final Assessment assessment;
     private final ClonedProgrammingSubmission clonedSubmission;
 
-    public ActiveAssessment(Assessment assessment, ClonedProgrammingSubmission clonedSubmission)
-            throws IOException, ArtemisClientException {
+    public ActiveAssessment(Assessment assessment, ClonedProgrammingSubmission clonedSubmission) {
         this.assessment = assessment;
         this.clonedSubmission = clonedSubmission;
     }
@@ -157,9 +155,9 @@ public class ActiveAssessment {
                     String message =
                             "Autograder made %d annotation(s). Please double-check all of them for false-positives!"
                                     .formatted(stats.annotationsMade());
-                    ApplicationManager.getApplication().invokeLater(() -> {
-                        Messages.showMessageDialog(message, "Autograder Completed", AllIcons.Status.Success);
-                    });
+                    ApplicationManager.getApplication()
+                            .invokeLater(() -> Messages.showMessageDialog(
+                                    message, "Autograder Completed", AllIcons.Status.Success));
 
                     // Notify listeners on event thread
                     ApplicationManager.getApplication().invokeLater(ActiveAssessment.this::notifyListeners);

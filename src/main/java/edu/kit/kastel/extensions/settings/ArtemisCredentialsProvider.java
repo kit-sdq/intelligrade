@@ -41,9 +41,8 @@ public final class ArtemisCredentialsProvider {
 
     public void setArtemisPassword(String artemisPassword) {
         this.artemisPassword = artemisPassword;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            PasswordSafe.getInstance().setPassword(createCredentialAttributes(PASSWORD_STORE_KEY), artemisPassword);
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> PasswordSafe.getInstance()
+                .setPassword(createCredentialAttributes(PASSWORD_STORE_KEY), artemisPassword));
     }
 
     public String getJwt() {
@@ -53,9 +52,8 @@ public final class ArtemisCredentialsProvider {
 
     public void setJwt(String jwt) {
         this.jwt = jwt;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            PasswordSafe.getInstance().setPassword(createCredentialAttributes(JWT_STORE_KEY), jwt);
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> PasswordSafe.getInstance()
+                .setPassword(createCredentialAttributes(JWT_STORE_KEY), jwt));
     }
 
     private CredentialAttributes createCredentialAttributes(String key) {

@@ -426,7 +426,7 @@ public class PluginState {
 
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
             this.assessmentStartedListeners.forEach(listener -> listener.accept(activeAssessment));
-        } catch (IOException | ArtemisClientException e) {
+        } catch (ArtemisClientException e) {
             LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Error cloning submission", e.getMessage());
 

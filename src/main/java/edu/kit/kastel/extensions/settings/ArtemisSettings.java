@@ -7,7 +7,6 @@ import javax.swing.*;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
@@ -214,8 +213,6 @@ public class ArtemisSettings implements Configurable {
     /**
      * Stores the settings from the Swing form to the configurable component.
      * This method is called on EDT upon user's request.
-     *
-     * @throws ConfigurationException if values cannot be applied
      */
     @Override
     public void apply() {

@@ -4,6 +4,7 @@ package edu.kit.kastel.extensions.guis;
 import java.awt.event.ItemEvent;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -45,14 +46,12 @@ import org.jetbrains.annotations.NotNull;
 public class ExercisePanel extends SimpleToolWindowPanel {
     private static final Logger LOG = Logger.getInstance(ExercisePanel.class);
 
-    private final JPanel content = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
+    private final JBLabel connectedLabel;
 
-    private JBLabel connectedLabel;
-
-    private ComboBox<Course> courseSelector;
-    private ComboBox<OptionalExam> examSelector;
-    private ComboBox<ProgrammingExercise> exerciseSelector;
-    private TextFieldWithBrowseButton gradingConfigPathInput;
+    private final ComboBox<Course> courseSelector;
+    private final ComboBox<OptionalExam> examSelector;
+    private final ComboBox<ProgrammingExercise> exerciseSelector;
+    private final TextFieldWithBrowseButton gradingConfigPathInput;
 
     private JPanel generalPanel;
     private JButton startGradingRound1Button;
@@ -72,6 +71,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         super(true, true);
 
         connectedLabel = new JBLabel();
+        JPanel content = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
         content.add(connectedLabel, "span 2, alignx center");
 
         content.add(new JBLabel("Course:"));
@@ -322,44 +322,42 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
             ApplicationManager.getApplication().invokeLater(() -> {
                 backlogList.removeAll();
-                submissions.stream()
-                        .sorted(Comparator.comparing(ProgrammingSubmission::getSubmissionDate))
-                        .forEach(submission -> {
-                            // Submission Date
-                            String dateText = submission
-                                    .getSubmissionDate()
-                                    .format(DateTimeFormatter.ofLocalizedDateTime(
-                                            FormatStyle.SHORT, FormatStyle.SHORT));
-                            backlogList.add(new JBLabel(dateText), "alignx right");
+                List<ProgrammingSubmission> sortedSubmissions = new ArrayList<>(submissions);
+                sortedSubmissions.sort(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
+                for (ProgrammingSubmission submission : sortedSubmissions) {
+                    String dateText = submission
+                            .getSubmissionDate()
+                            .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
+                    backlogList.add(new JBLabel(dateText), "alignx right");
 
-                            // Correction Round
-                            backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
+                    // Correction Round
+                    backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
 
-                            // Score in percent
-                            var latestResult = submission.getLatestResult();
-                            String resultText = "";
-                            if (submission.isSubmitted()) {
-                                resultText = latestResult
-                                        .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
-                                        .orElse("???");
-                            }
-                            backlogList.add(new JBLabel(resultText), "alignx right");
+                    // Score in percent
+                    var latestResult = submission.getLatestResult();
+                    String resultText = "";
+                    if (submission.isSubmitted()) {
+                        resultText = latestResult
+                                .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
+                                .orElse("???");
+                    }
+                    backlogList.add(new JBLabel(resultText), "alignx right");
 
-                            // Action Button
-                            JButton reopenButton;
-                            if (submission.isSubmitted()) {
-                                reopenButton = new JButton("Reopen Assessment");
-                            } else if (latestResult.isPresent()
-                                    && latestResult.get().assessmentType() != AssessmentType.AUTOMATIC) {
-                                reopenButton = new JButton("Continue Assessment");
-                                reopenButton.setForeground(JBColor.ORANGE);
-                            } else {
-                                reopenButton = new JButton("Start Assessment");
-                            }
-                            reopenButton.addActionListener(
-                                    a -> PluginState.getInstance().reopenAssessment(submission));
-                            backlogList.add(reopenButton, "growx");
-                        });
+                    // Action Button
+                    JButton reopenButton;
+                    if (submission.isSubmitted()) {
+                        reopenButton = new JButton("Reopen Assessment");
+                    } else if (latestResult.isPresent()
+                            && latestResult.get().assessmentType() != AssessmentType.AUTOMATIC) {
+                        reopenButton = new JButton("Continue Assessment");
+                        reopenButton.setForeground(JBColor.ORANGE);
+                    } else {
+                        reopenButton = new JButton("Start Assessment");
+                    }
+                    reopenButton.addActionListener(
+                            a -> PluginState.getInstance().reopenAssessment(submission));
+                    backlogList.add(reopenButton, "growx");
+                }
 
                 updateUI();
 

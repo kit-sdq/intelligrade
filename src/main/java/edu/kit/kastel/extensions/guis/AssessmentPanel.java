@@ -114,7 +114,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             }
 
             // Update button icons
-            this.assessmentButtons.forEach(assessmentButton -> {
+            for (AssessmentButton assessmentButton : this.assessmentButtons) {
                 var settings = ArtemisSettingsState.getInstance();
                 var mistakeType = assessmentButton.mistakeType();
 
@@ -154,7 +154,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 assessmentButton.iconRenderer().update(iconText, color);
                 assessmentButton.button().setForeground(color);
                 assessmentButton.button().setFont(font);
-            });
+            }
         });
 
         this.updateUI();
