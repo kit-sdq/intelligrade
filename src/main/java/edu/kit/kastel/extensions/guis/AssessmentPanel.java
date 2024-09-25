@@ -23,10 +23,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBFont;
 import edu.kit.kastel.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.CustomPenaltyRule;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.RatingGroup;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.ThresholdPenaltyRule;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.*;
 import edu.kit.kastel.state.ActiveAssessment;
 import edu.kit.kastel.state.PluginState;
 import net.miginfocom.swing.MigLayout;
@@ -128,20 +125,26 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 if (mistakeType.getReporting().shouldScore()) {
                     int count = a.getAnnotations(mistakeType).size();
                     var rule = mistakeType.getRule();
-                    if (rule instanceof ThresholdPenaltyRule thresholdRule) {
-                        iconText = count + "/" + thresholdRule.getThreshold();
-                        if (count >= thresholdRule.getThreshold()) {
-                            color = settings.getActiveAssessmentButtonColor();
-                            font = font.deriveFont(Map.of(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON));
-                        } else {
-                            color = settings.getFinishedAssessmentButtonColor();
+
+                    switch (rule) {
+                        case ThresholdPenaltyRule thresholdRule -> {
+                            iconText = count + "/" + thresholdRule.getThreshold();
+                            if (count >= thresholdRule.getThreshold()) {
+                                color = settings.getActiveAssessmentButtonColor();
+                                font = font.deriveFont(
+                                        Map.of(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON));
+                            } else {
+                                color = settings.getFinishedAssessmentButtonColor();
+                            }
                         }
-                    } else if (rule instanceof CustomPenaltyRule) {
-                        iconText = "C";
-                        color = settings.getActiveAssessmentButtonColor();
-                    } else {
-                        iconText = String.valueOf(count);
-                        color = settings.getActiveAssessmentButtonColor();
+                        case CustomPenaltyRule customPenaltyRule -> {
+                            iconText = "C";
+                            color = settings.getActiveAssessmentButtonColor();
+                        }
+                        case StackingPenaltyRule stackingPenaltyRule -> {
+                            iconText = String.valueOf(count);
+                            color = settings.getActiveAssessmentButtonColor();
+                        }
                     }
                 } else {
                     iconText = "R";
