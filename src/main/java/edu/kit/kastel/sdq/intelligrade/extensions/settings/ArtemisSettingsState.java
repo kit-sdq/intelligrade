@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSettingsState.InternalState> {
     private final InternalState state = new InternalState();
 
+    // Settings need to be public for IntelliJ to serialize them
+    @SuppressWarnings("java:S1104")
     public static class InternalState {
         public boolean useTokenLogin = true;
         public VCSAccessOption vcsAccessOption = VCSAccessOption.TOKEN;
