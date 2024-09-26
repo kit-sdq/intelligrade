@@ -17,28 +17,28 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationConfigurable
                 parentId="tools"
-                instance="edu.kit.kastel.extensions.settings.ArtemisSettings"
-                id="edu.kit.kastel.extensions.settings.ArtemisSettings"
+                instance="edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettings"
+                id="edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettings"
                 displayName="Artemis (IntelliGrade)"/>
         <applicationService
-                serviceImplementation="edu.kit.kastel.extensions.settings.ArtemisSettingsState"/>
+                serviceImplementation="edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState"/>
         <toolWindow id="Artemis" secondary="true" anchor="right" icon="AllIcons.Actions.Edit"
-                    factoryClass="edu.kit.kastel.extensions.tool_windows.MainToolWindowFactory"/>
-        <toolWindow factoryClass="edu.kit.kastel.extensions.tool_windows.AnnotationsToolWindowFactory" id="Annotations"
+                    factoryClass="edu.kit.kastel.sdq.intelligrade.extensions.tool_windows.MainToolWindowFactory"/>
+        <toolWindow factoryClass="edu.kit.kastel.sdq.intelligrade.extensions.tool_windows.AnnotationsToolWindowFactory" id="Annotations"
                     anchor="bottom" icon="AllIcons.Actions.Annotate"/>
         <notificationGroup id="IntelliGrade Notifications"
                            displayType="BALLOON"/>
-        <postStartupActivity implementation="edu.kit.kastel.listeners.OnStartupCompleted" />
-        <editorFactoryMouseMotionListener implementation="edu.kit.kastel.listeners.OnMouseInEditorMoved"/>
+        <postStartupActivity implementation="edu.kit.kastel.sdq.intelligrade.listeners.OnStartupCompleted" />
+        <editorFactoryMouseMotionListener implementation="edu.kit.kastel.sdq.intelligrade.listeners.OnMouseInEditorMoved"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="edu.kit.kastel.listeners.OnPlugInLoad"
+        <listener class="edu.kit.kastel.sdq.intelligrade.listeners.OnPlugInLoad"
                   topic="com.intellij.ide.AppLifecycleListener"/>
     </applicationListeners>
     <actions>
         <action id="edu.kit.kastel.actions.AddAnnotationPopupAction"
-                class="edu.kit.kastel.actions.edu.kit.kastel.actions.AddAnnotationPopupAction" text="Add Annotation"
+                class="edu.kit.kastel.sdq.intelligrade.actions.AddAnnotationPopupAction" text="Add Annotation"
                 description="Add a new grading annotation">
             <keyboard-shortcut keymap="$default" first-keystroke="alt a"/>
         </action>
