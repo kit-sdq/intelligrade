@@ -97,8 +97,8 @@ public class PluginState {
         }
 
         connectionFuture
-                .thenAcceptAsync(connection -> {
-                    this.connection = connection;
+                .thenAcceptAsync(newConnection -> {
+                    this.connection = newConnection;
                     try {
                         this.verifyLogin();
                         this.notifyConnectedListeners();
