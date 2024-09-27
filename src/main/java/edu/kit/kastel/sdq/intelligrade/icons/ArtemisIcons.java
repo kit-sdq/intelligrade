@@ -7,6 +7,9 @@ import com.intellij.openapi.util.IconLoader;
 
 // This class follows IntelliJ's code style conventions
 public final class ArtemisIcons {
+    private ArtemisIcons() {
+        throw new IllegalStateException("Utility class");
+    }
     public static final Icon AnnotationsGutter1 = IconLoader.getIcon("/icons/annotation1.svg", ArtemisIcons.class);
     public static final Icon AnnotationsGutter2 = IconLoader.getIcon("/icons/annotation2.svg", ArtemisIcons.class);
     public static final Icon AnnotationsGutter3 = IconLoader.getIcon("/icons/annotation3.svg", ArtemisIcons.class);
