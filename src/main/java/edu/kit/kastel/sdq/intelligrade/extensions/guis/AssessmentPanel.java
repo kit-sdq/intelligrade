@@ -49,6 +49,11 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             content.removeAll();
 
             content.add(pointsLabel, "alignx center");
+
+            var infoLabel = new JBLabel("Hold Ctrl to add a custom message");
+            infoLabel.setForeground(JBColor.GRAY);
+            content.add(infoLabel, "alignx center");
+
             assessment.registerAnnotationsUpdatedListener(annotations -> {
                 var a = assessment.getAssessment();
                 var testPoints = a.calculateTotalPointsOfTests();
@@ -64,6 +69,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     }
 
     private void createMistakeButtons(ActiveAssessment assessment) {
+
         int buttonsPerRow = ArtemisSettingsState.getInstance().getColumnsPerRatingGroup();
         for (var ratingGroup : assessment.getGradingConfig().getRatingGroups()) {
             if (ratingGroup.getMistakeTypes().isEmpty()) {
@@ -209,6 +215,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     }
 
     private static class MistakeTypeIconRenderer {
+        private final JBFont font;
+
         private String text;
         private Color bgColor;
 
@@ -217,11 +225,13 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
         private int textHeight;
 
         public MistakeTypeIconRenderer() {
+            this.font = JBFont.regular();
             this.update("", JBColor.foreground());
         }
 
         public void paint(Graphics2D g, JComponent component) {
-            g.setFont(JBFont.regular());
+            g.setFont(this.font);
+
             if (textWidth < 0) {
                 textWidth = g.getFontMetrics().stringWidth(text);
                 baselineHeight = g.getFontMetrics().getMaxAscent();
@@ -235,7 +245,6 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             g.fillRoundRect(component.getWidth() - textWidth - 5, 0, textWidth + 2, textHeight, 2, 2);
 
             g.setColor(JBColor.background());
-            // AllIcons.Actions.Back.paintIcon(c, g, c.getWidth() - textWidth, baselineHeight);
             g.drawString(text, component.getWidth() - textWidth - 4, baselineHeight);
         }
 
