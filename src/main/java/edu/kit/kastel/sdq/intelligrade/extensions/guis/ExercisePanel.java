@@ -7,11 +7,10 @@ import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 
 import com.intellij.icons.AllIcons;
@@ -28,9 +27,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.TextComponentEmptyText;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
+import edu.kit.kastel.sdq.artemis4j.client.AssessmentStatsDTO;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
@@ -51,11 +54,15 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private final ComboBox<Course> courseSelector;
     private final ComboBox<OptionalExam> examSelector;
     private final ComboBox<ProgrammingExercise> exerciseSelector;
-    private final TextFieldWithBrowseButton gradingConfigPathInput;
 
     private JPanel generalPanel;
     private JButton startGradingRound1Button;
     private JButton startGradingRound2Button;
+    private TextFieldWithBrowseButton gradingConfigPathInput;
+
+    private JPanel statisticsPanel;
+    private JBLabel totalStatisticsLabel;
+    private JBLabel userStatisticsLabel;
 
     private JPanel assessmentPanel;
     private JButton submitAssessmentButton;
@@ -86,25 +93,18 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         exerciseSelector = new ComboBox<>();
         content.add(exerciseSelector, "growx");
 
-        content.add(new JBLabel("Grading Config:"));
-        gradingConfigPathInput = new TextFieldWithBrowseButton();
-        gradingConfigPathInput.addBrowseFolderListener(
-                new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
-        gradingConfigPathInput.setText(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath());
-        gradingConfigPathInput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-            @Override
-            protected void textChanged(@NotNull DocumentEvent documentEvent) {
-                ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
-            }
-        });
-        content.add(gradingConfigPathInput, "growx");
+        createStatisticsPanel();
+        content.add(statisticsPanel, "span 2, growx");
 
         createGeneralPanel();
+        content.add(new TitledSeparator("General"), "spanx 2, growx");
         content.add(generalPanel, "span 2, growx");
 
+        content.add(new TitledSeparator("Assessment"), "spanx 2, growx");
         createAssessmentPanel();
         content.add(assessmentPanel, "span 2, growx");
 
+        content.add(new TitledSeparator("Backlog"), "spanx 2, growx");
         createBacklogPanel();
         content.add(backlogPanel, "span 2, growx");
 
@@ -121,7 +121,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 PluginState.getInstance().setActiveExam(examSelector.getItem().exam());
                 PluginState.getInstance().setActiveExercise(exercise);
 
-                updateBacklog();
+                updateBacklogAndStats();
             }
         });
 
@@ -207,6 +207,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             saveAssessmentButton.setEnabled(true);
             closeAssessmentButton.setEnabled(true);
             reRunAutograder.setEnabled(true);
+
+            updateBacklogAndStats();
         });
 
         PluginState.getInstance().registerAssessmentClosedListener(() -> {
@@ -220,13 +222,12 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             closeAssessmentButton.setEnabled(false);
             reRunAutograder.setEnabled(false);
 
-            updateBacklog();
+            updateBacklogAndStats();
         });
     }
 
     private void createGeneralPanel() {
-        generalPanel = new JBPanel<>().withBorder(new TitledBorder(new LineBorder(JBColor.border()), "General"));
-        generalPanel.setLayout(new MigLayout("wrap 1", "[grow]"));
+        generalPanel = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
 
         startGradingRound1Button = new JButton("Start Grading Round 1");
         startGradingRound1Button.setForeground(JBColor.GREEN);
@@ -239,11 +240,39 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         startGradingRound2Button.addActionListener(
                 a -> PluginState.getInstance().startNextAssessment(1));
         generalPanel.add(startGradingRound2Button, "growx");
+
+        gradingConfigPathInput = new TextFieldWithBrowseButton();
+        gradingConfigPathInput.addBrowseFolderListener(
+                new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
+        gradingConfigPathInput.setText(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath());
+        gradingConfigPathInput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent documentEvent) {
+                ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
+            }
+        });
+        generalPanel.add(gradingConfigPathInput, "growx");
+
+        var innerTextField = (JBTextField) gradingConfigPathInput.getTextField();
+        innerTextField.getEmptyText().setText("Path to grading config");
+        innerTextField.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)
+                f -> f.getText().isEmpty());
+    }
+
+    private void createStatisticsPanel() {
+        statisticsPanel = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
+
+        statisticsPanel.add(new JBLabel("Submissions:"));
+        totalStatisticsLabel = new JBLabel();
+        statisticsPanel.add(totalStatisticsLabel);
+
+        statisticsPanel.add(new JBLabel("Your Assessments:"));
+        userStatisticsLabel = new JBLabel();
+        statisticsPanel.add(userStatisticsLabel);
     }
 
     private void createAssessmentPanel() {
-        assessmentPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow][grow]"))
-                .withBorder(new TitledBorder(new LineBorder(JBColor.border()), "Assessment"));
+        assessmentPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow][grow]"));
         assessmentPanel.setEnabled(false);
 
         submitAssessmentButton = new JButton("Submit Assessment");
@@ -299,27 +328,29 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     }
 
     private void createBacklogPanel() {
-        backlogPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow] []"))
-                .withBorder(new TitledBorder(new LineBorder(JBColor.border()), "Backlog"));
+        backlogPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow] []"));
 
         backlogList = new JBPanel<>(new MigLayout("wrap 4, gapx 30", "[][][][grow]"));
         backlogPanel.add(ScrollPaneFactory.createScrollPane(backlogList, true), "spanx 2, growx");
 
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
-        refreshButton.addActionListener(a -> updateBacklog());
+        refreshButton.addActionListener(a -> updateBacklogAndStats());
         backlogPanel.add(refreshButton, "skip 1, alignx right");
     }
 
-    private void updateBacklog() {
+    private void updateBacklogAndStats() {
+        // Fetch data in the background, but do all UI updates on the EDT!
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var exercise = PluginState.getInstance().getActiveExercise().orElseThrow();
 
             List<ProgrammingSubmission> submissions;
+            AssessmentStatsDTO stats;
             try {
                 submissions = exercise.fetchSubmissions();
+                stats = exercise.fetchAssessmentStats();
             } catch (ArtemisNetworkException ex) {
                 LOG.warn(ex);
-                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch backlog", ex);
+                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch backlog or statistics", ex);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     backlogList.removeAll();
                     this.updateUI();
@@ -328,7 +359,41 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             }
 
             ApplicationManager.getApplication().invokeLater(() -> {
+                // Statistics
+                String totalText;
+                if (exercise.hasSecondCorrectionRound()) {
+                    totalText = "%d / %d / %d (%d locked)"
+                            .formatted(
+                                    stats.numberOfAssessmentsOfCorrectionRounds()
+                                            .getFirst()
+                                            .inTime(),
+                                    stats.numberOfAssessmentsOfCorrectionRounds()
+                                            .get(1)
+                                            .inTime(),
+                                    stats.numberOfSubmissions().inTime(),
+                                    stats.totalNumberOfAssessmentLocks());
+                } else {
+                    totalText = "%d / %d (%d locked)"
+                            .formatted(
+                                    stats.numberOfAssessmentsOfCorrectionRounds()
+                                            .getFirst()
+                                            .inTime(),
+                                    stats.numberOfSubmissions().inTime(),
+                                    stats.totalNumberOfAssessmentLocks());
+                }
+                totalStatisticsLabel.setText(totalText);
+
+                int submittedSubmissions = (int) submissions.stream()
+                        .filter(ProgrammingSubmission::isSubmitted)
+                        .count();
+                int lockedSubmissions = (int)
+                        submissions.stream().filter(this::isSubmissionStarted).count();
+                String userText = "%d (%d locked)".formatted(submittedSubmissions, lockedSubmissions);
+                userStatisticsLabel.setText(userText);
+
+                // Backlog
                 backlogList.removeAll();
+
                 List<ProgrammingSubmission> sortedSubmissions = new ArrayList<>(submissions);
                 sortedSubmissions.sort(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
                 for (ProgrammingSubmission submission : sortedSubmissions) {
@@ -354,8 +419,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                     JButton reopenButton;
                     if (submission.isSubmitted()) {
                         reopenButton = new JButton("Reopen Assessment");
-                    } else if (latestResult.isPresent()
-                            && latestResult.get().assessmentType() != AssessmentType.AUTOMATIC) {
+                    } else if (isSubmissionStarted(submission)) {
                         reopenButton = new JButton("Continue Assessment");
                         reopenButton.setForeground(JBColor.ORANGE);
                     } else {
@@ -380,5 +444,11 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         public String toString() {
             return exam == null ? "<No Exam>" : exam.toString();
         }
+    }
+
+    private boolean isSubmissionStarted(ProgrammingSubmission submission) {
+        return !submission.isSubmitted()
+                && submission.getLatestResult().isPresent()
+                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
     }
 }

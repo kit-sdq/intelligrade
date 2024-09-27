@@ -55,6 +55,7 @@ public final class FileOpener implements DumbService.DumbModeListener {
         }
 
         // Open the main class
+        // Do this in the background because it may cause a synchronous vfs refresh
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             synchronized (this) {
                 if (!openClassesNextTime || !PluginState.getInstance().isAssessing()) {
@@ -75,7 +76,9 @@ public final class FileOpener implements DumbService.DumbModeListener {
                 return;
             }
 
-            ApplicationManager.getApplication().runReadAction(() -> {
+            // Even though we exited dumb mode, the index operations below may throw IndexNotReadyExceptions,
+            // so defensively wrap this in a smart mode action
+            DumbService.getInstance(project).runReadActionInSmartMode(() -> {
                 var scope = GlobalSearchScopes.directoryScope(project, directory, true);
                 var mainMethods = PsiShortNamesCache.getInstance(project).getMethodsByName("main", scope);
 

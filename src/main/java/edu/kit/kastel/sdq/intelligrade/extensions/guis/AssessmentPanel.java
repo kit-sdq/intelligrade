@@ -69,7 +69,6 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     }
 
     private void createMistakeButtons(ActiveAssessment assessment) {
-
         int buttonsPerRow = ArtemisSettingsState.getInstance().getColumnsPerRatingGroup();
         for (var ratingGroup : assessment.getGradingConfig().getRatingGroups()) {
             if (ratingGroup.getMistakeTypes().isEmpty()) {
