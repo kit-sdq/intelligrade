@@ -114,16 +114,16 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                                     .thenComparing(Annotation::getStartLine)
                                     .thenComparing(Annotation::getEndLine));
 
-                            AnnotationsTableModel model = ((AnnotationsTableModel) table.getModel());
-                            model.setAnnotations(displayAnnotations);
+                            AnnotationsTableModel tableModel = ((AnnotationsTableModel) table.getModel());
+                            tableModel.setAnnotations(displayAnnotations);
                             table.revalidate();
                             table.updateUI();
                         }));
 
         PluginState.getInstance().registerAssessmentClosedListener(() -> {
             this.displayAnnotations.clear();
-            AnnotationsTableModel model = ((AnnotationsTableModel) table.getModel());
-            model.clearAnnotations();
+            AnnotationsTableModel tableModel = ((AnnotationsTableModel) table.getModel());
+            tableModel.clearAnnotations();
             table.updateUI();
         });
     }
