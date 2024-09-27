@@ -17,10 +17,7 @@ public class TestCasePanel extends SimpleToolWindowPanel {
     public TestCasePanel() {
         super(true, true);
 
-        var content = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
-
         this.content = new JBPanel<>(new MigLayout("wrap 3, gapx 10px, gapy 5px", "[][][]"));
-        content.add(this.content);
 
         setContent(ScrollPaneFactory.createScrollPane(content));
 

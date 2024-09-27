@@ -51,11 +51,9 @@ public class AutograderTask extends Task.Backgroundable {
         var settings = ArtemisSettingsState.getInstance();
 
         // Load Autograder from file
-        if (settings.getAutograderOption() == AutograderOption.FROM_FILE) {
-            // Skip everything if loading failed
-            if (!loadAutograderFromFile(settings, indicator)) {
-                return;
-            }
+        if (settings.getAutograderOption() == AutograderOption.FROM_FILE
+                && !loadAutograderFromFile(settings, indicator)) {
+            return;
         }
 
         try {
