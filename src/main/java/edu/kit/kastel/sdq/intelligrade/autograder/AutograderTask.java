@@ -52,6 +52,7 @@ public class AutograderTask extends Task.Backgroundable {
 
         // Load Autograder from file
         if (settings.getAutograderOption() == AutograderOption.FROM_FILE) {
+            // Skip everything if loading failed
             if (!loadAutograderFromFile(settings, indicator)) {
                 return;
             }

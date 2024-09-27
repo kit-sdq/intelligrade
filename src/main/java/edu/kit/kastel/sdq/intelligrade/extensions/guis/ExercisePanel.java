@@ -254,28 +254,31 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private void handleExamSelected(ItemEvent e) {
         // If an exam was selected, update the exercise selector with the exercises of the exam
         // If no exam was selected, update the exercise selector with the exercises of the course
-        if (e.getStateChange() != ItemEvent.DESELECTED) {
-            try {
-                exerciseSelector.removeAllItems();
-                var item = (OptionalExam) e.getItem();
-                if (item.exam() != null) {
-                    for (var group : item.exam().getExerciseGroups()) {
-                        for (var exercise : group.getProgrammingExercises()) {
-                            exerciseSelector.addItem(exercise);
-                        }
-                    }
-                } else {
-                    for (ProgrammingExercise programmingExercise :
-                            courseSelector.getItem().getProgrammingExercises()) {
-                        exerciseSelector.addItem(programmingExercise);
+        if (e.getStateChange() == ItemEvent.DESELECTED) {
+            return;
+        }
+
+        try {
+            exerciseSelector.removeAllItems();
+            var item = (OptionalExam) e.getItem();
+            if (item.exam() != null) {
+                for (var group : item.exam().getExerciseGroups()) {
+                    for (var exercise : group.getProgrammingExercises()) {
+                        exerciseSelector.addItem(exercise);
                     }
                 }
-            } catch (ArtemisNetworkException ex) {
-                LOG.warn(ex);
-                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
+            } else {
+                for (ProgrammingExercise programmingExercise :
+                        courseSelector.getItem().getProgrammingExercises()) {
+                    exerciseSelector.addItem(programmingExercise);
+                }
             }
-            updateUI();
+        } catch (ArtemisNetworkException ex) {
+            LOG.warn(ex);
+            ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
         }
+
+        updateUI();
     }
 
     private void handleCourseSelected(ItemEvent e) {
@@ -372,78 +375,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             }
 
             ApplicationManager.getApplication().invokeLater(() -> {
-                // Statistics
-                String totalText;
-                if (exercise.hasSecondCorrectionRound()) {
-                    totalText = "%d / %d / %d (%d locked)"
-                            .formatted(
-                                    stats.numberOfAssessmentsOfCorrectionRounds()
-                                            .getFirst()
-                                            .inTime(),
-                                    stats.numberOfAssessmentsOfCorrectionRounds()
-                                            .get(1)
-                                            .inTime(),
-                                    stats.numberOfSubmissions().inTime(),
-                                    stats.totalNumberOfAssessmentLocks());
-                } else {
-                    totalText = "%d / %d (%d locked)"
-                            .formatted(
-                                    stats.numberOfAssessmentsOfCorrectionRounds()
-                                            .getFirst()
-                                            .inTime(),
-                                    stats.numberOfSubmissions().inTime(),
-                                    stats.totalNumberOfAssessmentLocks());
-                }
-                totalStatisticsLabel.setText(totalText);
-
-                int submittedSubmissions = (int) submissions.stream()
-                        .filter(ProgrammingSubmission::isSubmitted)
-                        .count();
-                int lockedSubmissions = (int) submissions.stream()
-                        .filter(ExercisePanel::isSubmissionStarted)
-                        .count();
-                String userText = "%d (%d locked)".formatted(submittedSubmissions, lockedSubmissions);
-                userStatisticsLabel.setText(userText);
-
-                // Backlog
-                backlogList.removeAll();
-
-                List<ProgrammingSubmission> sortedSubmissions = new ArrayList<>(submissions);
-                sortedSubmissions.sort(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
-                for (ProgrammingSubmission submission : sortedSubmissions) {
-                    String dateText = submission
-                            .getSubmissionDate()
-                            .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
-                    backlogList.add(new JBLabel(dateText), "alignx right");
-
-                    // Correction Round
-                    backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
-
-                    // Score in percent
-                    var latestResult = submission.getLatestResult();
-                    String resultText = "";
-                    if (submission.isSubmitted()) {
-                        resultText = latestResult
-                                .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
-                                .orElse("???");
-                    }
-                    backlogList.add(new JBLabel(resultText), "alignx right");
-
-                    // Action Button
-                    JButton reopenButton;
-                    if (submission.isSubmitted()) {
-                        reopenButton = new JButton("Reopen Assessment");
-                    } else if (isSubmissionStarted(submission)) {
-                        reopenButton = new JButton("Continue Assessment");
-                        reopenButton.setForeground(JBColor.ORANGE);
-                    } else {
-                        reopenButton = new JButton("Start Assessment");
-                    }
-                    reopenButton.addActionListener(
-                            a -> PluginState.getInstance().reopenAssessment(submission));
-                    backlogList.add(reopenButton, "growx");
-                }
-
+                updateStatistics(exercise, stats, submissions);
+                updateBacklog(submissions);
                 updateUI();
 
                 // Tell the user that we've done something
@@ -451,6 +384,76 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                         .notifyByBalloon("Artemis", MessageType.INFO, "Backlog updated");
             });
         });
+    }
+
+    private void updateStatistics(
+            ProgrammingExercise exercise, AssessmentStatsDTO stats, List<ProgrammingSubmission> submissions) {
+        String totalText;
+        if (exercise.hasSecondCorrectionRound()) {
+            totalText = "%d / %d / %d (%d locked)"
+                    .formatted(
+                            stats.numberOfAssessmentsOfCorrectionRounds()
+                                    .getFirst()
+                                    .inTime(),
+                            stats.numberOfAssessmentsOfCorrectionRounds().get(1).inTime(),
+                            stats.numberOfSubmissions().inTime(),
+                            stats.totalNumberOfAssessmentLocks());
+        } else {
+            totalText = "%d / %d (%d locked)"
+                    .formatted(
+                            stats.numberOfAssessmentsOfCorrectionRounds()
+                                    .getFirst()
+                                    .inTime(),
+                            stats.numberOfSubmissions().inTime(),
+                            stats.totalNumberOfAssessmentLocks());
+        }
+        totalStatisticsLabel.setText(totalText);
+
+        int submittedSubmissions = (int)
+                submissions.stream().filter(ProgrammingSubmission::isSubmitted).count();
+        int lockedSubmissions = (int)
+                submissions.stream().filter(ExercisePanel::isSubmissionStarted).count();
+        String userText = "%d (%d locked)".formatted(submittedSubmissions, lockedSubmissions);
+        userStatisticsLabel.setText(userText);
+    }
+
+    private void updateBacklog(List<ProgrammingSubmission> submissions) {
+        backlogList.removeAll();
+
+        List<ProgrammingSubmission> sortedSubmissions = new ArrayList<>(submissions);
+        sortedSubmissions.sort(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
+        for (ProgrammingSubmission submission : sortedSubmissions) {
+            String dateText = submission
+                    .getSubmissionDate()
+                    .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
+            backlogList.add(new JBLabel(dateText), "alignx right");
+
+            // Correction Round
+            backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
+
+            // Score in percent
+            var latestResult = submission.getLatestResult();
+            String resultText = "";
+            if (submission.isSubmitted()) {
+                resultText = latestResult
+                        .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
+                        .orElse("???");
+            }
+            backlogList.add(new JBLabel(resultText), "alignx right");
+
+            // Action Button
+            JButton reopenButton;
+            if (submission.isSubmitted()) {
+                reopenButton = new JButton("Reopen Assessment");
+            } else if (isSubmissionStarted(submission)) {
+                reopenButton = new JButton("Continue Assessment");
+                reopenButton.setForeground(JBColor.ORANGE);
+            } else {
+                reopenButton = new JButton("Start Assessment");
+            }
+            reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
+            backlogList.add(reopenButton, "growx");
+        }
     }
 
     private static boolean isSubmissionStarted(ProgrammingSubmission submission) {

@@ -12,20 +12,20 @@ import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import net.miginfocom.swing.MigLayout;
 
 public class TestCasePanel extends SimpleToolWindowPanel {
-    private final JPanel testCasePanel;
+    private final JPanel content;
 
     public TestCasePanel() {
         super(true, true);
 
         var content = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
 
-        testCasePanel = new JBPanel<>(new MigLayout("wrap 3, gapx 10px, gapy 5px", "[][][]"));
-        content.add(testCasePanel);
+        this.content = new JBPanel<>(new MigLayout("wrap 3, gapx 10px, gapy 5px", "[][][]"));
+        content.add(this.content);
 
         setContent(ScrollPaneFactory.createScrollPane(content));
 
         PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
-            testCasePanel.removeAll();
+            this.content.removeAll();
 
             var testResults = assessment.getAssessment().getTestResults();
             for (var result : testResults) {
@@ -36,22 +36,22 @@ public class TestCasePanel extends SimpleToolWindowPanel {
                         : AllIcons.RunConfigurations.TestFailed;
                 var iconLabel = new JBLabel(icon);
                 iconLabel.setToolTipText(tooltip);
-                testCasePanel.add(iconLabel);
+                this.content.add(iconLabel);
 
                 var testName = new JBLabel(result.getTestName());
                 testName.setToolTipText(tooltip);
-                testCasePanel.add(testName);
+                this.content.add(testName);
 
                 String points = result.getPoints() != 0.0 ? String.format("%.3fP", result.getPoints()) : "";
-                testCasePanel.add(new JBLabel(points));
+                this.content.add(new JBLabel(points));
             }
 
             updateUI();
         });
 
         PluginState.getInstance().registerAssessmentClosedListener(() -> {
-            testCasePanel.removeAll();
-            testCasePanel.add(new JBLabel("No active assessment"), "spanx 3, alignx center");
+            this.content.removeAll();
+            this.content.add(new JBLabel("No active assessment"), "spanx 3, alignx center");
             updateUI();
         });
     }
