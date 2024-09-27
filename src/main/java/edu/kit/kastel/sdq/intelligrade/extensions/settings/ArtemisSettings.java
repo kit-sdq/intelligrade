@@ -28,10 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * Everything directly related to the Setting UI should be in here.
  */
 public class ArtemisSettings implements Configurable {
-    private JBPanel<?> contentPanel;
-
     private JBTextField artemisURLField;
-    private JButton loginButton;
 
     private JBLabel usernameLabel;
     private JBRadioButton useTokenLoginButton;
@@ -77,13 +74,13 @@ public class ArtemisSettings implements Configurable {
      */
     @Override
     public @Nullable JComponent createComponent() {
-        contentPanel = new JBPanel<>(new MigLayout("wrap 2", "[] [grow]"));
+        var contentPanel = new JBPanel<>(new MigLayout("wrap 2", "[] [grow]"));
 
         contentPanel.add(new JBLabel("Artemis URL:"));
         artemisURLField = new JBTextField();
         contentPanel.add(artemisURLField, "growx");
 
-        loginButton = new JButton("(Re-)Connect");
+        var loginButton = new JButton("(Re-)Connect");
         loginButton.addActionListener(a -> {
             ArtemisCredentialsProvider.getInstance().setJwt(null);
             ArtemisSettingsState.getInstance().setJwtExpiry(null);

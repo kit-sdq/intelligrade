@@ -26,7 +26,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
-import edu.kit.kastel.sdq.intelligrade.utils.EditorUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
@@ -36,7 +36,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
 
     public static AnnotationsListPanel getPanel() {
         var toolWindow =
-                ToolWindowManager.getInstance(EditorUtil.getActiveProject()).getToolWindow("Annotations");
+                ToolWindowManager.getInstance(IntellijUtil.getActiveProject()).getToolWindow("Annotations");
         return (AnnotationsListPanel)
                 toolWindow.getContentManager().getContent(0).getComponent();
     }
@@ -91,12 +91,12 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                                 .changeCustomMessage(annotation);
                     } else {
                         // Jump to the line in the editor
-                        var file = EditorUtil.getAnnotationFile(annotation);
+                        var file = IntellijUtil.getAnnotationFile(annotation);
                         var document = FileDocumentManager.getInstance().getDocument(file);
                         int offset = document.getLineStartOffset(annotation.getStartLine());
-                        FileEditorManager.getInstance(EditorUtil.getActiveProject())
+                        FileEditorManager.getInstance(IntellijUtil.getActiveProject())
                                 .openTextEditor(
-                                        new OpenFileDescriptor(EditorUtil.getActiveProject(), file, offset), true);
+                                        new OpenFileDescriptor(IntellijUtil.getActiveProject(), file, offset), true);
                     }
                 }
             }

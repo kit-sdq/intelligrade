@@ -10,7 +10,9 @@ import org.cef.handler.CefFocusHandler;
  */
 public class CefWindowFocusHandler implements CefFocusHandler {
     @Override
-    public void onTakeFocus(CefBrowser cefBrowser, boolean b) {}
+    public void onTakeFocus(CefBrowser cefBrowser, boolean b) {
+        // Nothing to do
+    }
 
     @Override
     public boolean onSetFocus(CefBrowser cefBrowser, FocusSource focusSource) {
@@ -18,5 +20,7 @@ public class CefWindowFocusHandler implements CefFocusHandler {
     }
 
     @Override
-    public void onGotFocus(CefBrowser cefBrowser) {}
+    public void onGotFocus(CefBrowser cefBrowser) {
+        // Nothing to do
+    }
 }

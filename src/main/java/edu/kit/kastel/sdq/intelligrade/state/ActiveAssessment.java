@@ -5,11 +5,9 @@ import java.awt.EventQueue;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
@@ -17,33 +15,25 @@ import javax.swing.JButton;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.JBFont;
-import de.firemage.autograder.api.loader.AutograderLoader;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
-import edu.kit.kastel.sdq.artemis4j.grading.autograder.AutograderFailedException;
-import edu.kit.kastel.sdq.artemis4j.grading.autograder.AutograderRunner;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
+import edu.kit.kastel.sdq.intelligrade.autograder.AutograderTask;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.AutograderOption;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.CodeSelection;
-import edu.kit.kastel.sdq.intelligrade.utils.EditorUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NotNull;
 
 public class ActiveAssessment {
     private static final Logger LOG = Logger.getInstance(ActiveAssessment.class);
@@ -81,10 +71,10 @@ public class ActiveAssessment {
             return;
         }
 
-        var editor = EditorUtil.getActiveEditor();
+        var editor = IntellijUtil.getActiveEditor();
         int startLine = editor.getDocument().getLineNumber(selection.get().startOffset());
         int endLine = editor.getDocument().getLineNumber(selection.get().endOffset());
-        String path = Path.of(EditorUtil.getActiveProject().getBasePath())
+        String path = Path.of(IntellijUtil.getActiveProject().getBasePath())
                 .resolve(ASSIGNMENT_SUB_PATH)
                 .relativize(selection.get().path())
                 .toString();
@@ -112,61 +102,7 @@ public class ActiveAssessment {
             return;
         }
 
-        new Task.Backgroundable(EditorUtil.getActiveProject(), "Autograder", true) {
-            public void run(@NotNull ProgressIndicator indicator) {
-                indicator.setIndeterminate(true);
-
-                // Load Autograder from file
-                if (settings.getAutograderOption() == AutograderOption.FROM_FILE) {
-                    if (!AutograderLoader.isAutograderLoaded()) {
-                        var path = settings.getAutograderPath();
-                        if (path == null || path.isBlank()) {
-                            ArtemisUtils.displayGenericErrorBalloon(
-                                    "No Autograder Path",
-                                    "Please set the path to the Autograder JAR, or choose to download it from GitHub.");
-                            return;
-                        }
-
-                        indicator.setText("Loading Autograder");
-                        try {
-                            AutograderLoader.loadFromFile(Path.of(settings.getAutograderPath()));
-                        } catch (IOException e) {
-                            LOG.warn(e);
-                            ArtemisUtils.displayGenericErrorBalloon("Could not load Autograder", e.getMessage());
-                            return;
-                        }
-                    } else {
-                        ArtemisUtils.displayGenericWarningBalloon(
-                                "Autograder Already Loaded",
-                                "Not reloading it from the specified file. Restart the IDE to reload it.");
-                    }
-                }
-
-                try {
-                    Consumer<String> statusConsumer = status -> indicator.setText("Autograder: " + status);
-
-                    var stats = AutograderRunner.runAutograder(
-                            ActiveAssessment.this.assessment,
-                            ActiveAssessment.this.clonedSubmission,
-                            Locale.GERMANY,
-                            2,
-                            statusConsumer);
-
-                    String message =
-                            "Autograder made %d annotation(s). Please double-check all of them for false-positives!"
-                                    .formatted(stats.annotationsMade());
-                    ApplicationManager.getApplication()
-                            .invokeLater(() -> Messages.showMessageDialog(
-                                    message, "Autograder Completed", AllIcons.Status.Success));
-
-                    // Notify listeners on event thread
-                    ApplicationManager.getApplication().invokeLater(ActiveAssessment.this::notifyListeners);
-                } catch (AutograderFailedException e) {
-                    LOG.warn(e);
-                    ArtemisUtils.displayGenericErrorBalloon("Autograder Failed", e.getMessage());
-                }
-            }
-        }.setCancelText("Stop Autograder").queue();
+        AutograderTask.execute(assessment, clonedSubmission, this::notifyListeners);
     }
 
     public Assessment getAssessment() {
@@ -250,7 +186,7 @@ public class ActiveAssessment {
             }
         });
 
-        popup.showCenteredInCurrentWindow(EditorUtil.getActiveProject());
+        popup.showCenteredInCurrentWindow(IntellijUtil.getActiveProject());
     }
 
     private void showCustomAnnotationDialog(
@@ -292,7 +228,7 @@ public class ActiveAssessment {
             }
         });
 
-        popup.showCenteredInCurrentWindow(EditorUtil.getActiveProject());
+        popup.showCenteredInCurrentWindow(IntellijUtil.getActiveProject());
     }
 
     private record MessageWithPoints(String message, double points) {}

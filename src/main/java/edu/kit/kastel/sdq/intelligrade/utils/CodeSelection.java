@@ -7,7 +7,7 @@ import java.util.Optional;
 public record CodeSelection(int startOffset, int endOffset, Path path) {
 
     public static Optional<CodeSelection> fromCaret() {
-        var editor = EditorUtil.getActiveEditor();
+        var editor = IntellijUtil.getActiveEditor();
         if (editor == null) {
             // no editor open or no selection made
             return Optional.empty();

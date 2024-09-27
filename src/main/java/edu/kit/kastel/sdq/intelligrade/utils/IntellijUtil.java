@@ -16,7 +16,11 @@ import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class EditorUtil {
+public final class IntellijUtil {
+    private IntellijUtil() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static Project getActiveProject() {
         return ProjectManager.getInstance().getOpenProjects()[0];
     }
@@ -42,11 +46,11 @@ public class EditorUtil {
     }
 
     public static ProjectLevelVcsManagerImpl getVcsManager() {
-        return ProjectLevelVcsManagerImpl.getInstanceImpl(EditorUtil.getActiveProject());
+        return ProjectLevelVcsManagerImpl.getInstanceImpl(IntellijUtil.getActiveProject());
     }
 
     public static Path getAnnotationPath(Annotation annotation) {
-        return EditorUtil.getProjectRootDirectory()
+        return IntellijUtil.getProjectRootDirectory()
                 .resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH)
                 .resolve(annotation.getFilePath());
     }

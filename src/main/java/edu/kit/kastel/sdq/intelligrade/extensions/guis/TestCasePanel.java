@@ -12,14 +12,12 @@ import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import net.miginfocom.swing.MigLayout;
 
 public class TestCasePanel extends SimpleToolWindowPanel {
-    private final JPanel content;
-
     private final JPanel testCasePanel;
 
     public TestCasePanel() {
         super(true, true);
 
-        content = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
+        var content = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
 
         testCasePanel = new JBPanel<>(new MigLayout("wrap 3, gapx 10px, gapy 5px", "[][][]"));
         content.add(testCasePanel);

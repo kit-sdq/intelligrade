@@ -37,18 +37,18 @@ import edu.kit.kastel.sdq.intelligrade.extensions.guis.AnnotationsListPanel;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.icons.ArtemisIcons;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
-import edu.kit.kastel.sdq.intelligrade.utils.EditorUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class HighlighterManager {
     private static final Map<Editor, List<HighlighterWithAnnotations>> highlightersPerEditor = new IdentityHashMap<>();
 
-    private static int lastPopupLine;
-    private static Editor lastPopupEditor;
+    // private static int lastPopupLine;
+    // private static Editor lastPopupEditor;
     private static JBPopup lastPopup;
 
     public static void initialize() {
-        var messageBus = EditorUtil.getActiveProject().getMessageBus();
+        var messageBus = IntellijUtil.getActiveProject().getMessageBus();
         messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
             @Override
             public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
@@ -208,14 +208,14 @@ public class HighlighterManager {
     }
 
     private static void cancelLastPopup() {
-        if (lastPopup != null) {
-            if (!lastPopup.isDisposed()) {
-                lastPopup.cancel();
-            }
-            lastPopup = null;
-            lastPopupLine = -1;
-            lastPopupEditor = null;
-        }
+        // if (lastPopup != null) {
+        //     if (!lastPopup.isDisposed()) {
+        //         lastPopup.cancel();
+        //     }
+        //     lastPopup = null;
+        //     lastPopupLine = -1;
+        //     lastPopupEditor = null;
+        // }
     }
 
     private static void updateHighlightersForAllEditors() {
@@ -224,7 +224,7 @@ public class HighlighterManager {
         }
 
         var editors =
-                FileEditorManager.getInstance(EditorUtil.getActiveProject()).getAllEditors();
+                FileEditorManager.getInstance(IntellijUtil.getActiveProject()).getAllEditors();
         for (var editor : editors) {
             updateHighlightersForEditor(((TextEditor) editor).getEditor());
         }
@@ -245,7 +245,7 @@ public class HighlighterManager {
         var state = PluginState.getInstance();
         var assessment = state.getActiveAssessment().orElseThrow().getAssessment();
         var annotationsByLine = assessment.getAnnotations().stream()
-                .filter(a -> EditorUtil.getAnnotationPath(a).equals(filePath))
+                .filter(a -> IntellijUtil.getAnnotationPath(a).equals(filePath))
                 .collect(Collectors.groupingBy(Annotation::getStartLine));
         for (var entry : annotationsByLine.entrySet()) {
             createHighlighter(editor, entry.getKey(), entry.getValue());

@@ -7,6 +7,7 @@ import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javax.swing.JButton;
@@ -35,14 +36,16 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentStatsDTO;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
+import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
-import edu.kit.kastel.sdq.intelligrade.utils.EditorUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,120 +113,17 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         setContent(ScrollPaneFactory.createScrollPane(content));
 
-        exerciseSelector.addItemListener(e -> {
-            // Exercise selected: Update plugin state, enable/disable grading buttons, update backlog
-            if (e.getStateChange() != ItemEvent.DESELECTED) {
-                var exercise = (ProgrammingExercise) e.getItem();
-                startGradingRound2Button.setEnabled(
-                        !PluginState.getInstance().isAssessing() && exercise.hasSecondCorrectionRound());
+        exerciseSelector.addItemListener(this::handleExerciseSelected);
 
-                PluginState.getInstance().setActiveCourse(courseSelector.getItem());
-                PluginState.getInstance().setActiveExam(examSelector.getItem().exam());
-                PluginState.getInstance().setActiveExercise(exercise);
+        examSelector.addItemListener(this::handleExamSelected);
 
-                updateBacklogAndStats();
-            }
-        });
+        courseSelector.addItemListener(this::handleCourseSelected);
 
-        examSelector.addItemListener(e -> {
-            // If an exam was selected, update the exercise selector with the exercises of the exam
-            // If no exam was selected, update the exercise selector with the exercises of the course
-            if (e.getStateChange() != ItemEvent.DESELECTED) {
-                try {
-                    exerciseSelector.removeAllItems();
-                    var item = (OptionalExam) e.getItem();
-                    if (item.exam() != null) {
-                        for (var group : item.exam().getExerciseGroups()) {
-                            for (var exercise : group.getProgrammingExercises()) {
-                                exerciseSelector.addItem(exercise);
-                            }
-                        }
-                    } else {
-                        for (ProgrammingExercise programmingExercise :
-                                courseSelector.getItem().getProgrammingExercises()) {
-                            exerciseSelector.addItem(programmingExercise);
-                        }
-                    }
-                } catch (ArtemisNetworkException ex) {
-                    LOG.warn(ex);
-                    ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
-                }
-                updateUI();
-            }
-        });
+        PluginState.getInstance().registerConnectedListener(this::handleConnectionChange);
 
-        courseSelector.addItemListener(e -> {
-            // Course was selected: Update the exam selector with the exams of the course
-            // This triggers an item event in the exam selector, which updates the exercise selector
-            if (e.getStateChange() != ItemEvent.DESELECTED) {
-                try {
-                    var course = (Course) e.getItem();
-                    examSelector.removeAllItems();
-                    examSelector.addItem(new OptionalExam(null));
-                    for (Exam exam : course.getExams()) {
-                        examSelector.addItem(new OptionalExam(exam));
-                    }
-                    updateUI();
-                } catch (ArtemisNetworkException ex) {
-                    LOG.warn(ex);
-                    ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exam info", ex);
-                }
-            }
-        });
+        PluginState.getInstance().registerAssessmentStartedListener(this::handleAssessmentStarted);
 
-        PluginState.getInstance().registerConnectedListener(connection -> {
-            courseSelector.removeAllItems();
-
-            if (connection.isPresent()) {
-                // When a connection is established, update the course selector with the courses of the connection
-                try {
-                    connectedLabel.setText("✔ Connected to "
-                            + connection.get().getClient().getInstance().getDomain() + " as "
-                            + connection.get().getAssessor().getLogin());
-                    connectedLabel.setForeground(JBColor.GREEN);
-                    for (Course course : connection.get().getCourses()) {
-                        courseSelector.addItem(course);
-                    }
-                } catch (ArtemisNetworkException ex) {
-                    LOG.warn(ex);
-                    ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
-                }
-            } else {
-                connectedLabel.setText("❌ Not connected");
-                connectedLabel.setForeground(JBColor.RED);
-            }
-
-            updateUI();
-        });
-
-        PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
-            startGradingRound1Button.setEnabled(false);
-            startGradingRound2Button.setEnabled(false);
-
-            assessmentPanel.setEnabled(true);
-            submitAssessmentButton.setEnabled(true);
-            cancelAssessmentButton.setEnabled(
-                    !assessment.getAssessment().getSubmission().isSubmitted());
-            saveAssessmentButton.setEnabled(true);
-            closeAssessmentButton.setEnabled(true);
-            reRunAutograder.setEnabled(true);
-
-            updateBacklogAndStats();
-        });
-
-        PluginState.getInstance().registerAssessmentClosedListener(() -> {
-            startGradingRound1Button.setEnabled(true);
-            startGradingRound2Button.setEnabled(exerciseSelector.getItem().hasSecondCorrectionRound());
-
-            assessmentPanel.setEnabled(false);
-            submitAssessmentButton.setEnabled(false);
-            cancelAssessmentButton.setEnabled(false);
-            saveAssessmentButton.setEnabled(false);
-            closeAssessmentButton.setEnabled(false);
-            reRunAutograder.setEnabled(false);
-
-            updateBacklogAndStats();
-        });
+        PluginState.getInstance().registerAssessmentClosedListener(this::handleAssessmentClosed);
     }
 
     private void createGeneralPanel() {
@@ -338,6 +238,119 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         backlogPanel.add(refreshButton, "skip 1, alignx right");
     }
 
+    private void handleExerciseSelected(ItemEvent e) {
+        // Exercise selected: Update plugin state, enable/disable grading buttons, update backlog
+        if (e.getStateChange() != ItemEvent.DESELECTED) {
+            var exercise = (ProgrammingExercise) e.getItem();
+            startGradingRound2Button.setEnabled(
+                    !PluginState.getInstance().isAssessing() && exercise.hasSecondCorrectionRound());
+
+            PluginState.getInstance().setActiveExercise(exercise);
+
+            updateBacklogAndStats();
+        }
+    }
+
+    private void handleExamSelected(ItemEvent e) {
+        // If an exam was selected, update the exercise selector with the exercises of the exam
+        // If no exam was selected, update the exercise selector with the exercises of the course
+        if (e.getStateChange() != ItemEvent.DESELECTED) {
+            try {
+                exerciseSelector.removeAllItems();
+                var item = (OptionalExam) e.getItem();
+                if (item.exam() != null) {
+                    for (var group : item.exam().getExerciseGroups()) {
+                        for (var exercise : group.getProgrammingExercises()) {
+                            exerciseSelector.addItem(exercise);
+                        }
+                    }
+                } else {
+                    for (ProgrammingExercise programmingExercise :
+                            courseSelector.getItem().getProgrammingExercises()) {
+                        exerciseSelector.addItem(programmingExercise);
+                    }
+                }
+            } catch (ArtemisNetworkException ex) {
+                LOG.warn(ex);
+                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
+            }
+            updateUI();
+        }
+    }
+
+    private void handleCourseSelected(ItemEvent e) {
+        // Course was selected: Update the exam selector with the exams of the course
+        // This triggers an item event in the exam selector, which updates the exercise selector
+        if (e.getStateChange() != ItemEvent.DESELECTED) {
+            try {
+                var course = (Course) e.getItem();
+                examSelector.removeAllItems();
+                examSelector.addItem(new OptionalExam(null));
+                for (Exam exam : course.getExams()) {
+                    examSelector.addItem(new OptionalExam(exam));
+                }
+                updateUI();
+            } catch (ArtemisNetworkException ex) {
+                LOG.warn(ex);
+                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exam info", ex);
+            }
+        }
+    }
+
+    private void handleConnectionChange(Optional<ArtemisConnection> connection) {
+        courseSelector.removeAllItems();
+
+        if (connection.isPresent()) {
+            // When a connection is established, update the course selector with the courses of the connection
+            try {
+                connectedLabel.setText("✔ Connected to "
+                        + connection.get().getClient().getInstance().getDomain() + " as "
+                        + connection.get().getAssessor().getLogin());
+                connectedLabel.setForeground(JBColor.GREEN);
+                for (Course course : connection.get().getCourses()) {
+                    courseSelector.addItem(course);
+                }
+            } catch (ArtemisNetworkException ex) {
+                LOG.warn(ex);
+                ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
+            }
+        } else {
+            connectedLabel.setText("❌ Not connected");
+            connectedLabel.setForeground(JBColor.RED);
+        }
+
+        updateUI();
+    }
+
+    private void handleAssessmentStarted(ActiveAssessment assessment) {
+        startGradingRound1Button.setEnabled(false);
+        startGradingRound2Button.setEnabled(false);
+
+        assessmentPanel.setEnabled(true);
+        submitAssessmentButton.setEnabled(true);
+        cancelAssessmentButton.setEnabled(
+                !assessment.getAssessment().getSubmission().isSubmitted());
+        saveAssessmentButton.setEnabled(true);
+        closeAssessmentButton.setEnabled(true);
+        reRunAutograder.setEnabled(true);
+
+        updateBacklogAndStats();
+    }
+
+    private void handleAssessmentClosed() {
+        startGradingRound1Button.setEnabled(true);
+        startGradingRound2Button.setEnabled(exerciseSelector.getItem().hasSecondCorrectionRound());
+
+        assessmentPanel.setEnabled(false);
+        submitAssessmentButton.setEnabled(false);
+        cancelAssessmentButton.setEnabled(false);
+        saveAssessmentButton.setEnabled(false);
+        closeAssessmentButton.setEnabled(false);
+        reRunAutograder.setEnabled(false);
+
+        updateBacklogAndStats();
+    }
+
     private void updateBacklogAndStats() {
         // Fetch data in the background, but do all UI updates on the EDT!
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -386,8 +399,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 int submittedSubmissions = (int) submissions.stream()
                         .filter(ProgrammingSubmission::isSubmitted)
                         .count();
-                int lockedSubmissions = (int)
-                        submissions.stream().filter(this::isSubmissionStarted).count();
+                int lockedSubmissions = (int) submissions.stream()
+                        .filter(ExercisePanel::isSubmissionStarted)
+                        .count();
                 String userText = "%d (%d locked)".formatted(submittedSubmissions, lockedSubmissions);
                 userStatisticsLabel.setText(userText);
 
@@ -433,10 +447,16 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 updateUI();
 
                 // Tell the user that we've done something
-                ToolWindowManager.getInstance(EditorUtil.getActiveProject())
+                ToolWindowManager.getInstance(IntellijUtil.getActiveProject())
                         .notifyByBalloon("Artemis", MessageType.INFO, "Backlog updated");
             });
         });
+    }
+
+    private static boolean isSubmissionStarted(ProgrammingSubmission submission) {
+        return !submission.isSubmitted()
+                && submission.getLatestResult().isPresent()
+                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
     }
 
     private record OptionalExam(Exam exam) {
@@ -444,11 +464,5 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         public String toString() {
             return exam == null ? "<No Exam>" : exam.toString();
         }
-    }
-
-    private boolean isSubmissionStarted(ProgrammingSubmission submission) {
-        return !submission.isSubmitted()
-                && submission.getLatestResult().isPresent()
-                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
     }
 }

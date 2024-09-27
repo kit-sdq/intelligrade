@@ -110,59 +110,62 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
         assessment.registerAnnotationsUpdatedListener(annotations -> {
             var a = assessment.getAssessment();
-
-            // Update rating group titles
-            for (var entry : this.ratingGroupBorders.entrySet()) {
-                var ratingGroup = entry.getKey();
-                var border = entry.getValue();
-                border.setTitle(getRatingGroupTitle(a, ratingGroup));
-            }
-
-            // Update button icons
-            for (AssessmentButton assessmentButton : this.assessmentButtons) {
-                var settings = ArtemisSettingsState.getInstance();
-                var mistakeType = assessmentButton.mistakeType();
-
-                String iconText;
-                Color color;
-                Font font = JBFont.regular();
-
-                if (mistakeType.getReporting().shouldScore()) {
-                    int count = a.getAnnotations(mistakeType).size();
-                    var rule = mistakeType.getRule();
-
-                    switch (rule) {
-                        case ThresholdPenaltyRule thresholdRule -> {
-                            iconText = count + "/" + thresholdRule.getThreshold();
-                            if (count >= thresholdRule.getThreshold()) {
-                                color = settings.getFinishedAssessmentButtonColor();
-                                font = font.deriveFont(
-                                        Map.of(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON));
-                            } else {
-                                color = settings.getActiveAssessmentButtonColor();
-                            }
-                        }
-                        case CustomPenaltyRule customPenaltyRule -> {
-                            iconText = "C";
-                            color = settings.getActiveAssessmentButtonColor();
-                        }
-                        case StackingPenaltyRule stackingPenaltyRule -> {
-                            iconText = String.valueOf(count);
-                            color = settings.getActiveAssessmentButtonColor();
-                        }
-                    }
-                } else {
-                    iconText = "R";
-                    color = settings.getReportingAssessmentButtonColor();
-                }
-
-                assessmentButton.iconRenderer().update(iconText, color);
-                assessmentButton.button().setForeground(color);
-                assessmentButton.button().setFont(font);
-            }
+            updateRatingGroupTitles(a);
+            updateButtonIcons(a);
         });
 
         this.updateUI();
+    }
+
+    private void updateRatingGroupTitles(Assessment assessment) {
+        for (var entry : this.ratingGroupBorders.entrySet()) {
+            var ratingGroup = entry.getKey();
+            var border = entry.getValue();
+            border.setTitle(getRatingGroupTitle(assessment, ratingGroup));
+        }
+    }
+
+    private void updateButtonIcons(Assessment assessment) {
+        for (AssessmentButton assessmentButton : this.assessmentButtons) {
+            var settings = ArtemisSettingsState.getInstance();
+            var mistakeType = assessmentButton.mistakeType();
+
+            String iconText;
+            Color color;
+            Font font = JBFont.regular();
+
+            if (mistakeType.getReporting().shouldScore()) {
+                int count = assessment.getAnnotations(mistakeType).size();
+                var rule = mistakeType.getRule();
+
+                switch (rule) {
+                    case ThresholdPenaltyRule thresholdRule -> {
+                        iconText = count + "/" + thresholdRule.getThreshold();
+                        if (count >= thresholdRule.getThreshold()) {
+                            color = settings.getFinishedAssessmentButtonColor();
+                            font = font.deriveFont(Map.of(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON));
+                        } else {
+                            color = settings.getActiveAssessmentButtonColor();
+                        }
+                    }
+                    case CustomPenaltyRule customPenaltyRule -> {
+                        iconText = "C";
+                        color = settings.getActiveAssessmentButtonColor();
+                    }
+                    case StackingPenaltyRule stackingPenaltyRule -> {
+                        iconText = String.valueOf(count);
+                        color = settings.getActiveAssessmentButtonColor();
+                    }
+                }
+            } else {
+                iconText = "R";
+                color = settings.getReportingAssessmentButtonColor();
+            }
+
+            assessmentButton.iconRenderer().update(iconText, color);
+            assessmentButton.button().setForeground(color);
+            assessmentButton.button().setFont(font);
+        }
     }
 
     private void showNoActiveAssessment() {
