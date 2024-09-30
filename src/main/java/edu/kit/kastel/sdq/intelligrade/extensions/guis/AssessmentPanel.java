@@ -1,7 +1,11 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.font.TextAttribute;
 import java.util.ArrayList;
@@ -10,7 +14,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLayer;
+import javax.swing.JPanel;
 import javax.swing.plaf.LayerUI;
 
 import com.intellij.DynamicBundle;
@@ -23,7 +30,11 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.*;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.CustomPenaltyRule;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.RatingGroup;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.StackingPenaltyRule;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.ThresholdPenaltyRule;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
