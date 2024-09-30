@@ -11,7 +11,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.plaf.LayerUI;
 
 import com.intellij.DynamicBundle;

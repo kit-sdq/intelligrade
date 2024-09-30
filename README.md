@@ -1,6 +1,6 @@
 # IntelliGrade
 
-IntelliGrade is an IntelliJ port of [the Eclipse Grading Tool](https://github.com/kit-sdq/programming-lecture-eclipse-artemis). 
+IntelliGrade is an IntelliJ port of [the Eclipse Grading Tool](https://github.com/kit-sdq/programming-lecture-eclipse-artemis).
 It is used to grade [Artemis](https://github.com/ls1intum/Artemis) based exercises.
 
 ## Building
