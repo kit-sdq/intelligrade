@@ -230,7 +230,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private void createBacklogPanel() {
         backlogPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow] []"));
 
-        backlogList = new JBPanel<>(new MigLayout("wrap 4, gapx 30", "[][][][grow]"));
+        backlogList = new JBPanel<>(new MigLayout("wrap 5, gapx 10", "[][][][][grow]"));
         backlogPanel.add(ScrollPaneFactory.createScrollPane(backlogList, true), "spanx 2, growx");
 
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
@@ -423,6 +423,10 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         List<ProgrammingSubmission> sortedSubmissions = new ArrayList<>(submissions);
         sortedSubmissions.sort(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
         for (ProgrammingSubmission submission : sortedSubmissions) {
+            // Participant
+            backlogList.add(new JBLabel(submission.getParticipantIdentifier()));
+
+            // Submission date
             String dateText = submission
                     .getSubmissionDate()
                     .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
@@ -444,12 +448,12 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             // Action Button
             JButton reopenButton;
             if (submission.isSubmitted()) {
-                reopenButton = new JButton("Reopen Assessment");
+                reopenButton = new JButton("Reopen");
             } else if (isSubmissionStarted(submission)) {
-                reopenButton = new JButton("Continue Assessment");
+                reopenButton = new JButton("Continue");
                 reopenButton.setForeground(JBColor.ORANGE);
             } else {
-                reopenButton = new JButton("Start Assessment");
+                reopenButton = new JButton("Start");
             }
             reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
             backlogList.add(reopenButton, "growx");

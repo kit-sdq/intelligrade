@@ -18,9 +18,11 @@ import com.intellij.DynamicBundle;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.*;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
@@ -33,7 +35,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
     private final JPanel content;
     private final JBLabel pointsLabel;
-    private final Map<RatingGroup, TitledBorder> ratingGroupBorders = new IdentityHashMap<>();
+    private final Map<RatingGroup, TitledSeparator> ratingGroupBorders = new IdentityHashMap<>();
     private final List<AssessmentButton> assessmentButtons = new ArrayList<>();
 
     public AssessmentPanel() {
@@ -75,18 +77,16 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 continue;
             }
 
+            var separator = new TitledSeparator(getRatingGroupTitle(assessment.getAssessment(), ratingGroup));
+            separator.setTitleFont(JBFont.h3().asBold());
+            this.ratingGroupBorders.put(ratingGroup, separator);
+            this.content.add(separator, "growx");
+
             var panel = new JBPanel<>(new MigLayout("fill, gap 0, wrap " + buttonsPerRow));
-
-            var border = BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(JBColor.border()),
-                    String.format(getRatingGroupTitle(assessment.getAssessment(), ratingGroup)));
-            border.setTitleFont(JBFont.h3().asBold());
-            panel.setBorder(border);
-            this.ratingGroupBorders.put(ratingGroup, border);
-
             for (var mistakeType : ratingGroup.getMistakeTypes()) {
                 var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
                 button.setToolTipText(mistakeType.getMessage().translateTo(LOCALE));
+                button.setMargin(JBUI.emptyInsets());
 
                 var iconRenderer = new MistakeTypeIconRenderer();
                 var layer = new LayerUI<>() {
@@ -96,7 +96,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                         iconRenderer.paint((Graphics2D) g, c);
                     }
                 };
-                JPanel buttonPanel = new JPanel(new MigLayout("fill"));
+                JPanel buttonPanel = new JPanel(new MigLayout("fill, insets 0"));
                 buttonPanel.add(button, "growx");
                 panel.add(new JLayer<>(buttonPanel, layer), "growx, sizegroup main");
 
@@ -104,7 +104,6 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                         mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
                 this.assessmentButtons.add(new AssessmentButton(mistakeType, button, iconRenderer));
             }
-
             this.content.add(panel, "growx");
         }
 
@@ -120,8 +119,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     private void updateRatingGroupTitles(Assessment assessment) {
         for (var entry : this.ratingGroupBorders.entrySet()) {
             var ratingGroup = entry.getKey();
-            var border = entry.getValue();
-            border.setTitle(getRatingGroupTitle(assessment, ratingGroup));
+            var separator = entry.getValue();
+            separator.setText(getRatingGroupTitle(assessment, ratingGroup));
         }
     }
 
