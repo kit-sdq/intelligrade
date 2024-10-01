@@ -22,21 +22,22 @@ If the Welcome to IntelliJ IDEA screen pops up, simply create a new empty projec
 This will be the grading workspace. Set the Artemis URL at File > Settings > Tools > IntelliGrade Settings,
 and press the connect button.
 
-The tool window to the left with the pen icon is the grading window, and the tool window with the sheet
+The tool window to the top right with the pen icon is the grading window, and the tool window with the sheet
 of paper icon to the bottom left is the annotations list.
 
-## Differences to the eclipse tool
+## Differences to the Eclipse tool
 
-- Hovering over line markers does not show the corresponding annotation(s). This is because IntelliJ itself has many tooltips on code that would conflict with our tooltip (though there is code in the HighlighterManager for such tooltips, which is currently commented out). Instead, you can click on or hover over gutter icons to show the annotations. Selecting an annotation from the list brings you to the corresponding entry in the annotations list.
-- You can right click an annotation in the annotations list to edit its custom message and custom score
-- Grading Buttons show the number of corresponding annotations made
-- The old Alt + Enter shortcut is now Alt + A since IntelliJ already uses the former
-- All editors are read-only
+- Hovering over line markers does not show the corresponding annotation(s). Instead, you can click on or hover over gutter icons to show the annotations. Selecting an annotation from the list brings you to the corresponding entry in the annotations list.
+- You can right click an annotation in the annotations list (or double-click the `message` column) to **edit its custom message and custom score** or **delete** the annotation.
+- The old Alt + Enter shortcut for adding annotations is now **Alt + A**. You can search in the popup as usual, and hold Control to add a custom message.
+- All editors are read-only.
 
 ## Building
-- run gradle target `runIde` to get a development version of the IDE:
+- Make sure that you have Java >=21 and a recent version of Gradle installed.
+- Run the gradle target `runIde` to get a development version of the IDE:
     - on Windows: `gradlew.bat runIde`
     - on Linux: `./gradlew runIde`
+  This will download IntelliJ Community Edition (may take several minutes) and run it with Intelligrade installed.
 
 ## Features
 
