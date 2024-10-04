@@ -5,12 +5,12 @@
 
   outputs = { self, nixpkgs }:
     let
-      javaVersion = 17; # Change this value to update the whole stack
+      javaVersion = 21; # Change this value to update the whole stack
       overlays = [
         (final: prev: rec {
           jdk = prev."jdk${toString javaVersion}";
           gradle = prev.gradle.override { java = jdk; };
-          maven = prev.maven.override { inherit jdk; };
+          maven = prev.maven.override { jdk_headless = jdk; };
         })
       ];
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
@@ -22,17 +22,13 @@
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
           packages = with pkgs; [
-            gradle 
-            jdk 
-            maven 
+            jdk
+            gradle
+            maven
             jdt-language-server
           ];
           
-          #NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [
-          #  pkgs.cc.cc
-          #];
-
-          # NIX_LD = builtins.readFile "${pkgs.cc}/nix-support/dynamic-linker";
+          LOCAL_JBR = pkgs.jetbrains.jdk;
         };
       });
     };

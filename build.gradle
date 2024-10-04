@@ -31,6 +31,10 @@ dependencies {
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.idea.maven")
         instrumentationTools()
+        def localJbr = System.getenv("LOCAL_JBR")
+        if (localJbr != null) {
+            jetbrainsRuntimeLocal(localJbr)
+        }
     }
     implementation 'edu.kit.kastel.sdq:artemis4j:7.5.0-SNAPSHOT'
     // Tests
