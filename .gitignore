@@ -182,3 +182,6 @@ exampleProject/
 
 grading-config-example.json
 .intellijPlatform/
+
+# Direnv state
+.direnv/
