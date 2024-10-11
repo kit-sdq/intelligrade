@@ -15,11 +15,14 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
+import javax.swing.*;
+
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.ui.jcef.JBCefApp;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
@@ -59,6 +62,35 @@ public class PluginState {
             pluginState = new PluginState();
         }
         return pluginState;
+    }
+
+    /**
+     * Logs out while displaying a warning if an assessment is still running
+     */
+    public void logout() {
+        boolean answer = true;
+        // check if confirmation is necessary because assessment is running
+        if (isAssessing()) {
+            answer = MessageDialogBuilder.okCancel(
+                            "Logging out while assessing!",
+                            "Logging out while assessing will discard current changes. Continue?")
+                    .guessWindowAndAsk();
+        }
+        // actually reset state
+        if (answer) {
+            this.resetState();
+
+            // reset state in settings
+            ArtemisCredentialsProvider.getInstance().setJwt(null);
+            ArtemisCredentialsProvider.getInstance().setArtemisPassword(null);
+            ArtemisSettingsState.getInstance().setJwtExpiry(null);
+
+            // reset JBCef cookies iff available
+            if (JBCefApp.isSupported()) {
+                CefUtils.resetCookies();
+            }
+        }
+        this.notifyConnectedListeners();
     }
 
     public void connect() {

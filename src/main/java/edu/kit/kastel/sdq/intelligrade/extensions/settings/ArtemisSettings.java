@@ -87,7 +87,16 @@ public class ArtemisSettings implements Configurable {
             this.apply();
             PluginState.getInstance().connect();
         });
-        contentPanel.add(loginButton, "span 2, growx");
+        contentPanel.add(loginButton, "span 1, growx");
+
+        // Button to log out of artemis
+        var logoutButton = new JButton("Logout");
+        logoutButton.addActionListener(a -> {
+            // request a logout
+            PluginState.getInstance().logout();
+            this.apply();
+        });
+        contentPanel.add(logoutButton, "span 1, growx");
 
         // Login options
         contentPanel.add(new TitledSeparator("Login Options"), "span 2, growx");
