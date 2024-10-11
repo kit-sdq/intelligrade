@@ -43,7 +43,7 @@ public final class CefUtils {
                 .setOffScreenRendering(false)
                 .build();
 
-        //clear cookies
+        // clear cookies
         CefApp.getInstance().onInitialization(state -> {
             browser.getJBCefCookieManager().deleteCookies(null, null);
         });
@@ -67,7 +67,6 @@ public final class CefUtils {
                 .setOffScreenRendering(false)
                 .setUrl(ArtemisSettingsState.getInstance().getArtemisInstanceUrl())
                 .build();
-
 
         // set focus handler because it gets invoked sometimes and causes NullPE otherwise
         CefFocusHandler focusHandler = new CefWindowFocusHandler();
