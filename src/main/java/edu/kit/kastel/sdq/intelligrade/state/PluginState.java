@@ -88,7 +88,7 @@ public class PluginState {
                 CefUtils.resetCookies();
             }
         }
-
+        this.notifyConnectedListeners();
         return answer == JOptionPane.OK_OPTION;
     }
 
