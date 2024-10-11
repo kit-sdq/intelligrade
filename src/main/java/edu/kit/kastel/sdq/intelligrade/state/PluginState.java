@@ -71,7 +71,8 @@ public class PluginState {
         boolean answer = true;
         // check if confirmation is necessary because assessment is running
         if (isAssessing()) {
-            answer = MessageDialogBuilder.okCancel("Logging out while assessing!",
+            answer = MessageDialogBuilder.okCancel(
+                            "Logging out while assessing!",
                             "Logging out while assessing will discard current changes. Continue?")
                     .guessWindowAndAsk();
         }

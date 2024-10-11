@@ -54,7 +54,6 @@ public final class CefUtils {
      */
     public static CompletableFuture<JBCefCookie> jcefBrowserLogin() {
 
-
         // offscreen rendering is problematic on Linux
         JBCefBrowser browser = JBCefBrowser.createBuilder()
                 .setClient(browserClient)
