@@ -38,7 +38,10 @@ import edu.kit.kastel.sdq.intelligrade.login.CefUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import org.apache.commons.io.FileUtils;
+import org.cef.CefApp;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class PluginState {
     private static final Logger LOG = Logger.getInstance(PluginState.class);
@@ -59,6 +62,32 @@ public class PluginState {
             pluginState = new PluginState();
         }
         return pluginState;
+    }
+
+    /**
+     * Logs out while displaying a warning if an assessment is still running
+     *
+     * @return true iff the logout was completed, false otherwise
+     */
+    public boolean logout() {
+        int answer = JOptionPane.OK_OPTION;
+        //check if confirmation is necessary because assessment is running
+        if (isAssessing()) {
+            answer = JOptionPane.showConfirmDialog(null,
+                    "Logging out while assessing will terminate the current assessment. Continue?",
+                    "Logging out while assessing!", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        }
+        //actually reset state
+        if (answer == JOptionPane.OK_OPTION) {
+            this.resetState();
+
+            //reset JBCef cookies iff available
+            if (JBCefApp.isSupported()) {
+                CefUtils.resetCookies();
+            }
+        }
+
+        return answer == JOptionPane.OK_OPTION;
     }
 
     public void connect() {

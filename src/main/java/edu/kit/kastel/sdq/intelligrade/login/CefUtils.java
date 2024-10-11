@@ -30,6 +30,27 @@ public final class CefUtils {
     }
 
     /**
+     * Reset the CEF Browsers cookies to remove the artemis login token
+     */
+    public static void resetCookies() {
+        if (browserClient == null) {
+            browserClient = JBCefApp.getInstance().createClient();
+        }
+
+        // offscreen rendering is problematic on Linux
+        JBCefBrowser browser = JBCefBrowser.createBuilder()
+                .setClient(browserClient)
+                .setOffScreenRendering(false)
+                .build();
+
+        //clear cookies
+        CefApp.getInstance().onInitialization(state -> {
+            browser.getJBCefCookieManager().deleteCookies(null, null);
+        });
+        browser.dispose();
+    }
+
+    /**
      * Create and display a Window containing a JBCef Window to request login. Call this on the EDT!
      *
      * @return A future on the JWT Cookie to log in. Don't await it on the EDT.
@@ -47,11 +68,6 @@ public final class CefUtils {
                 .setUrl(ArtemisSettingsState.getInstance().getArtemisInstanceUrl())
                 .build();
 
-        // TODO the following code deletes the jwt cookie, which is needed for a "fresh" login
-        // TODO add this somewhere where it is useful
-        // CefApp.getInstance().onInitialization(state -> {
-        //     browser.getJBCefCookieManager().deleteCookies(null, null);
-        // });
 
         // set focus handler because it gets invoked sometimes and causes NullPE otherwise
         CefFocusHandler focusHandler = new CefWindowFocusHandler();
