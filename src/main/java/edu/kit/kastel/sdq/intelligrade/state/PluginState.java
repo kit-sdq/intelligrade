@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.ui.jcef.JBCefApp;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
@@ -69,18 +70,15 @@ public class PluginState {
      * @return true iff the logout was completed, false otherwise
      */
     public boolean logout() {
-        int answer = JOptionPane.OK_OPTION;
+        boolean answer = true;
         // check if confirmation is necessary because assessment is running
         if (isAssessing()) {
-            answer = JOptionPane.showConfirmDialog(
-                    null,
-                    "Logging out while assessing will terminate the current assessment. Continue?",
-                    "Logging out while assessing!",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
+            answer = MessageDialogBuilder.okCancel("Logging out while assessing!",
+                            "Logging out while assessing will discard current changes. Continue?")
+                    .guessWindowAndAsk();
         }
         // actually reset state
-        if (answer == JOptionPane.OK_OPTION) {
+        if (answer) {
             this.resetState();
 
             // reset JBCef cookies iff available
@@ -89,7 +87,7 @@ public class PluginState {
             }
         }
         this.notifyConnectedListeners();
-        return answer == JOptionPane.OK_OPTION;
+        return answer;
     }
 
     public void connect() {
