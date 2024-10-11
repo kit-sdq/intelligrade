@@ -33,9 +33,6 @@ public final class CefUtils {
      * Reset the CEF Browsers cookies to remove the artemis login token
      */
     public static void resetCookies() {
-        if (browserClient == null) {
-            browserClient = JBCefApp.getInstance().createClient();
-        }
 
         // offscreen rendering is problematic on Linux
         JBCefBrowser browser = JBCefBrowser.createBuilder()
@@ -57,9 +54,6 @@ public final class CefUtils {
      */
     public static CompletableFuture<JBCefCookie> jcefBrowserLogin() {
 
-        if (browserClient == null) {
-            browserClient = JBCefApp.getInstance().createClient();
-        }
 
         // offscreen rendering is problematic on Linux
         JBCefBrowser browser = JBCefBrowser.createBuilder()
