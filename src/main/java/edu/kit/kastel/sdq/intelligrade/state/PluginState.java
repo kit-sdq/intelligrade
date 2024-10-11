@@ -66,10 +66,8 @@ public class PluginState {
 
     /**
      * Logs out while displaying a warning if an assessment is still running
-     *
-     * @return true iff the logout was completed, false otherwise
      */
-    public boolean logout() {
+    public void logout() {
         boolean answer = true;
         // check if confirmation is necessary because assessment is running
         if (isAssessing()) {
@@ -81,13 +79,17 @@ public class PluginState {
         if (answer) {
             this.resetState();
 
+            // reset state in settings
+            ArtemisCredentialsProvider.getInstance().setJwt(null);
+            ArtemisCredentialsProvider.getInstance().setArtemisPassword(null);
+            ArtemisSettingsState.getInstance().setJwtExpiry(null);
+
             // reset JBCef cookies iff available
             if (JBCefApp.isSupported()) {
                 CefUtils.resetCookies();
             }
         }
         this.notifyConnectedListeners();
-        return answer;
     }
 
     public void connect() {

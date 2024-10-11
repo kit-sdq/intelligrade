@@ -93,14 +93,8 @@ public class ArtemisSettings implements Configurable {
         var logoutButton = new JButton("Logout");
         logoutButton.addActionListener(a -> {
             // request a logout
-            boolean loggedOut = PluginState.getInstance().logout();
-            // clear data iff logout was actually carried out
-            if (loggedOut) {
-                ArtemisCredentialsProvider.getInstance().setJwt(null);
-                ArtemisCredentialsProvider.getInstance().setArtemisPassword(null);
-                ArtemisSettingsState.getInstance().setJwtExpiry(null);
-                this.apply();
-            }
+            PluginState.getInstance().logout();
+            this.apply();
         });
         contentPanel.add(logoutButton, "span 1, growx");
 
