@@ -262,9 +262,9 @@ public class HighlighterManager {
         for (Annotation annotation : annotations) {
             String text = annotation.getMistakeType().getButtonText().translateTo(DynamicBundle.getLocale());
             if (annotation.getCustomMessage().isPresent()) {
-                String displayPath = StringUtil.shortenPathWithEllipsis(
-                        annotation.getCustomMessage().get(), 80);
-                text += ": " + displayPath;
+                String displayMsg =
+                        shortenAndEscape(annotation.getCustomMessage().get());
+                text += ": " + displayMsg;
             }
 
             group.addAction(new AnActionButton(text) {
@@ -285,6 +285,10 @@ public class HighlighterManager {
             });
         }
         return group;
+    }
+
+    private static String shortenAndEscape(String text) {
+        return StringUtil.escapeMnemonics(StringUtil.shortenTextWithEllipsis(text, 80, 0));
     }
 
     private record HighlighterWithAnnotations(RangeHighlighter highlighter, List<Annotation> annotation) {}
