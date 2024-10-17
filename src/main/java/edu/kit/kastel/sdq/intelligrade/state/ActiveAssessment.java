@@ -77,7 +77,8 @@ public class ActiveAssessment {
         String path = Path.of(IntellijUtil.getActiveProject().getBasePath())
                 .resolve(ASSIGNMENT_SUB_PATH)
                 .relativize(selection.get().path())
-                .toString();
+                .toString()
+                .replace("\\", "/");
 
         if (mistakeType.isCustomAnnotation()) {
             addCustomAnnotation(mistakeType, startLine, endLine, path);
