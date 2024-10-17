@@ -28,9 +28,11 @@ public class TestCasePanel extends SimpleToolWindowPanel {
             for (var result : testResults) {
                 String tooltip = result.getDetailText().orElse("No details available");
 
-                var icon = result.getPoints() != 0.0
-                        ? AllIcons.RunConfigurations.TestPassed
-                        : AllIcons.RunConfigurations.TestFailed;
+                // isPositive() is true if the test passed, regardless of its points
+                // (which may be zero for mandatory tests)
+                var icon = result.getPositive()
+                        .map(p -> p ? AllIcons.RunConfigurations.TestPassed : AllIcons.RunConfigurations.TestFailed)
+                        .orElse(AllIcons.RunConfigurations.TestUnknown);
                 var iconLabel = new JBLabel(icon);
                 iconLabel.setToolTipText(tooltip);
                 this.content.add(iconLabel);
