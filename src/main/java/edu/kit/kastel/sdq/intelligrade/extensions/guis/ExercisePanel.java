@@ -2,10 +2,6 @@
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ItemEvent;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -14,7 +10,6 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -35,7 +30,6 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentStatsDTO;
-import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
@@ -74,8 +68,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private JButton closeAssessmentButton;
     private JButton reRunAutograder;
 
-    private JPanel backlogPanel;
-    private JPanel backlogList;
+    private BacklogPanel backlogPanel;
 
     public ExercisePanel() {
         super(true, true);
@@ -108,7 +101,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         content.add(assessmentPanel, "span 2, growx");
 
         content.add(new TitledSeparator("Backlog"), "spanx 2, growx");
-        createBacklogPanel();
+        backlogPanel = new BacklogPanel();
+        backlogPanel.addBacklogUpdateListener(this::updateBacklogAndStats);
         content.add(backlogPanel, "span 2, growx");
 
         setContent(ScrollPaneFactory.createScrollPane(content));
@@ -225,17 +219,6 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             }
         });
         assessmentPanel.add(reRunAutograder, "spanx 2, growx");
-    }
-
-    private void createBacklogPanel() {
-        backlogPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow] []"));
-
-        backlogList = new JBPanel<>(new MigLayout("wrap 5, gapx 10", "[][][][][grow]"));
-        backlogPanel.add(ScrollPaneFactory.createScrollPane(backlogList, true), "spanx 2, growx");
-
-        var refreshButton = new JButton(AllIcons.Actions.Refresh);
-        refreshButton.addActionListener(a -> updateBacklogAndStats());
-        backlogPanel.add(refreshButton, "skip 1, alignx right");
     }
 
     private void handleExerciseSelected(ItemEvent e) {
@@ -368,15 +351,14 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 LOG.warn(ex);
                 ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch backlog or statistics", ex);
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    backlogList.removeAll();
-                    this.updateUI();
+                    backlogPanel.clear();
                 });
                 return;
             }
 
             ApplicationManager.getApplication().invokeLater(() -> {
                 updateStatistics(exercise, stats, submissions);
-                updateBacklog(submissions);
+                backlogPanel.setSubmissions(submissions);
                 updateUI();
 
                 // Tell the user that we've done something
@@ -412,58 +394,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         int submittedSubmissions = (int)
                 submissions.stream().filter(ProgrammingSubmission::isSubmitted).count();
         int lockedSubmissions = (int)
-                submissions.stream().filter(ExercisePanel::isSubmissionStarted).count();
+                submissions.stream().filter(ArtemisUtils::isSubmissionStarted).count();
         String userText = "%d (%d locked)".formatted(submittedSubmissions, lockedSubmissions);
         userStatisticsLabel.setText(userText);
-    }
-
-    private void updateBacklog(List<ProgrammingSubmission> submissions) {
-        backlogList.removeAll();
-
-        List<ProgrammingSubmission> sortedSubmissions = new ArrayList<>(submissions);
-        sortedSubmissions.sort(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
-        for (ProgrammingSubmission submission : sortedSubmissions) {
-            // Participant
-            backlogList.add(new JBLabel(submission.getParticipantIdentifier()));
-
-            // Submission date
-            String dateText = submission
-                    .getSubmissionDate()
-                    .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
-            backlogList.add(new JBLabel(dateText), "alignx right");
-
-            // Correction Round
-            backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
-
-            // Score in percent
-            var latestResult = submission.getLatestResult();
-            String resultText = "";
-            if (submission.isSubmitted()) {
-                resultText = latestResult
-                        .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
-                        .orElse("???");
-            }
-            backlogList.add(new JBLabel(resultText), "alignx right");
-
-            // Action Button
-            JButton reopenButton;
-            if (submission.isSubmitted()) {
-                reopenButton = new JButton("Reopen");
-            } else if (isSubmissionStarted(submission)) {
-                reopenButton = new JButton("Continue");
-                reopenButton.setForeground(JBColor.ORANGE);
-            } else {
-                reopenButton = new JButton("Start");
-            }
-            reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
-            backlogList.add(reopenButton, "growx");
-        }
-    }
-
-    private static boolean isSubmissionStarted(ProgrammingSubmission submission) {
-        return !submission.isSubmitted()
-                && submission.getLatestResult().isPresent()
-                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
     }
 
     private record OptionalExam(Exam exam) {
