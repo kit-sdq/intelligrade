@@ -112,42 +112,49 @@ public class BacklogPanel extends JPanel {
 
             // Participant
             backlogList.add(new JBLabel(submission.getParticipantIdentifier()));
-
-            // Submission date
-            String dateText = submission
-                    .getSubmissionDate()
-                    .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
-            backlogList.add(new JBLabel(dateText), "alignx right");
-
+            addSubmissionDateLabel(submission);
             // Correction Round
             backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
-
-            // Score in percent
-            var latestResult = submission.getLatestResult();
-            String resultText = "";
-            if (submission.isSubmitted()) {
-                resultText = latestResult
-                        .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
-                        .orElse("???");
-            }
-            backlogList.add(new JBLabel(resultText), "alignx right");
-
-            // Action Button
-            JButton reopenButton;
-            if (submission.isSubmitted()) {
-                reopenButton = new JButton("Reopen");
-            } else if (ArtemisUtils.isSubmissionStarted(submission)) {
-                reopenButton = new JButton("Continue");
-                reopenButton.setForeground(JBColor.ORANGE);
-            } else {
-                reopenButton = new JButton("Start");
-            }
-            reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
-            backlogList.add(reopenButton, "growx");
+            addScoreItem(submission);
+            addActionButton(submission);
         }
 
         shownSubmissionsLabel.setText("Showing %d/%d".formatted(shown, lastFetchedSubmissions.size()));
 
         this.updateUI();
+    }
+
+    private void addSubmissionDateLabel(ProgrammingSubmission submission) {
+        String dateText = submission
+                .getSubmissionDate()
+                .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
+        backlogList.add(new JBLabel(dateText), "alignx right");
+    }
+
+    private void addScoreItem(ProgrammingSubmission submission) {
+        // Score in percent
+        var latestResult = submission.getLatestResult();
+        String resultText = "";
+        if (submission.isSubmitted()) {
+            resultText = latestResult
+                    .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
+                    .orElse("???");
+        }
+        backlogList.add(new JBLabel(resultText), "alignx right");
+    }
+
+    private void addActionButton(ProgrammingSubmission submission) {
+        // Action Button
+        JButton reopenButton;
+        if (submission.isSubmitted()) {
+            reopenButton = new JButton("Reopen");
+        } else if (ArtemisUtils.isSubmissionStarted(submission)) {
+            reopenButton = new JButton("Continue");
+            reopenButton.setForeground(JBColor.ORANGE);
+        } else {
+            reopenButton = new JButton("Start");
+        }
+        reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
+        backlogList.add(reopenButton, "growx");
     }
 }
