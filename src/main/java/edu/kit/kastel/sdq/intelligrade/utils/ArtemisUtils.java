@@ -7,6 +7,8 @@ import java.net.URI;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
+import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 
 /**
  * Utility Class to handle Artemis related common tasks such as
@@ -22,6 +24,12 @@ public final class ArtemisUtils {
         } catch (Exception ex) {
             return false;
         }
+    }
+
+    public static boolean isSubmissionStarted(ProgrammingSubmission submission) {
+        return !submission.isSubmitted()
+                && submission.getLatestResult().isPresent()
+                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
     }
 
     public static void displayGenericErrorBalloon(String title, String content) {
