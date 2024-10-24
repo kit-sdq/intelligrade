@@ -1,6 +1,7 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
+import java.awt.event.ActionEvent;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
@@ -68,8 +69,14 @@ public class BacklogPanel extends JPanel {
         this.add(ScrollPaneFactory.createScrollPane(backlogList, true), "spanx 2, growx");
 
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
-        refreshButton.addActionListener(a -> onBacklogUpdate.forEach(Runnable::run));
+        refreshButton.addActionListener(this::refreshButtonClicked);
         this.add(refreshButton, "skip 1, alignx right");
+    }
+
+    private void refreshButtonClicked(ActionEvent actionEvent) {
+        for (Runnable runnable : onBacklogUpdate) {
+            runnable.run();
+        }
     }
 
     public void addBacklogUpdateListener(Runnable listener) {
