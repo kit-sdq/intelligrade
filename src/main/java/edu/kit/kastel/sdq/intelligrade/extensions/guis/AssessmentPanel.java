@@ -13,6 +13,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -32,6 +33,7 @@ import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.CustomPenaltyRule;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.Points;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.RatingGroup;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.StackingPenaltyRule;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.ThresholdPenaltyRule;
@@ -139,7 +141,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             var settings = ArtemisSettingsState.getInstance();
             var mistakeType = assessmentButton.mistakeType();
 
-            String iconText;
+            StringBuilder iconText = new StringBuilder();
             Color color;
             Font font = JBFont.regular();
 
@@ -149,7 +151,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
                 switch (rule) {
                     case ThresholdPenaltyRule thresholdRule -> {
-                        iconText = count + "/" + thresholdRule.getThreshold();
+                        iconText.append(count).append("/").append(thresholdRule.getThreshold());
                         if (count >= thresholdRule.getThreshold()) {
                             color = settings.getFinishedAssessmentButtonColor();
                             font = font.deriveFont(Map.of(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON));
@@ -158,20 +160,30 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                         }
                     }
                     case CustomPenaltyRule customPenaltyRule -> {
-                        iconText = "C";
+                        iconText.append("C");
                         color = settings.getActiveAssessmentButtonColor();
                     }
                     case StackingPenaltyRule stackingPenaltyRule -> {
-                        iconText = String.valueOf(count);
+                        iconText.append(count);
                         color = settings.getActiveAssessmentButtonColor();
                     }
                 }
+
+                //find out how many points this button subtracts
+                Optional<Points> pointsSubtractedByButton = assessment.calculatePointsForMistakeType(mistakeType);
+
+                //annotate the amount of points subtracted by this button
+                pointsSubtractedByButton.ifPresentOrElse(
+                        points -> iconText.append(" | ").append(points.score()).append("P"),
+                        () -> iconText.append(" | 0P")
+                );
+
             } else {
-                iconText = "R";
+                iconText.append("R");
                 color = settings.getReportingAssessmentButtonColor();
             }
 
-            assessmentButton.iconRenderer().update(iconText, color);
+            assessmentButton.iconRenderer().update(iconText.toString(), color);
             assessmentButton.button().setForeground(color);
             assessmentButton.button().setFont(font);
         }
@@ -266,5 +278,6 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
         }
     }
 
-    private record AssessmentButton(MistakeType mistakeType, JButton button, MistakeTypeIconRenderer iconRenderer) {}
+    private record AssessmentButton(MistakeType mistakeType, JButton button, MistakeTypeIconRenderer iconRenderer) {
+    }
 }
