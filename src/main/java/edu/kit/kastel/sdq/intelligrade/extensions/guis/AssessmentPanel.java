@@ -169,14 +169,13 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                     }
                 }
 
-                //find out how many points this button subtracts
+                // find out how many points this button subtracts
                 Optional<Points> pointsSubtractedByButton = assessment.calculatePointsForMistakeType(mistakeType);
 
-                //annotate the amount of points subtracted by this button
+                // annotate the amount of points subtracted by this button
                 pointsSubtractedByButton.ifPresentOrElse(
                         points -> iconText.append(" | ").append(points.score()).append("P"),
-                        () -> iconText.append(" | 0P")
-                );
+                        () -> iconText.append(" | 0P"));
 
             } else {
                 iconText.append("R");
@@ -278,6 +277,5 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
         }
     }
 
-    private record AssessmentButton(MistakeType mistakeType, JButton button, MistakeTypeIconRenderer iconRenderer) {
-    }
+    private record AssessmentButton(MistakeType mistakeType, JButton button, MistakeTypeIconRenderer iconRenderer) {}
 }
