@@ -97,7 +97,11 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             var panel = new JBPanel<>(new MigLayout("fill, gap 0, wrap " + buttonsPerRow));
             for (var mistakeType : ratingGroup.getMistakeTypes()) {
                 var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
-                button.setToolTipText(mistakeType.getMessage().translateTo(LOCALE));
+
+                // no tooltip for custom comment
+                if (!mistakeType.isCustomAnnotation()) {
+                    button.setToolTipText(mistakeType.getMessage().translateTo(LOCALE));
+                }
                 button.setMargin(JBUI.emptyInsets());
 
                 var iconRenderer = new MistakeTypeIconRenderer();
