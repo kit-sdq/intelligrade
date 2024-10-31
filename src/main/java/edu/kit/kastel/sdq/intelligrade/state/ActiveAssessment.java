@@ -77,7 +77,8 @@ public class ActiveAssessment {
         String path = Path.of(IntellijUtil.getActiveProject().getBasePath())
                 .resolve(ASSIGNMENT_SUB_PATH)
                 .relativize(selection.get().path())
-                .toString();
+                .toString()
+                .replace("\\", "/");
 
         if (mistakeType.isCustomAnnotation()) {
             addCustomAnnotation(mistakeType, startLine, endLine, path);
@@ -155,7 +156,7 @@ public class ActiveAssessment {
     }
 
     private void showCustomMessageDialog(String initialMessage, Consumer<String> onOk) {
-        var panel = new JBPanel<>(new MigLayout("wrap 1", "[250lp]"));
+        var panel = new JBPanel<>(new MigLayout("wrap 1, fill", "[250lp]"));
 
         var customMessage = new JBTextArea(initialMessage);
         customMessage.setFont(JBFont.regular());
@@ -191,7 +192,7 @@ public class ActiveAssessment {
 
     private void showCustomAnnotationDialog(
             MistakeType mistakeType, String initialMessage, double initialPoints, Consumer<MessageWithPoints> onOk) {
-        var panel = new JBPanel<>(new MigLayout("wrap 2", "[200lp] []"));
+        var panel = new JBPanel<>(new MigLayout("wrap 2, fill", "[200lp] []"));
 
         var customMessage = new JBTextArea(initialMessage);
         customMessage.setFont(JBFont.regular());

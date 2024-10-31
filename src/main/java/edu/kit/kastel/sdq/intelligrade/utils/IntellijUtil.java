@@ -52,7 +52,7 @@ public final class IntellijUtil {
     public static Path getAnnotationPath(Annotation annotation) {
         return IntellijUtil.getProjectRootDirectory()
                 .resolve(ActiveAssessment.ASSIGNMENT_SUB_PATH)
-                .resolve(annotation.getFilePath());
+                .resolve(annotation.getFilePath().replace("\\", "/"));
     }
 
     public static VirtualFile getAnnotationFile(Annotation annotation) {

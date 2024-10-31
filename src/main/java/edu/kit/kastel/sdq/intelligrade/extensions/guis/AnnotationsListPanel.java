@@ -133,6 +133,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         if (row >= 0) {
             int viewRow = table.convertRowIndexToView(row);
             table.setRowSelectionInterval(viewRow, viewRow);
+            table.scrollRectToVisible(table.getCellRect(viewRow, 0, true));
         }
     }
 
