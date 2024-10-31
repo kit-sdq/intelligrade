@@ -46,6 +46,7 @@ import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.PermissionUtils;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -140,6 +141,11 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         startGradingRound2Button.addActionListener(
                 a -> PluginState.getInstance().startNextAssessment(1));
         generalPanel.add(startGradingRound2Button, "growx");
+
+        //only add the third grading round button iff the permissions are sufficient
+        PluginState.getInstance().registerConnectedListener(connectionOptional -> {
+            connectionOptional.flatMap(PermissionUtils::getAssessorPermissionLevel).ifPresent(System.out::println);
+        });
 
         gradingConfigPathInput = new TextFieldWithBrowseButton();
         gradingConfigPathInput.addBrowseFolderListener(
