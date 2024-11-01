@@ -2,7 +2,6 @@ package edu.kit.kastel.sdq.intelligrade.utils;
 
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
-import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,14 +53,14 @@ public class PermissionUtils {
             permissionLevels.add(PermissionLevel.NONE);
         }
 
-        return permissionLevels;
+        return permissionLevels.stream().distinct().toList();
     }
 
     /**
      * Map the string based permission level from the groups
      * to some cleanly switchable enum
      */
-    public enum PermissionLevel implements Comparable<PermissionLevel> {
+    public enum PermissionLevel {
         INSTRUCTOR,
         TUTOR,
         STUDENT,
