@@ -1,11 +1,12 @@
+/* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.sdq.intelligrade.utils;
-
-import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
-import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
+import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 
 public class PermissionUtils {
 
@@ -24,18 +25,18 @@ public class PermissionUtils {
         Optional<List<String>> groupsFound = Optional.empty();
 
         try {
-            //if the client is not yet connected, querying an assessor is bogus
+            // if the client is not yet connected, querying an assessor is bogus
             groupsFound = Optional.of(connection.getAssessor().getGroups());
 
         } catch (ArtemisNetworkException ignored) {
-            //optional is already empty so we don't do anything
+            // optional is already empty so we don't do anything
         }
 
-        //check all the groups this assessor belongs to
+        // check all the groups this assessor belongs to
         List<PermissionLevel> permissionLevels = new ArrayList<>();
         groupsFound.ifPresent(groups -> {
             for (String groupname : groups) {
-                //if the string has the correct suffix, we add the permission level
+                // if the string has the correct suffix, we add the permission level
                 if (groupname.endsWith("instructors")) {
                     permissionLevels.add(PermissionLevel.INSTRUCTOR);
                 }
@@ -48,7 +49,7 @@ public class PermissionUtils {
             }
         });
 
-        //if no permissions were found, we have none
+        // if no permissions were found, we have none
         if (permissionLevels.isEmpty()) {
             permissionLevels.add(PermissionLevel.NONE);
         }
