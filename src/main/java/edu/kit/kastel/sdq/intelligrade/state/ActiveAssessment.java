@@ -199,7 +199,7 @@ public class ActiveAssessment {
         customMessage.setBorder(BorderFactory.createLineBorder(JBColor.border()));
         panel.add(ScrollPaneFactory.createScrollPane(customMessage), "span 2, grow, height 100lp");
 
-        double maxValue = this.assessment.getConfig().isPositiveFeedbackAllowed() ? Double.MAX_VALUE : 0.0;
+        double maxValue = this.assessment.getConfig().isPositiveFeedbackAllowed() ? Double.POSITIVE_INFINITY : 0.0;
         double minValue = mistakeType.getRatingGroup().getMinPenalty();
         var customScore = new JSpinner(new SpinnerNumberModel(initialPoints, minValue, maxValue, 0.5));
         panel.add(customScore, "spanx 2, growx");
