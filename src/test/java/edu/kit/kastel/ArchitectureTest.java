@@ -4,6 +4,7 @@ package edu.kit.kastel;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -24,4 +25,10 @@ class ArchitectureTest {
             .orShould()
             .callMethod(List.class, "forEachOrdered", Consumer.class)
             .because("Lambdas should be functional. ForEach is typically used for side-effects.");
+
+    @ArchTest
+    static final ArchRule noOptionalAsParameter = noMethods()
+            .should()
+            .haveRawParameterTypes(Optional.class)
+            .because("Optional should be used as return type only.");
 }

@@ -48,7 +48,7 @@ public class PluginState {
 
     private static PluginState pluginState;
 
-    private final List<Consumer<Optional<ArtemisConnection>>> connectedListeners = new ArrayList<>();
+    private final List<Consumer<ArtemisConnection>> connectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
 
@@ -143,9 +143,9 @@ public class PluginState {
                 });
     }
 
-    public void registerConnectedListener(Consumer<Optional<ArtemisConnection>> listener) {
+    public void registerConnectedListener(Consumer<ArtemisConnection> listener) {
         this.connectedListeners.add(listener);
-        listener.accept(Optional.ofNullable(this.connection));
+        listener.accept(this.connection);
     }
 
     public boolean isAssessing() {
@@ -318,8 +318,8 @@ public class PluginState {
 
     private void notifyConnectedListeners() {
         ApplicationManager.getApplication().invokeLater(() -> {
-            for (Consumer<Optional<ArtemisConnection>> l : this.connectedListeners) {
-                l.accept(Optional.ofNullable(this.connection));
+            for (Consumer<ArtemisConnection> l : this.connectedListeners) {
+                l.accept(this.connection);
             }
         });
     }

@@ -3,7 +3,6 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ItemEvent;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import javax.swing.JButton;
@@ -283,17 +282,17 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         }
     }
 
-    private void handleConnectionChange(Optional<ArtemisConnection> connection) {
+    private void handleConnectionChange(ArtemisConnection connection) {
         courseSelector.removeAllItems();
 
-        if (connection.isPresent()) {
+        if (connection != null) {
             // When a connection is established, update the course selector with the courses of the connection
             try {
-                connectedLabel.setText("✔ Connected to "
-                        + connection.get().getClient().getInstance().getDomain() + " as "
-                        + connection.get().getAssessor().getLogin());
+                connectedLabel.setText("\u2714 Connected to "
+                        + connection.getClient().getInstance().getDomain() + " as "
+                        + connection.getAssessor().getLogin());
                 connectedLabel.setForeground(JBColor.GREEN);
-                for (Course course : connection.get().getCourses()) {
+                for (Course course : connection.getCourses()) {
                     courseSelector.addItem(course);
                 }
             } catch (ArtemisNetworkException ex) {
@@ -301,7 +300,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch course info", ex);
             }
         } else {
-            connectedLabel.setText("❌ Not connected");
+            connectedLabel.setText("\u274C Not connected");
             connectedLabel.setForeground(JBColor.RED);
         }
 
