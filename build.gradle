@@ -82,3 +82,7 @@ spotless {
         importOrderFile('spotless.importorder')
     }
 }
+
+configurations.configureEach {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
