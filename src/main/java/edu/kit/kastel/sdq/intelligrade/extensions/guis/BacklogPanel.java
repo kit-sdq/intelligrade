@@ -2,9 +2,8 @@
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ActionEvent;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -137,7 +136,10 @@ public class BacklogPanel extends JPanel {
         String resultText = "";
         if (submission.isSubmitted()) {
             resultText = latestResult
-                    .map(resultDTO -> resultDTO.completionDate().withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")))
+                    .map(resultDTO -> resultDTO
+                            .completionDate()
+                            .withZoneSameInstant(ZoneId.systemDefault())
+                            .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")))
                     .orElse("???");
         }
         backlogList.add(new JBLabel(resultText), "alignx right");
