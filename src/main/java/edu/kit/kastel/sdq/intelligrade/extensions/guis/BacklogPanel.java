@@ -4,6 +4,7 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 import java.awt.event.ActionEvent;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -119,7 +120,7 @@ public class BacklogPanel extends JPanel {
 
             // Participant
             backlogList.add(new JBLabel(submission.getParticipantIdentifier()));
-            addSubmissionDateLabel(submission);
+            addResultDateLabel(submission);
             // Correction Round
             backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
             addScoreItem(submission);
@@ -131,11 +132,15 @@ public class BacklogPanel extends JPanel {
         this.updateUI();
     }
 
-    private void addSubmissionDateLabel(ProgrammingSubmission submission) {
-        String dateText = submission
-                .getSubmissionDate()
-                .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT));
-        backlogList.add(new JBLabel(dateText), "alignx right");
+    private void addResultDateLabel(ProgrammingSubmission submission) {
+        var latestResult = submission.getLatestResult();
+        String resultText = "";
+        if (submission.isSubmitted()) {
+            resultText = latestResult
+                    .map(resultDTO -> resultDTO.completionDate().withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")))
+                    .orElse("???");
+        }
+        backlogList.add(new JBLabel(resultText), "alignx right");
     }
 
     private void addScoreItem(ProgrammingSubmission submission) {
