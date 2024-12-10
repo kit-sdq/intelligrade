@@ -39,6 +39,7 @@ import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.PermissionUtils;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +55,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private JPanel generalPanel;
     private JButton startGradingRound1Button;
     private JButton startGradingRound2Button;
+    private JButton startGradingRound3Button;
     private TextFieldWithBrowseButton gradingConfigPathInput;
 
     private JPanel statisticsPanel;
@@ -133,6 +135,24 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         startGradingRound2Button.addActionListener(
                 a -> PluginState.getInstance().startNextAssessment(1));
         generalPanel.add(startGradingRound2Button, "growx");
+
+        // add button for third correction round but disable it by default
+        startGradingRound3Button = new JButton("Start Grading Round 3");
+        startGradingRound3Button.setForeground(JBColor.GREEN);
+        startGradingRound3Button.addActionListener(
+                a -> PluginState.getInstance().startNextAssessment(3));
+        startGradingRound3Button.setEnabled(false);
+        generalPanel.add(startGradingRound3Button, "growx");
+
+        // only enable the third grading round button iff the permissions are sufficient
+        PluginState.getInstance()
+                .registerConnectedListener(connectionOptional -> connectionOptional.ifPresent(connection -> {
+                    List<PermissionUtils.PermissionLevel> perms =
+                            PermissionUtils.getAssessorPermissionLevel(connection);
+                    if (perms.contains(PermissionUtils.PermissionLevel.INSTRUCTOR)) {
+                        startGradingRound3Button.setEnabled(true);
+                    }
+                }));
 
         gradingConfigPathInput = new TextFieldWithBrowseButton();
         gradingConfigPathInput.addBrowseFolderListener(
