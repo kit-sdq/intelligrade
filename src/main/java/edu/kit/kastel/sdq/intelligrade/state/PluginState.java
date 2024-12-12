@@ -15,8 +15,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-import javax.swing.*;
-
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -35,6 +33,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
+import edu.kit.kastel.sdq.intelligrade.extensions.guis.SplashDialog;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisCredentialsProvider;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.login.CefUtils;
@@ -130,6 +129,9 @@ public class PluginState {
                     try {
                         this.verifyLogin();
                         this.notifyConnectedListeners();
+                        ApplicationManager.getApplication().invokeLater(() -> {
+                            new SplashDialog().show();
+                        });
                     } catch (ArtemisClientException e) {
                         throw new CompletionException(e);
                     }
