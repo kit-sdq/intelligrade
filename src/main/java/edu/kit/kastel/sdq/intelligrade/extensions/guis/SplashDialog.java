@@ -10,12 +10,14 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JSeparator;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.dsl.builder.components.DslLabel;
+import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.util.ui.JBFont;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
@@ -26,13 +28,13 @@ public class SplashDialog extends DialogWrapper {
     private static final TemporalAmount SPLASH_INTERVAL = Duration.ofMinutes(60);
 
     private static final List<String> REMINDER_LINES = List.of(
-            "<html><span style=\"\">Be fair.</span> <span style=\"color: %s\">Follow our official grading guidelines, not your own style preferences. Only deduct points if there is a matching button.</span></html>",
-            "<html><span style=\"\">Be nice.</span> <span style=\"color: %s\">Nobody submits bad code on purpose or to upset you. Also - it's okay to deduct no points :)</span></html>",
-            "<html><span style=\"\">Ask!</span> <span style=\"color: %s\">- if you are unsure about anything. Everyone is on Element. Also check out the .</span><a href=\"https://sdq.kastel.kit.edu/programmieren/Hauptseite\">Wiki</a></html>");
+            "<span style=\"\">Be fair.</span> <span style=\"color: %s\">Follow our official grading guidelines, not your own style preferences. Only deduct points if there is a matching button.</span>",
+            "<span style=\"\">Be nice.</span> <span style=\"color: %s\">Nobody submits bad code on purpose or to upset you. Also - it's okay to deduct no points :)</span>",
+            "<span style=\"\">Ask!</span> <span style=\"color: %1$s\">- if you are unsure about anything. Everyone is on Element. Also check out the </span><a href=\"https://sdq.kastel.kit.edu/programmieren/Hauptseite\">Wiki</a><span style=\"color: %1$s\">.</span>");
 
     private static final List<String> KEYBINDING_LINES = List.of(
-            "<html>Add Annotation  <span style=\"color: %s\">Press Button or Alt + A</span></html>",
-            "<html>Add Custom Message  <span style=\"color: %s\">Hold Ctrl</span></html>");
+            "Add Annotation  <span style=\"color: %s\">Press Button or Alt + A</span>",
+            "Add Custom Message  <span style=\"color: %s\">Hold Ctrl</span>");
 
     private static Instant lastShown = Instant.EPOCH;
 
@@ -56,15 +58,13 @@ public class SplashDialog extends DialogWrapper {
         var panel = new JBPanel<>(new MigLayout("wrap 1, fill, gapy 15", "[grow]"));
 
         for (var line : REMINDER_LINES) {
-            panel.add(
-                    new JBLabel(line.formatted(IntellijUtil.colorToCSS(JBColor.GRAY))).withFont(splashFont()), "growx");
+            panel.add(createHtmlLabel(line.formatted(IntellijUtil.colorToCSS(JBColor.GRAY))), "growx");
         }
 
         panel.add(new JSeparator(), "growx");
 
         for (var line : KEYBINDING_LINES) {
-            panel.add(
-                    new JBLabel(line.formatted(IntellijUtil.colorToCSS(JBColor.GRAY))).withFont(splashFont()), "growx");
+            panel.add(createHtmlLabel(line.formatted(IntellijUtil.colorToCSS(JBColor.GRAY))), "growx");
         }
 
         return panel;
@@ -75,7 +75,13 @@ public class SplashDialog extends DialogWrapper {
         return new Action[] {this.myOKAction};
     }
 
-    private static JBFont splashFont() {
-        return JBFont.regular().biggerOn(2.0f);
+    @SuppressWarnings("UnstableApiUsage")
+    private static JComponent createHtmlLabel(String content) {
+        // Using DslLabel since it has proper HTML link support
+        var label = new DslLabel(DslLabelType.LABEL);
+        label.setFont(JBFont.regular().biggerOn(2.0f));
+        label.setText(content);
+        label.setAction(e -> BrowserUtil.browse(e.getURL()));
+        return label;
     }
 }
