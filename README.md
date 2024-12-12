@@ -7,13 +7,13 @@ It is used to grade [Artemis](https://github.com/ls1intum/Artemis) based exercis
 ```
 git clone https://github.com/kit-sdq/intelligrade/
 cd intelligrade
-./gradlew runIde
+./gradlew runIde --refresh-dependencies
 ```
 for updating, execute
 ```
 cd intelligrade
 git pull
-./gradlew runIde
+./gradlew runIde --refresh-dependencies
 ```
 
 ## Setup
@@ -35,8 +35,8 @@ of paper icon to the bottom left is the annotations list.
 ## Building
 - Make sure that you have Java >=21 and a recent version of Gradle installed.
 - Run the gradle target `runIde` to get a development version of the IDE:
-    - on Windows: `gradlew.bat runIde`
-    - on Linux: `./gradlew runIde`
+    - on Windows: `gradlew.bat runIde --refresh-dependencies`
+    - on Linux: `./gradlew runIde --refresh-dependencies`
   This will download IntelliJ Community Edition (may take several minutes) and run it with Intelligrade installed.
 
 ## Features
