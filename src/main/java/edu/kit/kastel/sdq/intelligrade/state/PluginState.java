@@ -129,9 +129,6 @@ public class PluginState {
                     try {
                         this.verifyLogin();
                         this.notifyConnectedListeners();
-                        ApplicationManager.getApplication().invokeLater(() -> {
-                            new SplashDialog().show();
-                        });
                     } catch (ArtemisClientException e) {
                         throw new CompletionException(e);
                     }
@@ -474,6 +471,8 @@ public class PluginState {
                     if (!initializeAssessment(nextAssessment.get())) {
                         return;
                     }
+
+                    SplashDialog.showMaybe();
 
                     // Now everything is done - the submission is properly locked, and the repository is cloned
                     if (activeAssessment.getAssessment().getAnnotations().isEmpty()) {

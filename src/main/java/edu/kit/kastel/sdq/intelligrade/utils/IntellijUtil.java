@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.ui.JBColor;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -62,5 +63,9 @@ public final class IntellijUtil {
             throw new IllegalStateException("File not found: " + path);
         }
         return file;
+    }
+
+    public static String colorToCSS(JBColor color) {
+        return "rgb(%d, %d, %d)".formatted(color.getRed(), color.getGreen(), color.getBlue());
     }
 }
