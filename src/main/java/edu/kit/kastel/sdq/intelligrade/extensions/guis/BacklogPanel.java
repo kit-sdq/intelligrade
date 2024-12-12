@@ -20,6 +20,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
@@ -107,11 +108,11 @@ public class BacklogPanel extends JPanel {
                 continue;
             }
 
-            if (!firstRound && submission.getCorrectionRound() == 0) {
+            if (!firstRound && submission.getCorrectionRound() == CorrectionRound.FIRST) {
                 continue;
             }
 
-            if (!secondRound && submission.getCorrectionRound() == 1) {
+            if (!secondRound && submission.getCorrectionRound() == CorrectionRound.SECOND) {
                 continue;
             }
 
@@ -121,7 +122,7 @@ public class BacklogPanel extends JPanel {
             backlogList.add(new JBLabel(submission.getParticipantIdentifier()));
             addResultDateLabel(submission);
             // Correction Round
-            backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
+            backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound().toArtemis() + 1)));
             addScoreItem(submission);
             addActionButton(submission);
         }
@@ -170,5 +171,13 @@ public class BacklogPanel extends JPanel {
         }
         reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
         backlogList.add(reopenButton, "growx");
+
+        if (submission.isSubmitted() && ArtemisUtils.isAssessorInstructor()) {
+            JButton reviewButton = new JButton("Review");
+            reviewButton.addActionListener(a -> PluginState.getInstance().reviewAssessment(submission));
+            backlogList.add(reviewButton, "growx");
+        } else {
+            backlogList.add(new JBPanel<>(), "growx");
+        }
     }
 }

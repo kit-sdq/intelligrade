@@ -15,8 +15,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-import javax.swing.*;
-
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -29,9 +27,11 @@ import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.ArtemisInstance;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.MoreRecentSubmissionException;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.User;
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
@@ -152,7 +152,7 @@ public class PluginState {
         return activeAssessment != null;
     }
 
-    public void startNextAssessment(int correctionRound) {
+    public void startNextAssessment(CorrectionRound correctionRound) {
         if (activeAssessment != null) {
             ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
@@ -264,6 +264,10 @@ public class PluginState {
 
     public Optional<ActiveAssessment> getActiveAssessment() {
         return Optional.ofNullable(activeAssessment);
+    }
+
+    public User getAssessor() throws ArtemisNetworkException {
+        return connection.getAssessor();
     }
 
     public void registerAssessmentStartedListener(Consumer<ActiveAssessment> listener) {
@@ -453,10 +457,10 @@ public class PluginState {
     }
 
     private class StartAssessmentTask extends Task.Modal {
-        private final int correctionRound;
+        private final CorrectionRound correctionRound;
         private final GradingConfig gradingConfig;
 
-        public StartAssessmentTask(int correctionRound, GradingConfig gradingConfig) {
+        public StartAssessmentTask(CorrectionRound correctionRound, GradingConfig gradingConfig) {
             super(IntellijUtil.getActiveProject(), "Starting Assessment", false);
             this.correctionRound = correctionRound;
             this.gradingConfig = gradingConfig;

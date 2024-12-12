@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationType;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 
 /**
  * Utility Class to handle Artemis related common tasks such as
@@ -30,6 +31,20 @@ public final class ArtemisUtils {
         return !submission.isSubmitted()
                 && submission.getLatestResult().isPresent()
                 && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
+    }
+
+    public static boolean isAssessorInstructor() {
+        if (PluginState.getInstance().getActiveExercise().isEmpty()) {
+            return false;
+        }
+
+        try {
+            var assessor = PluginState.getInstance().getAssessor();
+            return assessor != null && PluginState.getInstance().getActiveExercise().get().getCourse().isInstructor(assessor);
+        } catch (ArtemisNetworkException ex) {
+            ArtemisUtils.displayNetworkErrorBalloon("Could not check instructor status", ex);
+            return false;
+        }
     }
 
     public static void displayGenericErrorBalloon(String title, String content) {

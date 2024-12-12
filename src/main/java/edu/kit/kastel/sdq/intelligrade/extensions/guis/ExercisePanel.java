@@ -30,6 +30,7 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentStatsDTO;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
@@ -125,13 +126,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         startGradingRound1Button = new JButton("Start Grading Round 1");
         startGradingRound1Button.setForeground(JBColor.GREEN);
         startGradingRound1Button.addActionListener(
-                a -> PluginState.getInstance().startNextAssessment(0));
+                a -> PluginState.getInstance().startNextAssessment(CorrectionRound.FIRST));
         generalPanel.add(startGradingRound1Button, "growx");
 
         startGradingRound2Button = new JButton("Start Grading Round 2");
         startGradingRound2Button.setForeground(JBColor.GREEN);
         startGradingRound2Button.addActionListener(
-                a -> PluginState.getInstance().startNextAssessment(1));
+                a -> PluginState.getInstance().startNextAssessment(CorrectionRound.SECOND));
         generalPanel.add(startGradingRound2Button, "growx");
 
         gradingConfigPathInput = new TextFieldWithBrowseButton();
