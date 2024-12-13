@@ -9,6 +9,7 @@ import javax.swing.table.AbstractTableModel;
 
 import com.intellij.DynamicBundle;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The table model for the annotations table.
@@ -58,8 +59,11 @@ public class AnnotationsTableModel extends AbstractTableModel {
                     .getMistakeType()
                     .getButtonText()
                     .translateTo(LOCALE);
-            case LINES_COLUMN -> formatLines(annotation);
-            case FILE_COLUMN -> annotation.getFilePath();
+            case LINES_COLUMN -> LineLocation.fromAnnotation(annotation);
+            case FILE_COLUMN -> annotation
+                    .getFilePath()
+                    // for display purposes, replace backslashes with forward slashes
+                    .replace("\\", "/");
             case SOURCE_COLUMN -> annotation.getSource();
             case CUSTOM_MESSAGE_COLUMN -> annotation.getCustomMessage().orElse("");
             case CUSTOM_PENALTY_COLUMN -> annotation
@@ -85,14 +89,39 @@ public class AnnotationsTableModel extends AbstractTableModel {
         return annotations.get(index);
     }
 
-    private String formatLines(Annotation annotation) {
-        int startLine = annotation.getStartLine() + 1;
-        int endLine = annotation.getEndLine() + 1;
-
-        if (startLine == endLine) {
-            return String.valueOf(startLine);
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        // This must be overridden, otherwise LineLocation#compareTo will not be called.
+        if (columnIndex == LINES_COLUMN) {
+            return LineLocation.class;
         } else {
-            return String.format("%d - %d", startLine, endLine);
+            return Object.class;
+        }
+    }
+
+    public record LineLocation(int startLine, int endLine) implements Comparable<LineLocation> {
+        public static LineLocation fromAnnotation(Annotation annotation) {
+            return new LineLocation(annotation.getStartLine() + 1, annotation.getEndLine() + 1);
+        }
+
+        @Override
+        public String toString() {
+            return startLine == endLine ? "%d".formatted(startLine) : "%d - %s".formatted(startLine, endLine);
+        }
+
+        @Override
+        public int compareTo(@NotNull LineLocation other) {
+            // It is not necessary to override equals and hashCode, because
+            // this is already done by the record keyword.
+            if (this.equals(other)) {
+                return 0;
+            }
+
+            if (startLine != other.startLine) {
+                return Integer.compare(startLine, other.startLine);
+            }
+
+            return Integer.compare(endLine, other.endLine);
         }
     }
 }
