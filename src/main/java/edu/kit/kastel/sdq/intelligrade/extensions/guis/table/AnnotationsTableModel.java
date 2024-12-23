@@ -33,7 +33,10 @@ public class AnnotationsTableModel extends ListTreeTableModel {
 
         // if a subset of the annotations have the same message, they are grouped together:
         Map<String, List<Annotation>> groupedByMessage = annotations.stream()
-                .collect(Collectors.groupingBy(annotation -> annotation.getCustomMessage().orElse(annotation.getUUID()), LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(
+                        annotation -> annotation.getCustomMessage().orElse(annotation.getUUID()),
+                        LinkedHashMap::new,
+                        Collectors.toList()));
 
         if (groupedByMessage.size() == 1) {
             // if all annotations have the same message, we don't need to group them again
