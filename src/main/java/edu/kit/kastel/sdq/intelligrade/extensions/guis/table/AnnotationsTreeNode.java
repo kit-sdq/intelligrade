@@ -104,7 +104,53 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
 
     public abstract List<Annotation> listAnnotations();
 
-    public abstract boolean removeIf(Predicate<Annotation> shouldRemove);
+    public boolean removeIf(Predicate<Annotation> shouldRemove) {
+        boolean hasAnyChanged = false;
+
+        for (var child : listChildren()) {
+            boolean hasChanged = child.removeIf(shouldRemove);
+            if (hasChanged) {
+                hasAnyChanged = true;
+            }
+
+            // remove the child if it should be removed
+            if (child instanceof AnnotationNode annotationNode) {
+                if (shouldRemove.test(annotationNode.getAnnotation())) {
+                    remove(child);
+                    hasAnyChanged = true;
+                }
+                continue;
+            }
+
+            // if a group has only one child, replace the group with the child
+            if (hasChanged && child.getChildCount() == 1) {
+                var onlyChild = child.listChildren().getFirst();
+                replace(child, onlyChild);
+                continue;
+            }
+
+            // remove empty children (e.g. groups which have no annotations)
+            //
+            // Note: if annotations are removed one by one, a group will never be empty,
+            //       because of the above code, but if multiple annotations are removed at once,
+            //       a group could become empty.
+            if (hasChanged && child.getAllowsChildren() && child.getChildCount() == 0) {
+                remove(child);
+            }
+        }
+
+        return hasAnyChanged;
+    }
+
+    public void replace(AnnotationsTreeNode oldNode, AnnotationsTreeNode newNode) {
+        int index = getIndex(oldNode);
+        if (index == -1) {
+            throw new IllegalArgumentException("oldNode is not a child of this node");
+        }
+
+        remove(index);
+        insert(newNode, index);
+    }
 
     /**
      * Sorts all children of this node recursively.
@@ -159,12 +205,6 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
         @Override
         public List<Annotation> listAnnotations() {
             return List.of(annotation);
-        }
-
-        @Override
-        public boolean removeIf(Predicate<Annotation> shouldRemove) {
-            // the annotation node can not remove itself, and it does not have children
-            return false;
         }
 
         @Override
@@ -238,39 +278,6 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
         }
 
         @Override
-        public boolean removeIf(Predicate<Annotation> shouldRemove) {
-            List<Integer> indices = new ArrayList<>();
-            var children = listChildren();
-
-            boolean hasAnyChanged = false;
-            for (int i = 0; i < children.size(); i++) {
-                var child = children.get(i);
-                boolean hasChanged = child.removeIf(shouldRemove);
-
-                if (hasChanged) {
-                    hasAnyChanged = true;
-                }
-
-                if (hasChanged && child.isLeaf()) {
-                    indices.add(i);
-                    continue;
-                }
-
-                // mark the annotation for removal if it contains one of the annotations
-                if (child instanceof AnnotationNode annotationNode
-                        && shouldRemove.test(annotationNode.getAnnotation())) {
-                    indices.add(i);
-                }
-            }
-
-            for (int i = indices.size() - 1; i >= 0; i--) {
-                remove(indices.get(i));
-            }
-
-            return hasAnyChanged || !indices.isEmpty();
-        }
-
-        @Override
         public String toString() {
             return this.getValueAt(MISTAKE_TYPE_COLUMN).toString();
         }
@@ -294,38 +301,6 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
             }
 
             return result;
-        }
-
-        @Override
-        public boolean removeIf(Predicate<Annotation> shouldRemove) {
-            boolean hasAnyChanged = false;
-            for (var child : listChildren()) {
-                boolean hasChanged = child.removeIf(shouldRemove);
-                if (hasChanged) {
-                    hasAnyChanged = true;
-                }
-
-                // if a group has only one child, replace the group with the child
-                if (child.listChildren().size() == 1) {
-                    var onlyChild = child.listChildren().getFirst();
-                    remove(child);
-                    add(onlyChild);
-                    hasAnyChanged = true;
-                    continue;
-                }
-
-                // remove empty children (e.g. groups which have no annotations)
-                //
-                // Note: if annotations are removed one by one, a group will never be empty,
-                //       because of the above code, but if multiple annotations are removed at once,
-                //       a group could become empty.
-                if (child.listChildren().isEmpty()) {
-                    remove(child);
-                    hasAnyChanged = true;
-                }
-            }
-
-            return hasAnyChanged;
         }
 
         @Override
