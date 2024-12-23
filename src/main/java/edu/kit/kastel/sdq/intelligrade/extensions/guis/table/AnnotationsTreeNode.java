@@ -3,6 +3,7 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis.table;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -33,7 +34,7 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
     private static final ColumnInfo[] COLUMN_INFOS = {
         new DefaultColumnInfo("Mistake type", String.class),
         new DefaultColumnInfo("Line(s)", Lines.class),
-        new DefaultColumnInfo("File", String.class),
+        new DefaultColumnInfo("File", FilePaths.class),
         new DefaultColumnInfo("Source", AnnotationSource.class),
         new DefaultColumnInfo("Custom Message", String.class),
         new DefaultColumnInfo("Custom Penalty", String.class)
@@ -66,7 +67,7 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
         return columns()[columnIndex].getColumnClass();
     }
 
-    private static Object getValueOfAt(Annotation annotation, int column) {
+    public static Object getValueOfAt(Annotation annotation, int column) {
         if (annotation == null) {
             return "";
         }
@@ -77,10 +78,7 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
                     .getButtonText()
                     .translateTo(LOCALE);
             case LINES_COLUMN -> Lines.fromAnnotation(annotation);
-            case FILE_COLUMN -> annotation
-                    .getFilePath()
-                    // for display purposes, replace backslashes with forward slashes
-                    .replace("\\", "/");
+            case FILE_COLUMN -> new FilePaths(List.of(annotation.getFilePath()));
             case SOURCE_COLUMN -> annotation.getSource();
             case CUSTOM_MESSAGE_COLUMN -> annotation.getCustomMessage().orElse("");
             case CUSTOM_PENALTY_COLUMN -> annotation
@@ -107,6 +105,24 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
     public abstract List<Annotation> listAnnotations();
 
     public abstract boolean removeIf(Predicate<Annotation> shouldRemove);
+
+    /**
+     * Sorts all children of this node recursively.
+     *
+     * @param comparator the comparator that defines the sorting
+     */
+    public void sort(Comparator<? super AnnotationsTreeNode> comparator) {
+        List<AnnotationsTreeNode> children = new ArrayList<>(listChildren());
+        this.removeAllChildren();
+
+        for (var child : children) {
+            child.sort(comparator);
+        }
+
+        children.sort(comparator);
+
+        children.forEach(this::add);
+    }
 
     public static class AnnotationNode extends AnnotationsTreeNode {
         private final @NotNull Annotation annotation;
@@ -177,10 +193,15 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
             }
 
             if (columnClass(column) == String.class) {
-                return data.stream().map(element -> (String) element).collect(Collectors.joining(", "));
+                return data.stream().map(String.class::cast).collect(Collectors.joining(", "));
             } else if (columnClass(column) == Lines.class) {
-                return Lines.fromLines(
-                        data.stream().map(element -> (Lines) element).toList());
+                return Lines.fromLines(data.stream().map(Lines.class::cast).toList());
+            } else if (columnClass(column) == FilePaths.class) {
+                return new FilePaths(data.stream()
+                        .map(FilePaths.class::cast)
+                        .map(FilePaths::filePaths)
+                        .flatMap(List::stream)
+                        .toList());
             } else {
                 // fallback to prevent crash (in case the group node becomes empty and intellij tries to render it)
                 if (data.isEmpty()) {

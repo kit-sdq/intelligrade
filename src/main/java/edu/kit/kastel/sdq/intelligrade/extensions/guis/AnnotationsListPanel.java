@@ -1,8 +1,6 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +23,6 @@ import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
-    private final List<Annotation> displayAnnotations = new ArrayList<>();
     private final AnnotationsTableModel model;
     private final AnnotationsTreeTable table;
 
@@ -50,26 +47,20 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         PluginState.getInstance()
                 .registerAssessmentStartedListener(
                         assessment -> assessment.registerAnnotationsUpdatedListener(annotations -> {
-                            this.displayAnnotations.clear();
-                            this.displayAnnotations.addAll(annotations);
-                            this.displayAnnotations.sort(Comparator.comparing(Annotation::getFilePath)
-                                    .thenComparing(Annotation::getStartLine)
-                                    .thenComparing(Annotation::getEndLine));
-
                             // save the currently expanded paths (so they stay open after the annotations change)
                             Set<TreePath> expandedPaths =
                                     new HashSet<>(table.getTree().getExpandedPaths());
-                            model.setAnnotations(displayAnnotations);
+                            model.setAnnotations(annotations);
 
                             table.revalidate();
                             table.updateUI();
 
+                            // restore the expanded paths
                             table.getTree().expandPaths(expandedPaths);
                         }));
 
         PluginState.getInstance().registerAssessmentClosedListener(() -> {
-            this.displayAnnotations.clear();
-            model.clearAnnotations();
+            model.setAnnotations(List.of());
             table.updateUI();
         });
     }

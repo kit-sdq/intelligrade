@@ -1,6 +1,8 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis.table;
 
+import java.util.Comparator;
+
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,16 +18,8 @@ public record LineLocation(int startLine, int endLine) implements Comparable<Lin
 
     @Override
     public int compareTo(@NotNull LineLocation other) {
-        // It is not necessary to override equals and hashCode, because
-        // this is already done by the record keyword.
-        if (this.equals(other)) {
-            return 0;
-        }
-
-        if (startLine != other.startLine) {
-            return Integer.compare(startLine, other.startLine);
-        }
-
-        return Integer.compare(endLine, other.endLine);
+        return Comparator.comparing(LineLocation::startLine)
+                .thenComparing(LineLocation::endLine)
+                .compare(this, other);
     }
 }

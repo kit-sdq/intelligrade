@@ -4,12 +4,24 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis.table;
 import java.awt.Component;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
+import javax.swing.JLabel;
 import javax.swing.JTable;
-import javax.swing.table.TableRowSorter;
+import javax.swing.SortOrder;
+import javax.swing.UIManager;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import javax.swing.tree.TreePath;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,8 +41,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnnotationsTreeTable extends TreeTable {
     private static final Logger LOG = Logger.getInstance(AnnotationsTreeTable.class);
+    public static final Comparator<AnnotationsTreeNode> DEFAULT_NODE_COMPARATOR = delegatingColumnComparator(
+                    AnnotationsTreeNode.FILE_COLUMN)
+            .thenComparing(delegatingColumnComparator(AnnotationsTreeNode.LINES_COLUMN));
 
     private final AnnotationsTableModel model;
+    private final Map<Integer, SortOrder> columnSortOrder = new HashMap<>();
+
+    private static Comparator<AnnotationsTreeNode> getColumnComparator(int columnIdx, SortOrder sortOrder) {
+        var comparator = delegatingColumnComparator(columnIdx);
+
+        return switch (sortOrder) {
+            case DESCENDING -> comparator;
+            case ASCENDING -> comparator.reversed();
+            case UNSORTED -> DEFAULT_NODE_COMPARATOR;
+        };
+    }
+
+    private static SortOrder nextSortOrder(SortOrder current) {
+        var order = List.of(SortOrder.DESCENDING, SortOrder.ASCENDING, SortOrder.UNSORTED);
+        return order.get((order.indexOf(current) + 1) % order.size());
+    }
 
     public AnnotationsTreeTable(AnnotationsTableModel model) {
         super(model);
@@ -39,8 +70,91 @@ public class AnnotationsTreeTable extends TreeTable {
 
         getTableHeader().setReorderingAllowed(false);
 
-        // TODO: make sorting work for treetables
-        setRowSorter(new TableRowSorter<>(getModel()) {});
+        // The original row sorter is disabled, because it does not work with tree tables.
+        //
+        // This code hooks into the table header rendering and adds icons for the sort order,
+        // depending on the above columnSortOrder map.
+        setRowSorter(null);
+        TableCellRenderer renderer = getTableHeader().getDefaultRenderer();
+        getTableHeader().setDefaultRenderer((table, value, isSelected, hasFocus, row, column) -> {
+            Component delegate =
+                    renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            if (!(delegate instanceof JLabel label)) {
+                return delegate;
+            }
+
+            SortOrder sortOrder = columnSortOrder.computeIfAbsent(column, key -> SortOrder.UNSORTED);
+            label.setIcon(
+                    switch (sortOrder) {
+                        case ASCENDING -> UIManager.getIcon("Table.ascendingSortIcon");
+                        case DESCENDING -> UIManager.getIcon("Table.descendingSortIcon");
+                        case UNSORTED -> UIManager.getIcon("Table.naturalSortIcon");
+                    });
+
+            return label;
+        });
+
+        // Register a mouse listener that is called when the user clicks on a column in the table header.
+        getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+
+                JTableHeader header = (JTableHeader) (e.getSource());
+                JTable tableView = header.getTable();
+                TableColumnModel columnModel = tableView.getColumnModel();
+                int column = columnModel.getColumnIndexAtX(e.getX());
+
+                // save the currently expanded paths (so they can be expanded again after sorting)
+                Set<TreePath> expandedPaths = new HashSet<>(getTree().getExpandedPaths());
+
+                // figure out the new sort order for the column:
+                var sortOrder = nextSortOrder(columnSortOrder.computeIfAbsent(column, key -> SortOrder.UNSORTED));
+                var columnComparator = getColumnComparator(column, sortOrder);
+
+                // set the sort order for all columns to UNSORTED, except for the clicked column:
+                for (int i = 0; i < header.getColumnModel().getColumnCount(); i++) {
+                    columnSortOrder.put(i, i == column ? sortOrder : SortOrder.UNSORTED);
+                }
+
+                // this is necessary to make the updated icon visible:
+                header.repaint();
+
+                model.sort(columnComparator);
+
+                revalidate();
+                updateUI();
+
+                getTree().expandPaths(expandedPaths);
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Comparator<AnnotationsTreeNode> delegatingColumnComparator(int columnIdx) {
+        if (AnnotationsTreeNode.columnClass(columnIdx) == Object.class) {
+            // by default compare the strings of the column values:
+            return Comparator.comparing(
+                    (AnnotationsTreeNode node) -> node.getValueAt(columnIdx).toString());
+        }
+
+        // if the class is not Object, this `Comparator` is used that will
+        // delegate to the `compareTo` method of the column values:
+        return (left, right) -> {
+            // The Objects.compare takes care of null values
+            return Objects.compare(left.getValueAt(columnIdx), right.getValueAt(columnIdx), (a, b) -> {
+                if (a instanceof Comparable<?> comparable) {
+                    // the code should be able to assume that a column value implements Comparable,
+                    // so that it can be compared with other values of the same column.
+                    //
+                    // If this is not the case, the code will crash here, indicating an implementation error.
+                    return ((Comparable<Object>) comparable).compareTo(b);
+                } else {
+                    return a.toString().compareTo(b.toString());
+                }
+            });
+        };
     }
 
     private void installListeners() {

@@ -2,12 +2,12 @@
 package edu.kit.kastel.sdq.intelligrade.extensions.guis.table;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -22,7 +22,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
  */
 public class AnnotationsTableModel extends ListTreeTableModel {
     private final List<Annotation> annotations = new ArrayList<>();
-
     private final AnnotationsTreeNode root;
 
     private static MutableTreeNode createNode(List<Annotation> annotations) {
@@ -43,7 +42,7 @@ public class AnnotationsTableModel extends ListTreeTableModel {
     // for the student.
 
     // The annotations are grouped by their classifiers
-    private final Function<List<Annotation>, List<MutableTreeNode>> annotationGrouper = (annotations) -> {
+    private List<MutableTreeNode> groupAnnotations(List<Annotation> annotations) {
         // first group all problems by the first classifier:
         Map<String, List<Annotation>> groupedAnnotations = annotations.stream()
                 .collect(Collectors.groupingBy(
@@ -83,7 +82,7 @@ public class AnnotationsTableModel extends ListTreeTableModel {
         }
 
         return result;
-    };
+    }
 
     // Don't ask, I couldn't think of a better solution.
     private static AnnotationsTreeNode tempRootNode = null;
@@ -101,10 +100,20 @@ public class AnnotationsTableModel extends ListTreeTableModel {
     private void refreshNodes() {
         this.root.removeAllChildren();
 
-        for (var child : annotationGrouper.apply(this.annotations)) {
+        for (var child : groupAnnotations(this.annotations)) {
             this.root.add(child);
         }
 
+        this.sort(AnnotationsTreeTable.DEFAULT_NODE_COMPARATOR);
+    }
+
+    public void sort(Comparator<? super AnnotationsTreeNode> comparator) {
+        // The root node and all its children are sorted here.
+        // An alternative approach would be to sort the list of annotations
+        // and then rebuild the tree, but this would destroy the tree structure
+        // and invalidate all the TreePaths.
+
+        this.root.sort(comparator);
         this.reload();
     }
 
@@ -171,11 +180,6 @@ public class AnnotationsTableModel extends ListTreeTableModel {
         for (var annotation : annotations) {
             this.root.add(createNode(List.of(annotation)));
         }
-    }
-
-    public void clearAnnotations() {
-        this.annotations.clear();
-        this.refreshNodes();
     }
 
     public TreePath getTreePathFor(Predicate<AnnotationsTreeNode> isMatching) {
