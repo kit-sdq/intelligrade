@@ -167,7 +167,9 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
 
         children.sort(comparator);
 
-        children.forEach(this::add);
+        for (AnnotationsTreeNode child : children) {
+            add(child);
+        }
     }
 
     public static class AnnotationNode extends AnnotationsTreeNode {
