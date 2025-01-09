@@ -36,7 +36,7 @@ dependencies {
             jetbrainsRuntimeLocal(localJbr)
         }
     }
-    implementation 'edu.kit.kastel.sdq:artemis4j:7.7.4'
+    implementation 'edu.kit.kastel.sdq:artemis4j:7.7.5-SNAPSHOT'
     // Tests
     testImplementation 'org.junit.jupiter:junit-jupiter-api:' + JUNIT_VERSION
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + JUNIT_VERSION
