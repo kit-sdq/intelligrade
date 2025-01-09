@@ -173,7 +173,9 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
     }
 
     public static class AnnotationNode extends AnnotationsTreeNode {
-        private final @NotNull Annotation annotation;
+        // This is transient to make sonar happy, because the parent class is serializable.
+        // It should never be serialized, so this solution is fine.
+        private final transient @NotNull Annotation annotation;
 
         public AnnotationNode(@NotNull Annotation annotation) {
             super(false);
