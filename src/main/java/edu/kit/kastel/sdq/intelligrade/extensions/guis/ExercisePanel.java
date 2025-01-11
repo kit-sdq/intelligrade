@@ -2,6 +2,7 @@
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ItemEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -246,13 +247,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             var item = (OptionalExam) e.getItem();
             if (item.exam() != null) {
                 for (var group : item.exam().getExerciseGroups()) {
-                    for (var exercise : group.getProgrammingExercises()) {
+                    for (var exercise : sortExercises(group.getProgrammingExercises())) {
                         exerciseSelector.addItem(exercise);
                     }
                 }
             } else {
                 for (ProgrammingExercise programmingExercise :
-                        courseSelector.getItem().getProgrammingExercises()) {
+                        sortExercises(courseSelector.getItem().getProgrammingExercises())) {
                     exerciseSelector.addItem(programmingExercise);
                 }
             }
@@ -262,6 +263,14 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         }
 
         updateUI();
+    }
+
+    private static <T extends ProgrammingExercise> List<T> sortExercises(List<T> exercises) {
+        List<T> result = new ArrayList<>(exercises);
+
+        result.sort((a, b) -> CharSequence.compare(a.getTitle(), b.getTitle()));
+
+        return result;
     }
 
     private void handleCourseSelected(ItemEvent e) {

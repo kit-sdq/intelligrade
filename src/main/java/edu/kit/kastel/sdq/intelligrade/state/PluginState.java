@@ -35,6 +35,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.User;
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
+import edu.kit.kastel.sdq.intelligrade.extensions.guis.SplashDialog;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisCredentialsProvider;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.login.CefUtils;
@@ -495,6 +496,8 @@ public class PluginState {
                     if (!initializeAssessment(nextAssessment.get())) {
                         return;
                     }
+
+                    SplashDialog.showMaybe();
 
                     // Now everything is done - the submission is properly locked, and the repository is cloned
                     if (activeAssessment.getAssessment().getAnnotations().isEmpty()) {

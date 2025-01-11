@@ -40,6 +40,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.ThresholdPenaltyRule;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
+import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
 
 public class AssessmentPanel extends SimpleToolWindowPanel {
@@ -217,9 +218,9 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             return """
                     <html> <h2><span style="color: %s">%.1f</span> <span style="color: %s">%.1f</span> = %.1f of %.1f</h2></html>"""
                     .formatted(
-                            colorToCSS(JBColor.GREEN),
+                            IntellijUtil.colorToCSS(JBColor.GREEN),
                             testPoints,
-                            colorToCSS(JBColor.GREEN),
+                            IntellijUtil.colorToCSS(JBColor.GREEN),
                             Math.abs(annotationPoints),
                             totalPoints,
                             maxPoints);
@@ -227,17 +228,13 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             return """
                     <html> <h2><span style="color: %s">%.1f</span> <span style="color: %s">- %.1f</span> = %.1f of %.1f</h2></html>"""
                     .formatted(
-                            colorToCSS(JBColor.GREEN),
+                            IntellijUtil.colorToCSS(JBColor.GREEN),
                             testPoints,
-                            colorToCSS(JBColor.RED),
+                            IntellijUtil.colorToCSS(JBColor.RED),
                             Math.abs(annotationPoints),
                             totalPoints,
                             maxPoints);
         }
-    }
-
-    private static String colorToCSS(JBColor color) {
-        return "rgb(%d, %d, %d)".formatted(color.getRed(), color.getGreen(), color.getBlue());
     }
 
     private static class MistakeTypeIconRenderer {
