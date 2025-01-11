@@ -254,6 +254,25 @@ public class PluginState {
         new ReopenAssessmentTask(submission, gradingConfig.get()).queue();
     }
 
+    public void reviewAssessment(ProgrammingSubmission submission) {
+        if (activeAssessment != null) {
+            ArtemisUtils.displayFinishAssessmentFirstBalloon();
+            return;
+        }
+
+        if (activeExercise == null) {
+            ArtemisUtils.displayGenericErrorBalloon("Could not review assessment", "No exercise selected");
+            return;
+        }
+
+        var gradingConfig = createGradingConfig();
+        if (gradingConfig.isEmpty()) {
+            return;
+        }
+
+        new ReopenAssessmentTask(submission, gradingConfig.get()).queue();
+    }
+
     public Optional<ProgrammingExercise> getActiveExercise() {
         return Optional.ofNullable(activeExercise);
     }

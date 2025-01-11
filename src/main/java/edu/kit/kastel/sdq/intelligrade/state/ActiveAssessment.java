@@ -22,9 +22,11 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.JBFont;
+import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.autograder.AutograderTask;
@@ -57,6 +59,10 @@ public class ActiveAssessment {
 
     public GradingConfig getGradingConfig() {
         return assessment.getConfig();
+    }
+
+    public boolean isReview() {
+        return assessment.getCorrectionRound() == CorrectionRound.REVIEW;
     }
 
     public void addAnnotationAtCaret(MistakeType mistakeType, boolean withCustomMessage) {
@@ -93,11 +99,28 @@ public class ActiveAssessment {
     }
 
     public void deleteAnnotation(Annotation annotation) {
-        this.assessment.removeAnnotation(annotation);
+        if (this.isReview() && annotation.getSource() != AnnotationSource.REVIEW) {
+            annotation.setDeletedInReview(true);
+        } else {
+            this.assessment.removeAnnotation(annotation);
+        }
+        this.notifyListeners();
+    }
+
+    public void restoreAnnotation(Annotation annotation) {
+        if (this.isReview() && annotation.getSource() != AnnotationSource.REVIEW) {
+            annotation.setDeletedInReview(false);
+        } else {
+            LOG.warn("Cannot restore annotation outside of review");
+        }
         this.notifyListeners();
     }
 
     public void runAutograder() {
+        if (this.isReview()) {
+            return;
+        }
+
         var settings = ArtemisSettingsState.getInstance();
         if (settings.getAutograderOption() == AutograderOption.SKIP) {
             return;
@@ -111,6 +134,11 @@ public class ActiveAssessment {
     }
 
     public void changeCustomMessage(Annotation annotation) {
+        if (this.isReview() && annotation.getSource() != AnnotationSource.REVIEW) {
+            ArtemisUtils.displayGenericErrorBalloon("Cannot change annotation in review", "Cannot change existing annotations in review. You can delete this annotation or add a new one.");
+            return;
+        }
+
         if (annotation.getMistakeType().isCustomAnnotation()) {
             showCustomAnnotationDialog(
                     annotation.getMistakeType(),
