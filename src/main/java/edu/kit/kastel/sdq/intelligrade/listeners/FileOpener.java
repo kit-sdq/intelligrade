@@ -93,15 +93,11 @@ public final class FileOpener implements DumbService.DumbModeListener {
         PsiType stringType =
                 PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
         for (var method : mainMethods) {
-            // Is public & static
+            // Is public & static & returns void
             var modifiers = method.getModifierList();
             if (!modifiers.hasExplicitModifier(PsiModifier.PUBLIC)
-                    || !modifiers.hasExplicitModifier(PsiModifier.STATIC)) {
-                continue;
-            }
-
-            // Returns void
-            if (!PsiTypes.voidType().equals(method.getReturnType())) {
+                    || !modifiers.hasExplicitModifier(PsiModifier.STATIC)
+                    || !PsiTypes.voidType().equals(method.getReturnType())) {
                 continue;
             }
 
