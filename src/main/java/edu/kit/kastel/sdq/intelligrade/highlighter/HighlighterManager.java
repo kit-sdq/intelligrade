@@ -130,6 +130,10 @@ public class HighlighterManager {
     private static void createHighlighter(Editor editor, int startLine, List<Annotation> annotations) {
         var document = FileDocumentManager.getInstance().getDocument(editor.getVirtualFile());
 
+        if (document == null) {
+            return;
+        }
+
         int startOffset = document.getLineStartOffset(startLine);
         int endOffset = document.getLineEndOffset(
                 annotations.stream().mapToInt(Annotation::getEndLine).max().orElse(startLine));
