@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.state;
 
 import java.io.IOException;
@@ -179,6 +179,7 @@ public class PluginState {
         try {
             activeAssessment.getAssessment().save();
             ArtemisUtils.displayGenericInfoBalloon("Assessment saved", "The assessment has been saved.");
+            this.cleanupAssessment();
         } catch (ArtemisNetworkException e) {
             LOG.warn(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not save assessment", e);
