@@ -1,7 +1,10 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ItemEvent;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -35,6 +38,8 @@ import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
@@ -138,11 +143,19 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         gradingConfigPathInput = new TextFieldWithBrowseButton();
         gradingConfigPathInput.addBrowseFolderListener(
                 new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
-        gradingConfigPathInput.setText(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath());
+        String currentConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
+        if (currentConfigPath != null) {
+            System.out.println("currentConfigPath: " + currentConfigPath);
+            selectExerciseForConfig();
+        }
+        gradingConfigPathInput.setText(currentConfigPath);
         gradingConfigPathInput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
             protected void textChanged(@NotNull DocumentEvent documentEvent) {
-                ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
+                String gradingConfigPath = gradingConfigPathInput.getText();
+                ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPath);
+
+                selectExerciseForConfig();
             }
         });
         generalPanel.add(gradingConfigPathInput, "growx");
@@ -151,6 +164,38 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         innerTextField.getEmptyText().setText("Path to grading config");
         innerTextField.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)
                 f -> f.getText().isEmpty());
+    }
+
+    private void selectExerciseForConfig() {
+        String configString = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
+        if (configString == null) {
+            return;
+        }
+
+        Path configPath = Path.of(configString);
+        if (!Files.exists(configPath)) {
+            return;
+        }
+
+        String config;
+        try {
+            config = Files.readString(configPath);
+        } catch (IOException e) {
+            return;
+        }
+
+        // this searches for the first exercise that the grading config can be used with
+        for (int i = 0; i < exerciseSelector.getItemCount(); i++) {
+            ProgrammingExercise exercise = exerciseSelector.getItemAt(i);
+            try {
+                GradingConfig.readFromString(config, exercise);
+                // select that exercise
+                exerciseSelector.setSelectedIndex(i);
+                break;
+            } catch (InvalidGradingConfigException e) {
+                // if it fails to parse/the exercise does not match, go to the next one
+            }
+        }
     }
 
     private void createStatisticsPanel() {
@@ -261,6 +306,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
         }
 
+        selectExerciseForConfig();
+
         updateUI();
     }
 
@@ -283,6 +330,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 for (Exam exam : course.getExams()) {
                     examSelector.addItem(new OptionalExam(exam));
                 }
+                selectExerciseForConfig();
+
                 updateUI();
             } catch (ArtemisNetworkException ex) {
                 LOG.warn(ex);
