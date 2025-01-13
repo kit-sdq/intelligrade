@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.Color;
@@ -38,6 +38,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.RatingGroup;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.StackingPenaltyRule;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.ThresholdPenaltyRule;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.sdq.intelligrade.extensions.settings.ThemeColor;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
@@ -147,7 +148,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             var mistakeType = assessmentButton.mistakeType();
 
             StringBuilder iconText = new StringBuilder();
-            Color color;
+            ThemeColor color;
             Font font = JBFont.regular();
 
             if (mistakeType.getReporting().shouldScore()) {
@@ -187,8 +188,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 color = settings.getReportingAssessmentButtonColor();
             }
 
-            assessmentButton.iconRenderer().update(iconText.toString(), color);
-            assessmentButton.button().setForeground(color);
+            assessmentButton.iconRenderer().update(iconText.toString(), color.toColor());
+            assessmentButton.button().setForeground(color.toColor());
             assessmentButton.button().setFont(font);
         }
     }

@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.highlighter;
 
 import java.awt.Font;
@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.JBColor;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.AnnotationsListPanel;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
@@ -137,7 +136,7 @@ public class HighlighterManager {
 
         var annotationColor = ArtemisSettingsState.getInstance().getAnnotationColor();
         var attributes = new TextAttributes(
-                null, new JBColor(annotationColor, annotationColor), null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN);
+                null, annotationColor.toJBColor(), null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN);
 
         var highlighter = editor.getMarkupModel()
                 .addRangeHighlighter(
