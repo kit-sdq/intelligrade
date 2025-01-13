@@ -143,19 +143,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         gradingConfigPathInput = new TextFieldWithBrowseButton();
         gradingConfigPathInput.addBrowseFolderListener(
                 new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor("json")));
-        String currentConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
-        if (currentConfigPath != null) {
-            System.out.println("currentConfigPath: " + currentConfigPath);
-            selectExerciseForConfig();
-        }
-        gradingConfigPathInput.setText(currentConfigPath);
+        gradingConfigPathInput.setText(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath());
         gradingConfigPathInput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
             protected void textChanged(@NotNull DocumentEvent documentEvent) {
-                String gradingConfigPath = gradingConfigPathInput.getText();
-                ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPath);
+                ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
 
-                selectExerciseForConfig();
+                updateSelectedExercise();
             }
         });
         generalPanel.add(gradingConfigPathInput, "growx");
@@ -166,7 +160,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 f -> f.getText().isEmpty());
     }
 
-    private void selectExerciseForConfig() {
+    private void updateSelectedExercise() {
         String configString = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
         if (configString == null) {
             return;
@@ -184,17 +178,27 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             return;
         }
 
+        int selectedIndex = exerciseSelector.getSelectedIndex();
+        if (exerciseMatchesConfig(exerciseSelector.getItemAt(selectedIndex), config)) {
+            return;
+        }
+
         // this searches for the first exercise that the grading config can be used with
         for (int i = 0; i < exerciseSelector.getItemCount(); i++) {
             ProgrammingExercise exercise = exerciseSelector.getItemAt(i);
-            try {
-                GradingConfig.readFromString(config, exercise);
-                // select that exercise
+            if (exerciseMatchesConfig(exercise, config)) {
                 exerciseSelector.setSelectedIndex(i);
-                break;
-            } catch (InvalidGradingConfigException e) {
-                // if it fails to parse/the exercise does not match, go to the next one
+                return;
             }
+        }
+    }
+
+    private static boolean exerciseMatchesConfig(ProgrammingExercise exercise, String config) {
+        try {
+            GradingConfig.readFromString(config, exercise);
+            return true;
+        } catch (InvalidGradingConfigException e) {
+            return false;
         }
     }
 
@@ -306,7 +310,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
         }
 
-        selectExerciseForConfig();
+        updateSelectedExercise();
 
         updateUI();
     }
@@ -330,7 +334,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 for (Exam exam : course.getExams()) {
                     examSelector.addItem(new OptionalExam(exam));
                 }
-                selectExerciseForConfig();
+                updateSelectedExercise();
 
                 updateUI();
             } catch (ArtemisNetworkException ex) {
