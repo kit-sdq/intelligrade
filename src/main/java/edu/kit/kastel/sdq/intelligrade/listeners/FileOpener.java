@@ -1,5 +1,7 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.listeners;
+
+import java.util.Arrays;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
@@ -122,21 +124,31 @@ public final class FileOpener implements DumbService.DumbModeListener {
             }
 
             // All checks passed, this is a main method!
-            var file = method.getContainingFile().getVirtualFile();
-            int offset = method.getTextOffset();
-
-            ApplicationManager.getApplication().invokeLater(() -> {
-                // Open the file in an editor, and place the caret at the main method's declaration
-                FileEditorManager.getInstance(project)
-                        .openTextEditor(new OpenFileDescriptor(project, file, offset), true);
-
-                // Expand the project view and select the file
-                ProjectView.getInstance(IntellijUtil.getActiveProject()).select(null, file, true);
-            });
-
+            openFile(project, method.getContainingFile().getVirtualFile(), method.getTextOffset());
             return;
         }
 
         LOG.info("No main class found");
+
+        // if it could not find a main class, open the first class in the directory:
+        for (String className : PsiShortNamesCache.getInstance(project).getAllClassNames()) {
+            var psiClass = Arrays.stream(PsiShortNamesCache.getInstance(project).getClassesByName(className, scope))
+                    .findFirst();
+            if (psiClass.isPresent()) {
+                var file = psiClass.get().getContainingFile().getVirtualFile();
+                openFile(project, file, 0);
+                return;
+            }
+        }
+    }
+
+    private static void openFile(Project project, VirtualFile file, int offset) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            // Open the file in an editor, and place the caret at the main method's declaration
+            FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), true);
+
+            // Expand the project view and select the file
+            ProjectView.getInstance(IntellijUtil.getActiveProject()).select(null, file, true);
+        });
     }
 }
