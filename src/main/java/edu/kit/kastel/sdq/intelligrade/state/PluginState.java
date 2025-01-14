@@ -361,6 +361,9 @@ public class PluginState {
                 IntellijUtil.getMavenManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
             });
 
+            // Sometimes the SDK is not set properly, this will set the SDK if it is not set
+            IntellijUtil.updateProjectSDK();
+
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
             for (Consumer<ActiveAssessment> listener : this.assessmentStartedListeners) {
                 listener.accept(activeAssessment);
