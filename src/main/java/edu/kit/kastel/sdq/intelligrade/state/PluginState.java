@@ -355,6 +355,9 @@ public class PluginState {
                                 .cloneViaVCSTokenInto(IntellijUtil.getProjectRootDirectory(), null);
                     };
 
+            // TODO: might have to be spawned in a background thread
+            IntellijUtil.setupProjectProfile();
+
             // Refresh all files, so that they are up-to-date for the maven update
             IntellijUtil.forceFilesSync(() -> {
                 // Force IntelliJ to update the Maven project

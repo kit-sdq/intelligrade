@@ -1,6 +1,9 @@
 /* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.utils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -112,6 +115,28 @@ public final class IntellijUtil {
         }
 
         LOG.error("No suitable SDK found, please install a JDK with version " + TARGET_SDK_VERSION + " or higher");
+    }
+
+    private static String loadInspectionsProfile() throws IOException {
+        try (var in = IntellijUtil.class.getResourceAsStream("/Project_Default.xml")) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    public static void setupProjectProfile() {
+        var project = getActiveProject();
+
+        Path path = Path.of(project.getBasePath() + "/" + Project.DIRECTORY_STORE_FOLDER + "/"
+                + "inspectionProfiles/Project_Default.xml");
+
+        try {
+            // create the directory if it does not exist
+            Files.createDirectories(path.getParent());
+            // write the default profile to the file
+            Files.writeString(path, loadInspectionsProfile());
+        } catch (IOException ioException) {
+            throw new IllegalStateException("Could not write default profile", ioException);
+        }
     }
 
     public static Path getAnnotationPath(Annotation annotation) {
