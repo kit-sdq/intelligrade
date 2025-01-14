@@ -126,8 +126,8 @@ public final class IntellijUtil {
     public static void setupProjectProfile() {
         var project = getActiveProject();
 
-        Path path = Path.of(project.getBasePath() + "/" + Project.DIRECTORY_STORE_FOLDER + "/"
-                + "inspectionProfiles/Project_Default.xml");
+        Path path = Path.of(
+                project.getBasePath(), Project.DIRECTORY_STORE_FOLDER, "inspectionProfiles", "Project_Default.xml");
 
         try {
             // create the directory if it does not exist
