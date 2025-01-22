@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.state;
 
 import java.awt.EventQueue;
@@ -64,19 +64,18 @@ public class ActiveAssessment {
             throw new IllegalStateException("No active assessment");
         }
 
-        var selection = CodeSelection.fromCaret();
-        if (selection.isEmpty()) {
+        var selection = CodeSelection.fromCaret().orElse(null);
+        if (selection == null) {
             ArtemisUtils.displayGenericErrorBalloon(
                     "No code selected", "Cannot create annotation without code selection");
             return;
         }
 
-        var editor = IntellijUtil.getActiveEditor();
-        int startLine = editor.getDocument().getLineNumber(selection.get().startOffset());
-        int endLine = editor.getDocument().getLineNumber(selection.get().endOffset());
+        int startLine = selection.startLine();
+        int endLine = selection.endLine();
         String path = Path.of(IntellijUtil.getActiveProject().getBasePath())
                 .resolve(ASSIGNMENT_SUB_PATH)
-                .relativize(selection.get().path())
+                .relativize(selection.path())
                 .toString()
                 .replace("\\", "/");
 

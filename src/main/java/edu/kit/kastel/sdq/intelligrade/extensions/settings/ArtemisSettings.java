@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.settings;
 
 import java.util.Objects;
@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorPanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JBIntSpinner;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
@@ -46,10 +47,48 @@ public class ArtemisSettings implements Configurable {
 
     private JBCheckBox autoOpenMainClassCheckBox;
     private JBIntSpinner columnsPerRatingGroupSpinner;
-    private ColorPanel highlighterColorChooser;
-    private ColorPanel activeAssessmentButtonColorChooser;
-    private ColorPanel finishedAssessmentButtonColorChooser;
-    private ColorPanel reportingAssessmentButtonColorChooser;
+    private ThemeColorPanel highlighterColorChooser;
+    private ThemeColorPanel activeAssessmentButtonColorChooser;
+    private ThemeColorPanel finishedAssessmentButtonColorChooser;
+    private ThemeColorPanel reportingAssessmentButtonColorChooser;
+
+    /**
+     * This class is a color picker that changes the color to select based on the current theme.
+     * <p>
+     * When the light theme is active, the bright colors can be selected and when the dark theme is active,
+     * the dark colors can be selected.
+     */
+    private static class ThemeColorPanel extends JBPanel<JBPanel<?>> {
+        private final ColorPanel brightColorChooser;
+        private final ColorPanel darkColorChooser;
+
+        public ThemeColorPanel() {
+            super(new MigLayout("wrap 1", "[grow]"));
+
+            this.brightColorChooser = new ColorPanel();
+            this.brightColorChooser.setSupportTransparency(true);
+            this.darkColorChooser = new ColorPanel();
+            this.darkColorChooser.setSupportTransparency(true);
+
+            if (JBColor.isBright()) {
+                this.add(this.brightColorChooser, "growx");
+            } else {
+                this.add(this.darkColorChooser, "growx");
+            }
+        }
+
+        public @Nullable ThemeColor getSelectedColor() {
+            if (brightColorChooser.getSelectedColor() == null || darkColorChooser.getSelectedColor() == null) {
+                return null;
+            }
+            return new ThemeColor(brightColorChooser.getSelectedColor(), darkColorChooser.getSelectedColor());
+        }
+
+        public void setSelectedColor(ThemeColor color) {
+            brightColorChooser.setSelectedColor(color.getBrightColor());
+            darkColorChooser.setSelectedColor(color.getDarkColor());
+        }
+    }
 
     /**
      * Returns the visible name of the configurable component.
@@ -169,19 +208,19 @@ public class ArtemisSettings implements Configurable {
         contentPanel.add(columnsPerRatingGroupSpinner, "growx");
 
         contentPanel.add(new JBLabel("Highlighter color:"));
-        highlighterColorChooser = new ColorPanel();
+        highlighterColorChooser = new ThemeColorPanel();
         contentPanel.add(highlighterColorChooser, "growx");
 
         contentPanel.add(new JBLabel("Scoring grading button:"));
-        activeAssessmentButtonColorChooser = new ColorPanel();
+        activeAssessmentButtonColorChooser = new ThemeColorPanel();
         contentPanel.add(activeAssessmentButtonColorChooser, "growx");
 
         contentPanel.add(new JBLabel("Scoring grading button (limit reached):"));
-        finishedAssessmentButtonColorChooser = new ColorPanel();
+        finishedAssessmentButtonColorChooser = new ThemeColorPanel();
         contentPanel.add(finishedAssessmentButtonColorChooser, "growx");
 
         contentPanel.add(new JBLabel("Reporting grading button:"));
-        reportingAssessmentButtonColorChooser = new ColorPanel();
+        reportingAssessmentButtonColorChooser = new ThemeColorPanel();
         contentPanel.add(reportingAssessmentButtonColorChooser, "growx");
 
         return contentPanel;

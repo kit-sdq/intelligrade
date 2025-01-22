@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.settings;
 
 import java.awt.*;
@@ -8,9 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.ui.JBColor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,12 @@ import org.jetbrains.annotations.Nullable;
  */
 @State(name = "edu.kit.kastel.extensions.ArtemisSettingsState", storages = @Storage("IntelliGradeSettings.xml"))
 public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSettingsState.InternalState> {
+    private static final Logger LOG = Logger.getInstance(ArtemisSettingsState.class);
+
+    private static final ThemeColor OLD_ANNOTATION_COLOR =
+            new ThemeColor(new Color(155, 54, 54), new Color(155, 54, 54));
+    private static final ThemeColor DEFAULT_ANNOTATION_COLOR =
+            new ThemeColor(new Color(225, 128, 128), new Color(75, 30, 30));
     private final InternalState state = new InternalState();
 
     // Settings need to be public for IntelliJ to serialize them
@@ -37,10 +44,17 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
         public Date jwtExpiry = new Date(Long.MAX_VALUE);
 
-        public int annotationColor = new JBColor(new Color(155, 54, 54), new Color(155, 54, 54)).getRGB();
-        public int activeAssessmentButtonColor = JBColor.YELLOW.getRGB();
-        public int finishedAssessmentButtonColor = JBColor.MAGENTA.getRGB();
-        public int reportingAssessmentButtonColor = JBColor.GREEN.getRGB();
+        @OptionTag(converter = ThemeColor.ThemeColorConverter.class)
+        public ThemeColor annotationColor = DEFAULT_ANNOTATION_COLOR;
+
+        @OptionTag(converter = ThemeColor.ThemeColorConverter.class)
+        public ThemeColor activeAssessmentButtonColor = ThemeColor.yellow();
+
+        @OptionTag(converter = ThemeColor.ThemeColorConverter.class)
+        public ThemeColor finishedAssessmentButtonColor = ThemeColor.magenta();
+
+        @OptionTag(converter = ThemeColor.ThemeColorConverter.class)
+        public ThemeColor reportingAssessmentButtonColor = ThemeColor.green();
     }
 
     public static ArtemisSettingsState getInstance() {
@@ -74,6 +88,20 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
     @Override
     public void loadState(@NotNull InternalState state) {
         XmlSerializerUtil.copyBean(state, this.state);
+
+        // The annotation color type was changed from an int to a ThemeColor.
+        // The ThemeColorConverter is able to handle converting a single number to a ThemeColor,
+        // but it would not apply the new default colors.
+        //
+        // There seems to be a dedicated mechanism for migrating configs, but there is not much
+        // documentation on it. According to what is there, it should only be used when the
+        // config changes in a major way.
+        //
+        // That is why the config is migrated here.
+        if (this.state.annotationColor.equals(OLD_ANNOTATION_COLOR)) {
+            LOG.debug("Migrating old annotation color to new format");
+            this.state.annotationColor = DEFAULT_ANNOTATION_COLOR;
+        }
     }
 
     public boolean isUseTokenLogin() {
@@ -118,12 +146,12 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         state.columnsPerRatingGroup = columnsPerRatingGroup;
     }
 
-    public Color getAnnotationColor() {
-        return new Color(state.annotationColor);
+    public ThemeColor getAnnotationColor() {
+        return state.annotationColor;
     }
 
-    public void setAnnotationColor(Color annotationColor) {
-        state.annotationColor = annotationColor.getRGB();
+    public void setAnnotationColor(ThemeColor annotationColor) {
+        state.annotationColor = annotationColor;
     }
 
     public Date getJwtExpiry() {
@@ -166,27 +194,27 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         state.vcsAccessOption = vcsAccessOption;
     }
 
-    public Color getActiveAssessmentButtonColor() {
-        return new Color(state.activeAssessmentButtonColor);
+    public ThemeColor getActiveAssessmentButtonColor() {
+        return state.activeAssessmentButtonColor;
     }
 
-    public void setActiveAssessmentButtonColor(Color activeAssessmentButtonColor) {
-        state.activeAssessmentButtonColor = activeAssessmentButtonColor.getRGB();
+    public void setActiveAssessmentButtonColor(ThemeColor activeAssessmentButtonColor) {
+        state.activeAssessmentButtonColor = activeAssessmentButtonColor;
     }
 
-    public Color getFinishedAssessmentButtonColor() {
-        return new Color(state.finishedAssessmentButtonColor);
+    public ThemeColor getFinishedAssessmentButtonColor() {
+        return state.finishedAssessmentButtonColor;
     }
 
-    public void setFinishedAssessmentButtonColor(Color finishedAssessmentButtonColor) {
-        state.finishedAssessmentButtonColor = finishedAssessmentButtonColor.getRGB();
+    public void setFinishedAssessmentButtonColor(ThemeColor finishedAssessmentButtonColor) {
+        state.finishedAssessmentButtonColor = finishedAssessmentButtonColor;
     }
 
-    public Color getReportingAssessmentButtonColor() {
-        return new Color(state.reportingAssessmentButtonColor);
+    public ThemeColor getReportingAssessmentButtonColor() {
+        return state.reportingAssessmentButtonColor;
     }
 
-    public void setReportingAssessmentButtonColor(Color reportingAssessmentButtonColor) {
-        state.reportingAssessmentButtonColor = reportingAssessmentButtonColor.getRGB();
+    public void setReportingAssessmentButtonColor(ThemeColor reportingAssessmentButtonColor) {
+        state.reportingAssessmentButtonColor = reportingAssessmentButtonColor;
     }
 }

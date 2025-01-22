@@ -1,7 +1,10 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ItemEvent;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -35,6 +38,8 @@ import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
@@ -143,6 +148,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             @Override
             protected void textChanged(@NotNull DocumentEvent documentEvent) {
                 ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
+
+                updateSelectedExercise();
             }
         });
         generalPanel.add(gradingConfigPathInput, "growx");
@@ -151,6 +158,41 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         innerTextField.getEmptyText().setText("Path to grading config");
         innerTextField.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)
                 f -> f.getText().isEmpty());
+    }
+
+    private void updateSelectedExercise() {
+        String configString = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
+        if (configString == null) {
+            return;
+        }
+
+        Path configPath = Path.of(configString);
+        if (!Files.exists(configPath)) {
+            return;
+        }
+
+        GradingConfig.GradingConfigDTO config;
+        try {
+            config = GradingConfig.readDTOFromString(Files.readString(configPath));
+        } catch (InvalidGradingConfigException | IOException e) {
+            return;
+        }
+
+        // if the selected exercise is compatible with the grading config, do nothing
+        int selectedIndex = exerciseSelector.getSelectedIndex();
+        if (config.isAllowedForExercise(
+                exerciseSelector.getItemAt(selectedIndex).getId())) {
+            return;
+        }
+
+        // this searches for the first exercise that the grading config can be used with
+        for (int i = 0; i < exerciseSelector.getItemCount(); i++) {
+            ProgrammingExercise exercise = exerciseSelector.getItemAt(i);
+            if (config.isAllowedForExercise(exercise.getId())) {
+                exerciseSelector.setSelectedIndex(i);
+                return;
+            }
+        }
     }
 
     private void createStatisticsPanel() {
@@ -261,6 +303,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
         }
 
+        updateSelectedExercise();
+
         updateUI();
     }
 
@@ -283,6 +327,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 for (Exam exam : course.getExams()) {
                     examSelector.addItem(new OptionalExam(exam));
                 }
+                updateSelectedExercise();
+
                 updateUI();
             } catch (ArtemisNetworkException ex) {
                 LOG.warn(ex);

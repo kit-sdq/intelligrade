@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.state;
 
 import java.io.IOException;
@@ -179,6 +179,7 @@ public class PluginState {
         try {
             activeAssessment.getAssessment().save();
             ArtemisUtils.displayGenericInfoBalloon("Assessment saved", "The assessment has been saved.");
+            this.cleanupAssessment();
         } catch (ArtemisNetworkException e) {
             LOG.warn(e);
             ArtemisUtils.displayNetworkErrorBalloon("Could not save assessment", e);
@@ -354,11 +355,17 @@ public class PluginState {
                                 .cloneViaVCSTokenInto(IntellijUtil.getProjectRootDirectory(), null);
                     };
 
+            // TODO: might have to be spawned in a background thread
+            IntellijUtil.setupProjectProfile();
+
             // Refresh all files, so that they are up-to-date for the maven update
             IntellijUtil.forceFilesSync(() -> {
                 // Force IntelliJ to update the Maven project
                 IntellijUtil.getMavenManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
             });
+
+            // Sometimes the SDK is not set properly, this will set the SDK if it is not set
+            IntellijUtil.updateProjectSDK();
 
             this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
             for (Consumer<ActiveAssessment> listener : this.assessmentStartedListeners) {
