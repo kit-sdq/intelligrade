@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.AnnotationsListPanel;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.icons.ArtemisIcons;
@@ -141,6 +142,15 @@ public class HighlighterManager {
         var annotationColor = ArtemisSettingsState.getInstance().getAnnotationColor();
         var attributes = new TextAttributes(
                 null, annotationColor.toJBColor(), null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN);
+
+        // there can be multiple annotations on the same line, if all don't have a highlight, create an invisible
+        // highlighter
+        if (annotations.stream()
+                .map(Annotation::getMistakeType)
+                .map(MistakeType::getHighlight)
+                .allMatch(highlight -> highlight == MistakeType.Highlight.NONE)) {
+            attributes = new TextAttributes();
+        }
 
         var highlighter = editor.getMarkupModel()
                 .addRangeHighlighter(
