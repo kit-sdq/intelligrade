@@ -171,34 +171,27 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             return;
         }
 
-        String config;
+        GradingConfig.GradingConfigDTO config;
         try {
-            config = Files.readString(configPath);
-        } catch (IOException e) {
+            config = GradingConfig.readDTOFromString(Files.readString(configPath));
+        } catch (InvalidGradingConfigException | IOException e) {
             return;
         }
 
+        // if the selected exercise is compatible with the grading config, do nothing
         int selectedIndex = exerciseSelector.getSelectedIndex();
-        if (exerciseMatchesConfig(exerciseSelector.getItemAt(selectedIndex), config)) {
+        if (config.isAllowedForExercise(
+                exerciseSelector.getItemAt(selectedIndex).getId())) {
             return;
         }
 
         // this searches for the first exercise that the grading config can be used with
         for (int i = 0; i < exerciseSelector.getItemCount(); i++) {
             ProgrammingExercise exercise = exerciseSelector.getItemAt(i);
-            if (exerciseMatchesConfig(exercise, config)) {
+            if (config.isAllowedForExercise(exercise.getId())) {
                 exerciseSelector.setSelectedIndex(i);
                 return;
             }
-        }
-    }
-
-    private static boolean exerciseMatchesConfig(ProgrammingExercise exercise, String config) {
-        try {
-            GradingConfig.readFromString(config, exercise);
-            return true;
-        } catch (InvalidGradingConfigException e) {
-            return false;
         }
     }
 
