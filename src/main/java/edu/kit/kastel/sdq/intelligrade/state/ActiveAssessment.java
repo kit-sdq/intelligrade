@@ -54,7 +54,7 @@ public class ActiveAssessment {
 
     public void registerAnnotationsUpdatedListener(Consumer<List<Annotation>> listener) {
         annotationsUpdatedListener.add(listener);
-        listener.accept(assessment.getAnnotations());
+        listener.accept(assessment.getAllAnnotations());
     }
 
     public GradingConfig getGradingConfig() {
@@ -179,7 +179,7 @@ public class ActiveAssessment {
 
     private void notifyListeners() {
         for (Consumer<List<Annotation>> listener : this.annotationsUpdatedListener) {
-            listener.accept(this.assessment.getAnnotations());
+            listener.accept(this.assessment.getAllAnnotations());
         }
     }
 

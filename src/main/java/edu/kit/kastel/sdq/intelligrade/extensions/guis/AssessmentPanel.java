@@ -151,7 +151,9 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             Font font = JBFont.regular();
 
             if (mistakeType.getReporting().shouldScore()) {
-                int count = assessment.getAnnotations(mistakeType).size();
+                int count = (int) assessment.streamAllAnnotations(mistakeType)
+                        .filter(a -> !a.isDeletedInReview())
+                        .count();
                 var rule = mistakeType.getRule();
 
                 switch (rule) {

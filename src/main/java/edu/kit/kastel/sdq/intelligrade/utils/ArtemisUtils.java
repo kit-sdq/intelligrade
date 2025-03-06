@@ -1,21 +1,22 @@
 /* Licensed under EPL-2.0 2024. */
 package edu.kit.kastel.sdq.intelligrade.utils;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
-
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
-import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
-import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
+
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Utility Class to handle Artemis related common tasks such as
  * creating a new client and logging in or creating Error messages.
  */
 public final class ArtemisUtils {
+    public static final DateTimeFormatter DATE_TIME_PATTERN = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
     private ArtemisUtils() {}
 
     public static boolean doesUrlExist(String url) {
@@ -27,13 +28,7 @@ public final class ArtemisUtils {
         }
     }
 
-    public static boolean isSubmissionStarted(ProgrammingSubmission submission) {
-        return !submission.isSubmitted()
-                && submission.getLatestResult().isPresent()
-                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
-    }
-
-    public static boolean isAssessorInstructor() {
+    public static boolean isAssessorInstructorForCurrentExercise() {
         if (PluginState.getInstance().getActiveExercise().isEmpty()) {
             return false;
         }

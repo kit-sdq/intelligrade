@@ -34,8 +34,8 @@ import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
+import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
-import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
@@ -324,7 +324,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         assessmentPanel.setEnabled(true);
         submitAssessmentButton.setEnabled(true);
         cancelAssessmentButton.setEnabled(
-                !assessment.getAssessment().getSubmission().isSubmitted());
+                !assessment.getAssessment().isSubmitted());
         saveAssessmentButton.setEnabled(true);
         closeAssessmentButton.setEnabled(true);
         reRunAutograder.setEnabled(true);
@@ -351,10 +351,10 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var exercise = PluginState.getInstance().getActiveExercise().orElseThrow();
 
-            List<ProgrammingSubmission> submissions;
+            List<PackedAssessment> assessments;
             AssessmentStatsDTO stats;
             try {
-                submissions = exercise.fetchSubmissions();
+                assessments = exercise.fetchMyAssessments();
                 stats = exercise.fetchAssessmentStats();
             } catch (ArtemisNetworkException ex) {
                 LOG.warn(ex);
@@ -366,8 +366,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             }
 
             ApplicationManager.getApplication().invokeLater(() -> {
-                updateStatistics(exercise, stats, submissions);
-                backlogPanel.setSubmissions(submissions);
+                updateStatistics(exercise, stats, assessments);
+                backlogPanel.setAssessments(assessments);
                 updateUI();
 
                 // Tell the user that we've done something
@@ -378,7 +378,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     }
 
     private void updateStatistics(
-            ProgrammingExercise exercise, AssessmentStatsDTO stats, List<ProgrammingSubmission> submissions) {
+            ProgrammingExercise exercise, AssessmentStatsDTO stats, List<PackedAssessment> assessments) {
         String totalText;
         if (exercise.hasSecondCorrectionRound()) {
             totalText = "%d / %d / %d (%d locked)"
@@ -401,9 +401,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         totalStatisticsLabel.setText(totalText);
 
         int submittedSubmissions = (int)
-                submissions.stream().filter(ProgrammingSubmission::isSubmitted).count();
-        int lockedSubmissions = (int)
-                submissions.stream().filter(ArtemisUtils::isSubmissionStarted).count();
+                assessments.stream().filter(PackedAssessment::isSubmitted).count();
+        int lockedSubmissions = assessments.size() - submittedSubmissions;
         String userText = "%d (%d locked)".formatted(submittedSubmissions, lockedSubmissions);
         userStatisticsLabel.setText(userText);
     }

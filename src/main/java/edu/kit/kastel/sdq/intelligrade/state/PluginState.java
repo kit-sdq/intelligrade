@@ -29,6 +29,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.MoreRecentSubmissionException;
+import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.artemis4j.grading.User;
@@ -50,6 +51,7 @@ public class PluginState {
     private static PluginState pluginState;
 
     private final List<Consumer<ArtemisConnection>> connectedListeners = new ArrayList<>();
+    private final List<Consumer<Optional<ProgrammingExercise>>> exerciseSelectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
 
@@ -149,11 +151,24 @@ public class PluginState {
         listener.accept(this.connection);
     }
 
+    public void registerExerciseSelectedListener(Consumer<Optional<ProgrammingExercise>> listener) {
+        this.exerciseSelectedListeners.add(listener);
+        listener.accept(Optional.ofNullable(this.activeExercise));
+    }
+
     public boolean isAssessing() {
         return activeAssessment != null;
     }
 
     public void startNextAssessment(CorrectionRound correctionRound) {
+        this.internalStartAssessment(null, correctionRound);
+    }
+
+    public void startAssessment(ProgrammingSubmission submission, CorrectionRound correctionRound) {
+        this.internalStartAssessment(submission, correctionRound);
+    }
+
+    private void internalStartAssessment(ProgrammingSubmission submission, CorrectionRound correctionRound) {
         if (activeAssessment != null) {
             ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
@@ -169,7 +184,7 @@ public class PluginState {
             return;
         }
 
-        new StartAssessmentTask(correctionRound, gradingConfig.get()).queue();
+        new StartAssessmentTask(submission, correctionRound, gradingConfig.get()).queue();
     }
 
     public void saveAssessment() {
@@ -236,7 +251,7 @@ public class PluginState {
         this.cleanupAssessment();
     }
 
-    public void reopenAssessment(ProgrammingSubmission submission) {
+    public void reopenAssessment(PackedAssessment assessment) {
         if (activeAssessment != null) {
             ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
@@ -252,26 +267,25 @@ public class PluginState {
             return;
         }
 
-        new ReopenAssessmentTask(submission, gradingConfig.get()).queue();
-    }
+        // If we have a review config and are not opening a review assessment, ask
+        if (gradingConfig.get().isReview() && assessment.round() != CorrectionRound.REVIEW) {
+            var confirmed = MessageDialogBuilder
+                    .okCancel("Reopening in non-review mode!", "The grading config is a review config, but you are opening the assessment in non-review mode. Are you sure you know what you are doing?")
+                    .asWarning()
+                    .guessWindowAndAsk();
 
-    public void reviewAssessment(ProgrammingSubmission submission) {
-        if (activeAssessment != null) {
-            ArtemisUtils.displayFinishAssessmentFirstBalloon();
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        // We can't start a review assessment without a review config
+        if (assessment.round() == CorrectionRound.REVIEW && !gradingConfig.get().isReview()) {
+            ArtemisUtils.displayGenericErrorBalloon("Could not start review", "No review grading config selected");
             return;
         }
 
-        if (activeExercise == null) {
-            ArtemisUtils.displayGenericErrorBalloon("Could not review assessment", "No exercise selected");
-            return;
-        }
-
-        var gradingConfig = createGradingConfig();
-        if (gradingConfig.isEmpty()) {
-            return;
-        }
-
-        new ReopenAssessmentTask(submission, gradingConfig.get()).queue();
+        new ReopenAssessmentTask(assessment, gradingConfig.get()).queue();
     }
 
     public Optional<ProgrammingExercise> getActiveExercise() {
@@ -280,6 +294,9 @@ public class PluginState {
 
     public void setActiveExercise(ProgrammingExercise exercise) {
         this.activeExercise = exercise;
+        for (var listener : this.exerciseSelectedListeners) {
+            listener.accept(Optional.ofNullable(exercise));
+        }
     }
 
     public Optional<ActiveAssessment> getActiveAssessment() {
@@ -478,11 +495,13 @@ public class PluginState {
 
     private class StartAssessmentTask extends Task.Modal {
         private final CorrectionRound correctionRound;
+        private final ProgrammingSubmission submission;
         private final GradingConfig gradingConfig;
 
-        public StartAssessmentTask(CorrectionRound correctionRound, GradingConfig gradingConfig) {
+        public StartAssessmentTask(ProgrammingSubmission submission, CorrectionRound correctionRound, GradingConfig gradingConfig) {
             super(IntellijUtil.getActiveProject(), "Starting Assessment", false);
             this.correctionRound = correctionRound;
+            this.submission = submission;
             this.gradingConfig = gradingConfig;
         }
 
@@ -490,7 +509,22 @@ public class PluginState {
         public void run(@NotNull ProgressIndicator progressIndicator) {
             try {
                 progressIndicator.setText("Locking...");
-                var nextAssessment = activeExercise.tryLockNextSubmission(correctionRound, gradingConfig);
+
+                Optional<Assessment> nextAssessment;
+                if (this.submission == null) {
+                    nextAssessment = activeExercise.tryLockNextSubmission(correctionRound, gradingConfig);
+                } else {
+                    try {
+                        nextAssessment = activeExercise.tryLockSubmission(submission.getId(), correctionRound, gradingConfig);
+                    } catch (MoreRecentSubmissionException ex) {
+                        LOG.warn(ex);
+                        ArtemisUtils.displayGenericErrorBalloon(
+                                "Could not start assessment",
+                                "The student has submitted a newer version of his code.");
+                        return;
+                    }
+                }
+
                 if (nextAssessment.isPresent()) {
                     progressIndicator.setText("Cloning...");
                     if (!initializeAssessment(nextAssessment.get())) {
@@ -500,7 +534,7 @@ public class PluginState {
                     SplashDialog.showMaybe();
 
                     // Now everything is done - the submission is properly locked, and the repository is cloned
-                    if (activeAssessment.getAssessment().getAnnotations().isEmpty()) {
+                    if (activeAssessment.getAssessment().getAllAnnotations().isEmpty()) {
                         activeAssessment.runAutograder();
                     } else {
                         ArtemisUtils.displayGenericInfoBalloon(
@@ -531,12 +565,12 @@ public class PluginState {
     }
 
     private class ReopenAssessmentTask extends Task.Modal {
-        private final ProgrammingSubmission submission;
+        private final PackedAssessment packedAssessment;
         private final GradingConfig gradingConfig;
 
-        public ReopenAssessmentTask(ProgrammingSubmission submission, GradingConfig gradingConfig) {
+        public ReopenAssessmentTask(PackedAssessment assessment, GradingConfig gradingConfig) {
             super(IntellijUtil.getActiveProject(), "Reopening Assessment", false);
-            this.submission = submission;
+            this.packedAssessment = assessment;
             this.gradingConfig = gradingConfig;
         }
 
@@ -544,7 +578,7 @@ public class PluginState {
         public void run(@NotNull ProgressIndicator progressIndicator) {
             try {
                 progressIndicator.setText("Locking...");
-                var assessment = submission.tryLock(gradingConfig);
+                var assessment = packedAssessment.lockAndOpen(gradingConfig);
                 if (assessment.isPresent()) {
                     progressIndicator.setText("Cloning...");
                     initializeAssessment(assessment.get());

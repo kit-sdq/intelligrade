@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.ContentFactory;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.AssessmentPanel;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.ExercisePanel;
+import edu.kit.kastel.sdq.intelligrade.extensions.guis.SubmissionsInstructorPanel;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.TestCasePanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,5 +28,8 @@ public class MainToolWindowFactory implements ToolWindowFactory, DumbAware {
         toolWindow
                 .getContentManager()
                 .addContent(ContentFactory.getInstance().createContent(new TestCasePanel(), "Test Results", false));
+        toolWindow
+                .getContentManager()
+                .addContent(ContentFactory.getInstance().createContent(new SubmissionsInstructorPanel(), "Submissions", false));
     }
 }
