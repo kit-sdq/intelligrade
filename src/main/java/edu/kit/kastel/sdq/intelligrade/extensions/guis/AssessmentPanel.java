@@ -87,7 +87,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     private void createMistakeButtons(ActiveAssessment assessment) {
         int buttonsPerRow = ArtemisSettingsState.getInstance().getColumnsPerRatingGroup();
         for (var ratingGroup : assessment.getGradingConfig().getRatingGroups()) {
-            if (ratingGroup.getMistakeTypes().isEmpty()) {
+            if (ratingGroup.getAllMistakeTypes().isEmpty()) {
                 continue;
             }
 
@@ -97,7 +97,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             this.content.add(separator, "growx");
 
             var panel = new JBPanel<>(new MigLayout("fill, gap 0, wrap " + buttonsPerRow));
-            for (var mistakeType : ratingGroup.getMistakeTypes()) {
+            for (var mistakeType : ratingGroup.getAllMistakeTypes()) {
                 var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
 
                 // no tooltip for custom comment
