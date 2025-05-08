@@ -6,8 +6,9 @@ import java.util.Optional;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.TextRange;
+import edu.kit.kastel.sdq.artemis4j.grading.location.LineColumn;
 
-public record CodeSelection(Path path, int startLine, int endLine) {
+public record CodeSelection(Path path, LineColumn start, LineColumn end) {
     public static Optional<CodeSelection> fromCaret() {
         var editor = IntellijUtil.getActiveEditor();
         if (editor == null) {
@@ -36,6 +37,11 @@ public record CodeSelection(Path path, int startLine, int endLine) {
         // the end is not inclusive, therefore 1 is subtracted to get the correct line number
         int endLine = editor.getDocument().getLineNumber(endOffset - 1);
 
-        return Optional.of(new CodeSelection(path, startLine, endLine));
+        // The column is the offset in the line (0-based), sometimes only parts of a line are highlighted
+        int startColumn = startOffset - editor.getDocument().getLineStartOffset(startLine);
+        int endColumn = endOffset - editor.getDocument().getLineStartOffset(endLine);
+
+        return Optional.of(
+                new CodeSelection(path, new LineColumn(startLine, startColumn), new LineColumn(endLine, endColumn)));
     }
 }
