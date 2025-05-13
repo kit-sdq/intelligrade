@@ -92,9 +92,11 @@ public final class FileOpener implements DumbService.DumbModeListener {
             // This returns a value that is unused, because they deprecated the method
             // that takes a Runnable and the documentation says to use a Callable instead
             ReadAction.nonBlocking(() -> {
-                findAnOpenMainMethod(project, directory);
-                return 0;
-            }).inSmartMode(project).executeSynchronously();
+                        findAnOpenMainMethod(project, directory);
+                        return 0;
+                    })
+                    .inSmartMode(project)
+                    .executeSynchronously();
         });
     }
 
