@@ -90,7 +90,7 @@ public final class IntellijUtil {
 
         var availableSdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdkTypeId);
         if (availableSdks.isEmpty()) {
-            LOG.error("No SDK found, please install a JDK");
+            LOG.warn("No SDK found, please install a JDK");
             return;
         }
 

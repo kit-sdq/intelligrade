@@ -1,6 +1,6 @@
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 plugins {
-    id("org.jetbrains.intellij.platform") version "2.3.0"
+    id("org.jetbrains.intellij.platform") version "2.5.0"
     id 'java'
     id 'com.diffplug.spotless' version '7.0.2'
 }
@@ -26,10 +26,11 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity('2024.2.1')
+        intellijIdeaCommunity('2025.1.1')
         pluginVerifier()
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.idea.maven")
+        bundledPlugin("Git4Idea")
         instrumentationTools()
         def localJbr = System.getenv("LOCAL_JBR")
         if (localJbr != null) {
