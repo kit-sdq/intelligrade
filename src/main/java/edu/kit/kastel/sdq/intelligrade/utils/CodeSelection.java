@@ -28,9 +28,9 @@ public record CodeSelection(Path path, LineColumn start, LineColumn end) {
         } else {
             // highlight the entire line if no selection is made:
             int offset = ReadAction.compute(caret::getOffset);
-            startOffset = editor.getDocument().getLineStartOffset(offset);
-            endOffset =
-                    editor.getDocument().getLineEndOffset(editor.getDocument().getLineNumber(offset));
+            int lineNumber = editor.getDocument().getLineNumber(offset);
+            startOffset = editor.getDocument().getLineStartOffset(lineNumber);
+            endOffset = editor.getDocument().getLineEndOffset(lineNumber);
         }
 
         var path = editor.getVirtualFile().toNioPath();
