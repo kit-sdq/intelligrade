@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -147,7 +148,7 @@ public final class IntellijUtil {
 
     public static VirtualFile getAnnotationFile(Annotation annotation) {
         var path = getAnnotationPath(annotation);
-        var file = VfsUtil.findFile(path, true);
+        var file = ReadAction.compute(() -> VfsUtil.findFile(path, true));
         if (file == null) {
             throw new IllegalStateException("File not found: " + path);
         }
