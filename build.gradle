@@ -73,7 +73,7 @@ spotless {
     format 'misc', {
         target '*.gradle', '.gitattributes', '.gitignore', '*.md'
         trimTrailingWhitespace()
-        indentWithSpaces()
+        leadingTabsToSpaces()
         endWithNewline()
     }
     java {
