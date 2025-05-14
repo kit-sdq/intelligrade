@@ -2,7 +2,7 @@
 plugins {
     id("org.jetbrains.intellij.platform") version "2.5.0"
     id 'java'
-    id 'com.diffplug.spotless' version '7.0.2'
+    id 'com.diffplug.spotless' version '7.0.3'
 }
 
 group 'edu.kit.kastel.sdq'
@@ -25,6 +25,11 @@ repositories {
 }
 
 dependencies {
+    // Tests
+    testImplementation 'junit:junit:' + JUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit-junit4:' + ARCHUNIT_VERSION
+
     intellijPlatform {
         intellijIdeaCommunity('2025.1.1')
         pluginVerifier()
@@ -37,12 +42,8 @@ dependencies {
             jetbrainsRuntimeLocal(localJbr)
         }
     }
+    
     implementation 'edu.kit.kastel.sdq:artemis4j:8.0.0-SNAPSHOT'
-    // Tests
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:' + JUNIT_VERSION
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + JUNIT_VERSION
-    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
-    testImplementation 'com.tngtech.archunit:archunit-junit5:' + ARCHUNIT_VERSION
 }
 
 intellijPlatform {
