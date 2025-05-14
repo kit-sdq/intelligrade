@@ -425,7 +425,9 @@ public class PluginState {
         if (gradingConfigPath == null) {
             ArtemisUtils.displayGenericErrorBalloon("No grading config", "Please select a grading config");
             // notify listeners that the grading config is missing
-            missingGradingConfigListeners.forEach(Runnable::run);
+            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
+                missingGradingConfigListener.run();
+            }
             return Optional.empty();
         }
 
@@ -436,7 +438,9 @@ public class PluginState {
             LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
             // notify listeners that the grading config is missing/invalid
-            missingGradingConfigListeners.forEach(Runnable::run);
+            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
+                missingGradingConfigListener.run();
+            }
             return Optional.empty();
         }
     }
