@@ -25,6 +25,11 @@ repositories {
 }
 
 dependencies {
+    // Tests
+    testImplementation 'junit:junit:' + JUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit-junit4:' + ARCHUNIT_VERSION
+
     intellijPlatform {
         intellijIdeaCommunity('2024.2.1')
         pluginVerifier()
@@ -37,11 +42,7 @@ dependencies {
         }
     }
     implementation 'edu.kit.kastel.sdq:artemis4j:7.10.2-SNAPSHOT'
-    // Tests
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:' + JUNIT_VERSION
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + JUNIT_VERSION
-    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
-    testImplementation 'com.tngtech.archunit:archunit-junit5:' + ARCHUNIT_VERSION
+
 }
 
 intellijPlatform {
