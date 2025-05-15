@@ -50,6 +50,7 @@ public class PluginState {
     private final List<Consumer<ArtemisConnection>> connectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
+    private final List<Runnable> missingGradingConfigListeners = new ArrayList<>();
 
     private ArtemisConnection connection;
     private ProgrammingExercise activeExercise;
@@ -140,6 +141,17 @@ public class PluginState {
                     this.notifyConnectedListeners();
                     return null;
                 });
+    }
+
+    /**
+     * Registers a listener that is called when intelligrade needs the grading config, but it is missing.
+     * <p>
+     * This is used to highlight the input text box in which the grading config should be entered.
+     *
+     * @param listener the listener to be called
+     */
+    public void registerMissingGradingConfigListeners(Runnable listener) {
+        this.missingGradingConfigListeners.add(listener);
     }
 
     public void registerConnectedListener(Consumer<ArtemisConnection> listener) {
@@ -412,6 +424,10 @@ public class PluginState {
         var gradingConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
         if (gradingConfigPath == null) {
             ArtemisUtils.displayGenericErrorBalloon("No grading config", "Please select a grading config");
+            // notify listeners that the grading config is missing
+            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
+                missingGradingConfigListener.run();
+            }
             return Optional.empty();
         }
 
@@ -421,6 +437,10 @@ public class PluginState {
         } catch (IOException | InvalidGradingConfigException e) {
             LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
+            // notify listeners that the grading config is missing/invalid
+            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
+                missingGradingConfigListener.run();
+            }
             return Optional.empty();
         }
     }

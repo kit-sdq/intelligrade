@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +32,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
+import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentStatsDTO;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
@@ -61,6 +63,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private JButton startGradingRound1Button;
     private JButton startGradingRound2Button;
     private TextFieldWithBrowseButton gradingConfigPathInput;
+    private transient Border originalGradingConfigBorder = null;
 
     private JPanel statisticsPanel;
     private JBLabel totalStatisticsLabel;
@@ -123,6 +126,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         PluginState.getInstance().registerAssessmentStartedListener(this::handleAssessmentStarted);
 
         PluginState.getInstance().registerAssessmentClosedListener(this::handleAssessmentClosed);
+
+        PluginState.getInstance().registerMissingGradingConfigListeners(this::handleMissingGradingConfig);
     }
 
     private void createGeneralPanel() {
@@ -148,6 +153,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             @Override
             protected void textChanged(@NotNull DocumentEvent documentEvent) {
                 ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
+
+                // When nothing is selected, the border is red. This code is called when something has been selected
+                // -> remove the red border
+                if (originalGradingConfigBorder != null) {
+                    gradingConfigPathInput.getTextField().setBorder(originalGradingConfigBorder);
+                    originalGradingConfigBorder = null;
+                }
 
                 updateSelectedExercise();
             }
@@ -389,6 +401,12 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         reRunAutograder.setEnabled(false);
 
         updateBacklogAndStats();
+    }
+
+    private void handleMissingGradingConfig() {
+        originalGradingConfigBorder = gradingConfigPathInput.getTextField().getBorder();
+        // Add a red border to the field to indicate that the grading config is missing:
+        gradingConfigPathInput.getTextField().setBorder(JBUI.Borders.customLine(JBColor.RED));
     }
 
     private void updateBacklogAndStats() {

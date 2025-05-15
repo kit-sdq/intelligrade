@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -82,7 +83,20 @@ public final class FileOpener implements DumbService.DumbModeListener {
 
             // Even though we exited dumb mode, the index operations below may throw IndexNotReadyExceptions,
             // so defensively wrap this in a smart mode action
-            DumbService.getInstance(project).runReadActionInSmartMode(() -> findAnOpenMainMethod(project, directory));
+
+            // - pauses current thread until dumb mode is finished
+            // - runs the provided runnable
+            // -> it is guaranteed that indexes are available for the runnable
+            // might throw a ProcessCanceledException if the project is closed during dumb mode
+
+            // This returns a value that is unused, because they deprecated the method
+            // that takes a Runnable and the documentation says to use a Callable instead
+            ReadAction.nonBlocking(() -> {
+                        findAnOpenMainMethod(project, directory);
+                        return 0;
+                    })
+                    .inSmartMode(project)
+                    .executeSynchronously();
         });
     }
 
