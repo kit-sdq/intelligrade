@@ -1,6 +1,6 @@
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 plugins {
-    id("org.jetbrains.intellij.platform") version "2.3.0"
+    id("org.jetbrains.intellij.platform") version "2.6.0"
     id 'java'
     id 'com.diffplug.spotless' version '7.0.3'
 }
@@ -35,18 +35,19 @@ dependencies {
     testImplementation 'com.tngtech.archunit:archunit-junit4:' + ARCHUNIT_VERSION
 
     intellijPlatform {
-        intellijIdeaCommunity('2024.2.1')
+        intellijIdeaCommunity('2025.1.1')
         pluginVerifier()
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.idea.maven")
+        bundledPlugin("Git4Idea")
         instrumentationTools()
         def localJbr = System.getenv("LOCAL_JBR")
         if (localJbr != null) {
             jetbrainsRuntimeLocal(localJbr)
         }
     }
-    implementation 'edu.kit.kastel.sdq:artemis4j:7.10.2-SNAPSHOT'
 
+    implementation 'edu.kit.kastel.sdq:artemis4j:8.0.0-SNAPSHOT'
 }
 
 intellijPlatform {
@@ -59,6 +60,13 @@ patchPluginXml {
 }
 test {
     useJUnitPlatform()
+    testLogging {
+        events "PASSED", "SKIPPED", "FAILED"
+        exceptionFormat "full"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
 }
 
 tasks {
@@ -77,7 +85,7 @@ spotless {
     format 'misc', {
         target '*.gradle', '.gitattributes', '.gitignore', '*.md'
         trimTrailingWhitespace()
-        indentWithSpaces()
+        leadingTabsToSpaces()
         endWithNewline()
     }
     java {

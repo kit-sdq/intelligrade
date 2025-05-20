@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBFont;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.location.Location;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.autograder.AutograderTask;
@@ -71,21 +72,20 @@ public class ActiveAssessment {
             return;
         }
 
-        int startLine = selection.startLine();
-        int endLine = selection.endLine();
         String path = Path.of(IntellijUtil.getActiveProject().getBasePath())
                 .resolve(ASSIGNMENT_SUB_PATH)
                 .relativize(selection.path())
                 .toString()
                 .replace("\\", "/");
 
+        Location location = new Location(path, selection.start(), selection.end());
         if (mistakeType.isCustomAnnotation()) {
-            addCustomAnnotation(mistakeType, startLine, endLine, path);
+            addCustomAnnotation(mistakeType, location);
         } else {
             if (withCustomMessage) {
-                addPredefinedAnnotationWithCustomMessage(mistakeType, startLine, endLine, path);
+                addPredefinedAnnotationWithCustomMessage(mistakeType, location);
             } else {
-                assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, null);
+                assessment.addPredefinedAnnotation(mistakeType, location, null);
                 this.notifyListeners();
             }
         }
@@ -132,18 +132,17 @@ public class ActiveAssessment {
         }
     }
 
-    private void addPredefinedAnnotationWithCustomMessage(
-            MistakeType mistakeType, int startLine, int endLine, String path) {
+    private void addPredefinedAnnotationWithCustomMessage(MistakeType mistakeType, Location location) {
         showCustomMessageDialog("", customMessage -> {
-            this.assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, customMessage);
+            this.assessment.addPredefinedAnnotation(mistakeType, location, customMessage);
             this.notifyListeners();
         });
     }
 
-    private void addCustomAnnotation(MistakeType mistakeType, int startLine, int endLine, String path) {
+    private void addCustomAnnotation(MistakeType mistakeType, Location location) {
         showCustomAnnotationDialog(mistakeType, "", 0.0, messageWithPoints -> {
             this.assessment.addCustomAnnotation(
-                    mistakeType, path, startLine, endLine, messageWithPoints.message(), messageWithPoints.points());
+                    mistakeType, location, messageWithPoints.message(), messageWithPoints.points());
             this.notifyListeners();
         });
     }
