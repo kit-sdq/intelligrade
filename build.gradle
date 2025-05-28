@@ -2,7 +2,7 @@
 plugins {
     id("org.jetbrains.intellij.platform") version "2.6.0"
     id 'java'
-    id 'com.diffplug.spotless' version '7.0.3'
+    id 'com.diffplug.spotless' version '7.0.4'
 }
 
 group 'edu.kit.kastel.sdq'
