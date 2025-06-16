@@ -202,7 +202,7 @@ object AssessmentTracker {
         // Delete all directory contents, but not the directory itself
         val deletionQueue = mutableListOf<VirtualFile>()
         withContext(Dispatchers.IO) {
-            VfsUtil.visitChildrenRecursively(rootFile, object : VirtualFileVisitor<Void?>() {
+            VfsUtil.visitChildrenRecursively(rootFile, object : VirtualFileVisitor<Unit?>() {
                 override fun visitFile(file: VirtualFile): Boolean {
                     if (!file.isDirectory) {
                         deletionQueue.add(file)

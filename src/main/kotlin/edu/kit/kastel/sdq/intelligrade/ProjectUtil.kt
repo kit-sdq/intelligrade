@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.util.lang.JavaVersion
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil
 import kotlinx.coroutines.Dispatchers
