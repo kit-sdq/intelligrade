@@ -176,7 +176,7 @@ object AssessmentTracker {
         // This is a workaround for an issue with the jgit library that is used by artemis4j:
         withContext(Dispatchers.IO) {
             RepositoryCache.clear()
-            WindowCache.reconfigure(WindowCacheConfig())
+            WindowCacheConfig().install()
         }
 
     }
