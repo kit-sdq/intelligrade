@@ -24,7 +24,6 @@ import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.lang3.reflect.MethodUtils
-import org.eclipse.jgit.internal.storage.file.WindowCache
 import org.eclipse.jgit.lib.RepositoryCache
 import org.eclipse.jgit.storage.file.WindowCacheConfig
 import java.io.IOException
