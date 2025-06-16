@@ -75,7 +75,7 @@ class StartAssessmentService(private val project: Project, private val cs: Corou
 
             ArtemisUtils.displayGenericInfoBalloon(
                 "Assessment started",
-                "You can now grade the submission. Please make sure that are familiar with all "
+                "You can now grade the submission. Please make sure you are familiar with all "
                         + "grading guidelines."
             )
         } catch (e: ArtemisNetworkException) {
