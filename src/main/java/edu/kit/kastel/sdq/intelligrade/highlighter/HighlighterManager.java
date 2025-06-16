@@ -169,13 +169,14 @@ public class HighlighterManager {
                     .map(endColumn -> document.getLineStartOffset(location.end().line()) + endColumn)
                     .orElseGet(() -> document.getLineEndOffset(location.end().line()));
 
+            var range = HighlighterTargetArea.EXACT_RANGE;
+            if (startOffset == endOffset) {
+                // if the start and end offset are the same, we highlight the entire line
+                range = HighlighterTargetArea.LINES_IN_RANGE;
+            }
+
             highlighters.add(editor.getMarkupModel()
-                    .addRangeHighlighter(
-                            startOffset,
-                            endOffset,
-                            HighlighterLayer.SELECTION - 1,
-                            attributes,
-                            HighlighterTargetArea.EXACT_RANGE));
+                    .addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, attributes, range));
         }
 
         // use the first highlighter for the gutter icon
