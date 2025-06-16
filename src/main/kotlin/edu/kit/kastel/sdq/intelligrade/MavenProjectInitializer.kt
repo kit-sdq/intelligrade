@@ -58,7 +58,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         //
         // Without this code, it will sometimes detect the maven project files, and sometimes not.
         cs.launch {
-            val root = ProjectUtil.getProjectRootVirtualFile(project);
+            val root = ProjectUtil.getProjectRootVirtualFile(project)
             if (root == null) {
                 LOG.error("Project root virtual file is null, cannot add maven project files")
                 return@launch
