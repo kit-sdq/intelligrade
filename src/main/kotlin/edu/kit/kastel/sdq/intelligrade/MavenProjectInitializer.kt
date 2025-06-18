@@ -14,6 +14,7 @@ import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -101,6 +102,38 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         }
     }
 
+    private suspend fun notifyListeners() = coroutineScope {
+        for (listener in listeners) {
+            listener()
+        }
+
+        // This class only has one instance, but the listeners are added in code that is called multiple times
+        // over the lifetime -> would cause duplicate listeners
+        //
+        // So we clear the listeners after they were called
+        listeners.clear()
+    }
+
+    private suspend fun closeMavenWindowIfNecessary(projectRoot: VirtualFile) {
+        // This fetches the maven tool window (the window on the right side of the IDE with the maven logo)
+        val window = withContext(Dispatchers.EDT) {
+            val manager = ToolWindowManager.getInstance(project)
+            manager.getToolWindow("Maven")
+        }
+
+        if (window == null) {
+            LOG.error("Maven tool window is missing")
+            addMavenProjectFiles(project, projectRoot)
+            return
+        }
+
+        if (window.isActive) {
+            withContext(Dispatchers.EDT) {
+                window.hide()
+            }
+        }
+    }
+
     /**
      * Launches a coroutine that monitors the maven project initialization.
      *
@@ -141,23 +174,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
                     }
                 }
 
-                // This fetches the maven tool window (the window on the right side of the IDE with the maven logo)
-                val window = withContext(Dispatchers.EDT) {
-                    val manager = ToolWindowManager.getInstance(project)
-                    manager.getToolWindow("Maven")
-                }
-
-                if (window == null) {
-                    LOG.error("Maven tool window is missing")
-                    addMavenProjectFiles(project, projectRoot)
-                    continue
-                }
-
-                if (window.isActive) {
-                    withContext(Dispatchers.EDT) {
-                        window.hide()
-                    }
-                }
+                closeMavenWindowIfNecessary(projectRoot)
             }
 
             // A huge problem is that I could not find a good way to wait for the maven project
@@ -173,15 +190,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             // As a stopgap solution, this timer exists, which should hopefully resolve some of the issues.
             delay(2000) // Wait a bit to ensure everything is loaded
 
-            for (listener in listeners) {
-                listener()
-            }
-
-            // This class only has one instance, but the listeners are added in code that is called multiple times
-            // over the lifetime -> would cause duplicate listeners
-            //
-            // So we clear the listeners after they were called
-            listeners.clear()
+            notifyListeners()
         }
     }
 
