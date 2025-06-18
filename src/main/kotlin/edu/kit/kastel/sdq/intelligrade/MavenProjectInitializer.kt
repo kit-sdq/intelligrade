@@ -13,6 +13,7 @@ import com.intellij.util.asDisposable
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,14 +23,48 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 private val LOG = logger<MavenProjectInitializer>()
 
 @Service(Service.Level.PROJECT)
 class MavenProjectInitializer(private val project: Project, private val cs: CoroutineScope) {
+    private val runningJobs: MutableList<Job> = mutableListOf()
     private val listeners: MutableList<suspend CoroutineScope.() -> Unit> = mutableListOf()
     private var isInitialized = false
     private var isResolved = false
+    private var expectsInit = false
+
+    init {
+        // This class (including its scope) should live for the entire duration of the project.
+        // To prevent duplicate listeners, they are registered here instead of in the start() method.
+        //
+        // To prevent them from setting the variables to true, before the project initialization was even started,
+        // the expectsInit variable is used to indicate whether the project initialization is expected to be started.
+
+        // These two callbacks are called independently of each other, sometimes one is called when the other is not.
+        //
+        // A successfully loaded project will call both of them, which is why they are listened for here.
+        MavenProjectsManager.getInstance(project)
+            .addManagerListener(object : MavenProjectsManager.Listener {
+                override fun projectImportCompleted() {
+                    if (expectsInit) {
+                        isInitialized = true
+                    }
+                }
+            }, cs.asDisposable())
+
+        MavenProjectsManager.getInstance(project)
+            .addProjectsTreeListener(object: MavenProjectsTree.Listener {
+                override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
+                    if (expectsInit) {
+                        isResolved = true
+                    }
+                }
+            }, cs.asDisposable())
+    }
 
     companion object {
         @JvmStatic
@@ -49,15 +84,12 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         return isInitialized && isResolved
     }
 
-    fun start() {
-        isInitialized = false
-        isResolved = false
-
+    private fun launchMavenProjectInit(): Job {
         // It is important that intellij loads the maven project files, otherwise no files are visible
         // in the project view.
         //
         // Without this code, it will sometimes detect the maven project files, and sometimes not.
-        cs.launch {
+        return cs.launch {
             val root = ProjectUtil.getProjectRootVirtualFile(project)
             if (root == null) {
                 LOG.error("Project root virtual file is null, cannot add maven project files")
@@ -67,7 +99,15 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             // This registers the files with maven, which should load the project correctly.
             addMavenProjectFiles(project, root)
         }
+    }
 
+    /**
+     * Launches a coroutine that monitors the maven project initialization.
+     *
+     * This coroutine will ensure that the maven tool window is kept closed throughout the initialization
+     * and will notify the listeners once the project is fully initialized.
+     */
+    private fun launchInitMonitor(): Job {
         // The addMavenProjectFiles function has several problems:
         // - the intellij code opens the maven tool window upon finishing loading
         // -> the user would have to close it manually, which is annoying
@@ -76,9 +116,30 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         //
         // The below code makes sure that the maven tool window stays closed and that the listeners are called
         // after the maven project is initialized.
-        cs.launch {
+        return cs.launch {
+            val isFinishedPartialInitTimeout = 5.seconds
+            var instant: TimeMark? = null
+            val projectRoot = ProjectUtil.getProjectRootVirtualFile(project) ?: return@launch
             while (!isFinished()) {
                 delay(500) // Wait a bit before checking again
+
+                // in some cases the initialization with maven does not work, either isInitialized or isResolved
+                // will then be false.
+                if (isInitialized && !isResolved || !isInitialized && isResolved) {
+                    if (instant == null) {
+                        instant = TimeSource.Monotonic.markNow()
+                    }
+
+                    // It might just be a timing issue, e.g. the variable will become true after a few more seconds.
+                    if (instant.elapsedNow() > isFinishedPartialInitTimeout) {
+                        LOG.warn("Maven project initialization is not fully completed after"
+                            + " ${isFinishedPartialInitTimeout.inWholeSeconds} seconds."
+                            + " isInitialized: $isInitialized, isResolved: $isResolved")
+                        instant = null
+                        // Try to force a new initialization of the maven project files:
+                        addMavenProjectFiles(project, projectRoot)
+                    }
+                }
 
                 // This fetches the maven tool window (the window on the right side of the IDE with the maven logo)
                 val window = withContext(Dispatchers.EDT) {
@@ -88,7 +149,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
 
                 if (window == null) {
                     LOG.error("Maven tool window is missing")
-                    addMavenProjectFiles(project, ProjectUtil.getProjectRootVirtualFile(project) ?: return@launch)
+                    addMavenProjectFiles(project, projectRoot)
                     continue
                 }
 
@@ -122,68 +183,25 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             // So we clear the listeners after they were called
             listeners.clear()
         }
+    }
 
-        // These two callbacks are called independently of each other, sometimes one is called when the other is not.
-        //
-        // A successfully loaded project will call both of them, which is why they are listened for here.
-        MavenProjectsManager.getInstance(project)
-            .addManagerListener(object : MavenProjectsManager.Listener {
-                override fun projectImportCompleted() {
-                    isInitialized = true
-                }
-            }, cs.asDisposable())
+    fun start() {
+        isInitialized = false
+        isResolved = false
+        expectsInit = true
 
-        MavenProjectsManager.getInstance(project)
-            .addProjectsTreeListener(object: MavenProjectsTree.Listener {
-                override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
-                    isResolved = true
-                }
-            })
-
-        cs.launch {
-            var counter = 0
-            while (!isFinished()) {
-                delay(1000) // Wait a second before checking to prevent busy-waiting
-
-                // in some cases the initialization with maven does not work, either isInitialized or isResolved
-                // will then be false.
-                if (isInitialized && !isResolved || !isInitialized && isResolved) {
-                    counter += 1
-
-                    if (counter == 5) {
-                        LOG.warn("Maven project initialization is not fully completed after 5 seconds. " +
-                                 "isInitialized: $isInitialized, isResolved: $isResolved")
-                        counter = 0
-
-                        // Try to force a new initialization of the maven project files:
-                        addMavenProjectFiles(project, ProjectUtil.getProjectRootVirtualFile(project) ?: return@launch)
-                    }
-                }
-
-                val window = withContext(Dispatchers.EDT) {
-                    val manager = ToolWindowManager.getInstance(project)
-                    manager.getToolWindow("Maven")
-                }
-
-                // If the maven window is missing, try to add the maven project files again.
-                if (window == null) {
-                    // Try to force a new initialization of the maven project files:
-                    addMavenProjectFiles(project, ProjectUtil.getProjectRootVirtualFile(project) ?: return@launch)
-                    continue
-                }
-
-                // This makes sure that the maven tool window is always closed. It sometimes opens automatically
-                // with the addMavenProjectFiles method, which is annoying.
-                //
-                // It sometimes opens after the project import callback is called, which is why it can not be
-                // done in a callback.
-                if (window.isActive) {
-                    withContext(Dispatchers.EDT) {
-                        window.hide()
-                    }
-                }
+        // There might still be running jobs from the previous initialization,
+        // so we cancel them to prevent multiple initializations.
+        for (job in runningJobs) {
+            if (job.isActive) {
+                job.cancel()
             }
         }
+
+        runningJobs.clear()
+
+        runningJobs.add(launchMavenProjectInit())
+        runningJobs.add(launchInitMonitor())
     }
 
     /**

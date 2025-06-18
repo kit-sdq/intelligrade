@@ -101,7 +101,7 @@ object AssessmentTracker {
                 ProjectUtil.forceFilesSync()
             }
 
-            val mavenInitializer = MavenProjectInitializer.getInstance(IntellijUtil.getActiveProject());
+            val mavenInitializer = MavenProjectInitializer.getInstance(IntellijUtil.getActiveProject())
             mavenInitializer.addListener {
                 // Sometimes the SDK is not set properly, this will set the SDK if it is not set
                 ProjectUtil.updateProjectSDK()
