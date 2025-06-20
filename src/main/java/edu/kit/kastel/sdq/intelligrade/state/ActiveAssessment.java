@@ -8,15 +8,20 @@ import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanel;
@@ -25,6 +30,7 @@ import com.intellij.util.ui.JBFont;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.location.LineColumn;
 import edu.kit.kastel.sdq.artemis4j.grading.location.Location;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
@@ -32,7 +38,6 @@ import edu.kit.kastel.sdq.intelligrade.autograder.AutograderTask;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.AutograderOption;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
-import edu.kit.kastel.sdq.intelligrade.utils.CodeSelection;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
 
@@ -60,34 +65,79 @@ public class ActiveAssessment {
         return assessment.getConfig();
     }
 
+    private static LineColumn translateToLineColumn(Document document, int offset) {
+        // The line number in the document is 0-based, and LineColumn expects 0-based as well.
+        int line = document.getLineNumber(offset);
+        // The column is the offset in the line (0-based), it should satisfy:
+        // lineStartOffset + column = offset
+        // <-> column = offset - lineStartOffset
+        int column = offset - document.getLineStartOffset(line);
+
+        return new LineColumn(line, column);
+    }
+
+    private static Optional<Location> createLocationFromSelection(Function<Path, String> pathResolver) {
+        var editor = IntellijUtil.getActiveEditor();
+        if (editor == null) {
+            // no editor open or no selection made
+            return Optional.empty();
+        }
+
+        var caret = editor.getCaretModel().getPrimaryCaret();
+        var path = editor.getVirtualFile().toNioPath();
+
+        if (!caret.hasSelection()) {
+            // highlight the entire line if no selection was made:
+            int offset = ReadAction.compute(caret::getOffset);
+            int lineNumber = editor.getDocument().getLineNumber(offset);
+            return Optional.of(new Location(pathResolver.apply(path), lineNumber, lineNumber));
+        }
+
+        TextRange textRange = ReadAction.compute(caret::getSelectionRange);
+
+        int startOffset = textRange.getStartOffset();
+        int endOffset = textRange.getEndOffset();
+
+        if (startOffset == endOffset) {
+            // no selection made -> highlight the entire line
+            int lineNumber = editor.getDocument().getLineNumber(startOffset);
+            return Optional.of(new Location(pathResolver.apply(path), lineNumber, lineNumber));
+        }
+
+        var start = translateToLineColumn(editor.getDocument(), startOffset);
+        // The end offset provided by the text range is exclusive (last character is not included),
+        // therefore 1 is subtracted to get the correct end position:
+        var end = translateToLineColumn(editor.getDocument(), endOffset - 1);
+
+        return Optional.of(new Location(pathResolver.apply(path), start, end));
+    }
+
     public void addAnnotationAtCaret(MistakeType mistakeType, boolean withCustomMessage) {
         if (assessment == null) {
             throw new IllegalStateException("No active assessment");
         }
 
-        var selection = CodeSelection.fromCaret().orElse(null);
-        if (selection == null) {
+        Function<Path, String> pathResolver =
+                path -> Path.of(IntellijUtil.getActiveProject().getBasePath())
+                        .resolve(ASSIGNMENT_SUB_PATH)
+                        .relativize(path)
+                        .toString()
+                        .replace("\\", "/");
+
+        var location = createLocationFromSelection(pathResolver).orElse(null);
+        if (location == null) {
             ArtemisUtils.displayGenericErrorBalloon(
                     "No code selected", "Cannot create annotation without code selection");
             return;
         }
 
-        String path = Path.of(IntellijUtil.getActiveProject().getBasePath())
-                .resolve(ASSIGNMENT_SUB_PATH)
-                .relativize(selection.path())
-                .toString()
-                .replace("\\", "/");
-
-        Location location = new Location(path, selection.start(), selection.end());
         if (mistakeType.isCustomAnnotation()) {
             addCustomAnnotation(mistakeType, location);
+        } else if (withCustomMessage) {
+            addPredefinedAnnotationWithCustomMessage(mistakeType, location);
         } else {
-            if (withCustomMessage) {
-                addPredefinedAnnotationWithCustomMessage(mistakeType, location);
-            } else {
-                assessment.addPredefinedAnnotation(mistakeType, location, null);
-                this.notifyListeners();
-            }
+            assessment.addPredefinedAnnotation(mistakeType, location, null);
+            this.notifyListeners();
         }
     }
 
