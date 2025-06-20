@@ -164,9 +164,13 @@ public class HighlighterManager {
                     + location.start().column().orElse(0);
             // if the column is present, it has to be added to the start offset of the last line
             // otherwise the end offset is the end of the line
+            //
+            // The endOffset seems to be exclusive. The getLineEndOffset will return the correct offset,
+            // but for our calculated column through the start offset, we have to add 1 to obtain the correct end
+            // offset.
             int endOffset = location.end()
                     .column()
-                    .map(endColumn -> document.getLineStartOffset(location.end().line()) + endColumn)
+                    .map(endColumn -> document.getLineStartOffset(location.end().line()) + endColumn + 1)
                     .orElseGet(() -> document.getLineEndOffset(location.end().line()));
 
             var range = HighlighterTargetArea.EXACT_RANGE;
