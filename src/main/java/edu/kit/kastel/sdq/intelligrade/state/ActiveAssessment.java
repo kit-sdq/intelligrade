@@ -8,9 +8,7 @@ import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -20,6 +18,7 @@ import javax.swing.SpinnerNumberModel;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
@@ -76,21 +75,14 @@ public class ActiveAssessment {
         return new LineColumn(line, column);
     }
 
-    private static Optional<Location> createLocationFromSelection(Function<Path, String> pathResolver) {
-        var editor = IntellijUtil.getActiveEditor();
-        if (editor == null) {
-            // no editor open or no selection made
-            return Optional.empty();
-        }
-
+    private static Location createLocationFromSelection(Editor editor, String path) {
         var caret = editor.getCaretModel().getPrimaryCaret();
-        var path = editor.getVirtualFile().toNioPath();
 
         if (!caret.hasSelection()) {
             // highlight the entire line if no selection was made:
             int offset = ReadAction.compute(caret::getOffset);
             int lineNumber = editor.getDocument().getLineNumber(offset);
-            return Optional.of(new Location(pathResolver.apply(path), lineNumber, lineNumber));
+            return new Location(path, lineNumber, lineNumber);
         }
 
         TextRange textRange = ReadAction.compute(caret::getSelectionRange);
@@ -101,7 +93,7 @@ public class ActiveAssessment {
         if (startOffset == endOffset) {
             // no selection made -> highlight the entire line
             int lineNumber = editor.getDocument().getLineNumber(startOffset);
-            return Optional.of(new Location(pathResolver.apply(path), lineNumber, lineNumber));
+            return new Location(path, lineNumber, lineNumber);
         }
 
         var start = translateToLineColumn(editor.getDocument(), startOffset);
@@ -109,7 +101,7 @@ public class ActiveAssessment {
         // therefore 1 is subtracted to get the correct end position:
         var end = translateToLineColumn(editor.getDocument(), endOffset - 1);
 
-        return Optional.of(new Location(pathResolver.apply(path), start, end));
+        return new Location(path, start, end);
     }
 
     public void addAnnotationAtCaret(MistakeType mistakeType, boolean withCustomMessage) {
@@ -117,19 +109,20 @@ public class ActiveAssessment {
             throw new IllegalStateException("No active assessment");
         }
 
-        Function<Path, String> pathResolver =
-                path -> Path.of(IntellijUtil.getActiveProject().getBasePath())
-                        .resolve(ASSIGNMENT_SUB_PATH)
-                        .relativize(path)
-                        .toString()
-                        .replace("\\", "/");
-
-        var location = createLocationFromSelection(pathResolver).orElse(null);
-        if (location == null) {
+        var editor = IntellijUtil.getActiveEditor();
+        if (editor == null) {
+            // no editor open or no selection made
             ArtemisUtils.displayGenericErrorBalloon(
                     "No code selected", "Cannot create annotation without code selection");
             return;
         }
+
+        var path = Path.of(IntellijUtil.getActiveProject().getBasePath())
+                .resolve(ASSIGNMENT_SUB_PATH)
+                .relativize(editor.getVirtualFile().toNioPath())
+                .toString()
+                .replace("\\", "/");
+        var location = createLocationFromSelection(editor, path);
 
         if (mistakeType.isCustomAnnotation()) {
             addCustomAnnotation(mistakeType, location);
