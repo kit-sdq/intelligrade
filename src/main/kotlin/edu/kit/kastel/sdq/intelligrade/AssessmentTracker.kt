@@ -43,6 +43,14 @@ object AssessmentTracker {
     var activeAssessment: ActiveAssessment? = null
     private val listeners: MutableList<AssessmentListener> = mutableListOf()
 
+    /**
+     * Adds a listener that will be notified when the active assessment changes.
+     *
+     * This can be when a new assessment is started or when the current assessment is cleared.
+     *
+     * Regarding Threading Model: There is no guarantee that the listener will be called on EDT,
+     * make sure to account for that.
+     */
     fun addListener(listener: AssessmentListener) {
         listeners.add(listener)
     }
@@ -68,7 +76,7 @@ object AssessmentTracker {
     }
 
     @Throws(ArtemisClientException::class)
-    suspend fun cloneSubmission(workspacePath: Path?, assessment: Assessment): ClonedProgrammingSubmission? {
+    private suspend fun cloneSubmission(workspacePath: Path?, assessment: Assessment): ClonedProgrammingSubmission? {
         // Clone the new submission
         val submission = when (ArtemisSettingsState.getInstance().vcsAccessOption) {
             VCSAccessOption.SSH -> withContext(Dispatchers.IO) {

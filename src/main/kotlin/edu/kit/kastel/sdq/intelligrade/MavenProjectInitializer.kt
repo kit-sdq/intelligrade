@@ -93,7 +93,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         return cs.launch {
             val root = ProjectUtil.getProjectRootVirtualFile(project)
             if (root == null) {
-                LOG.error("Project root virtual file is null, cannot add maven project files")
+                LOG.warn("Project root virtual file is null, cannot add maven project files")
                 return@launch
             }
 
@@ -122,7 +122,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         }
 
         if (window == null) {
-            LOG.error("Maven tool window is missing")
+            LOG.warn("Maven tool window is missing")
             addMavenProjectFiles(project, projectRoot)
             return
         }
@@ -233,7 +233,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             // - or is a maven project file but is already managed by maven
             //
             // then it is not a valid selection
-            LOG.error("The selected file is not a valid maven project file: ${projectFile.presentableUrl}")
+            LOG.warn("The selected file is not a valid maven project file: ${projectFile.presentableUrl}")
             return
         }
 
