@@ -391,7 +391,10 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
     private void handleAssessmentClosed() {
         startGradingRound1Button.setEnabled(true);
-        startGradingRound2Button.setEnabled(exerciseSelector.getItem().hasSecondCorrectionRound());
+        // If no exercise is selected (e.g. not connected to artemis), the getItem() will return null.
+        if (exerciseSelector.getItem() != null) {
+            startGradingRound2Button.setEnabled(exerciseSelector.getItem().hasSecondCorrectionRound());
+        }
 
         assessmentPanel.setEnabled(false);
         submitAssessmentButton.setEnabled(false);
