@@ -57,15 +57,16 @@ public class PluginState {
         AssessmentTracker.INSTANCE.addListener(changedAssessment -> {
             activeAssessment = changedAssessment;
 
+            // The invokeLater ensures that the listeners are running on EDT, which is required for UI updates.
             if (changedAssessment == null) {
                 // Notify listeners that the assessment was closed
                 for (Runnable listener : assessmentClosedListeners) {
-                    listener.run();
+                    ApplicationManager.getApplication().invokeLater(listener);
                 }
             } else {
                 // Notify listeners that the assessment was started
                 for (Consumer<ActiveAssessment> listener : assessmentStartedListeners) {
-                    listener.accept(changedAssessment);
+                    ApplicationManager.getApplication().invokeLater(() -> listener.accept(changedAssessment));
                 }
             }
         });
