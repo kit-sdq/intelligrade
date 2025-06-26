@@ -101,6 +101,8 @@ object AssessmentTracker {
             cleanupProjectDirectory()
 
             val baseDirectory = IntellijUtil.getProjectRootDirectory()
+            //TODO: use git4Idea to clone Project
+            git4idea.checkout.GitCheckoutProvider.clone()
             val clonedSubmission: ClonedProgrammingSubmission? = cloneSubmission(baseDirectory, assessment)
 
             withContext(Dispatchers.IO) {
