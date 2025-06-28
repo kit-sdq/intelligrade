@@ -13,6 +13,8 @@ import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 public class OnStartupCompleted implements ProjectActivity, DumbAware {
     @Nullable
     @Override
@@ -22,15 +24,17 @@ public class OnStartupCompleted implements ProjectActivity, DumbAware {
         project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, FileOpener.getInstance());
 
         // Open the Artemis tool window
-        ApplicationManager.getApplication().invokeLater(() -> ToolWindowManager.getInstance(project)
-                .getToolWindow("Artemis")
-                .show());
-
-        //open the annotations window
         ApplicationManager.getApplication().invokeLater(() -> {
-            ToolWindowManager.getInstance(project).getToolWindow("Annotations").show();
-        });
+                    ToolWindowManager.getInstance(project)
+                            .getToolWindow("Artemis")
+                            .show();
+                    //open the annotations window
+                    ToolWindowManager.getInstance(project)
+                            .getToolWindow("Annotations")
+                            .show();
 
+                }
+        );
         return null;
     }
 }
