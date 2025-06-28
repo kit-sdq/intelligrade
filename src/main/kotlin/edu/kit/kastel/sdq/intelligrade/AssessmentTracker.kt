@@ -21,6 +21,7 @@ import edu.kit.kastel.sdq.intelligrade.extensions.settings.VCSAccessOption
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil
+import git4idea.commands.Git
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.lang3.reflect.MethodUtils
@@ -102,7 +103,12 @@ object AssessmentTracker {
 
             val baseDirectory = IntellijUtil.getProjectRootDirectory()
             //TODO: use git4Idea to clone Project
-            git4idea.checkout.GitCheckoutProvider.clone()
+
+            git4idea.checkout.GitCheckoutProvider.clone(
+                project = ,
+                git = Git.getInstance(),
+                listener =
+            )
             val clonedSubmission: ClonedProgrammingSubmission? = cloneSubmission(baseDirectory, assessment)
 
             withContext(Dispatchers.IO) {
