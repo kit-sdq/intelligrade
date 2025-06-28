@@ -26,6 +26,11 @@ public class OnStartupCompleted implements ProjectActivity, DumbAware {
                 .getToolWindow("Artemis")
                 .show());
 
+        //open the annotations window
+        ApplicationManager.getApplication().invokeLater(() -> {
+            ToolWindowManager.getInstance(project).getToolWindow("Annotations").show();
+        });
+
         return null;
     }
 }
