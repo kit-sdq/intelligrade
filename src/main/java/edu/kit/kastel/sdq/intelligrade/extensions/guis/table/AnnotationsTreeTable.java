@@ -279,6 +279,10 @@ public class AnnotationsTreeTable extends TreeTable {
     public void deleteSelection() {
         List<Annotation> annotationsToDelete = getSelectedAnnotations();
 
+        if (annotationsToDelete.size() >= 15){
+            LOG.error("Delete more than 15 annotations.");
+        }
+
         LOG.debug("Deleting annotations: " + annotationsToDelete);
         var assessment = PluginState.getInstance().getActiveAssessment().orElseThrow();
         for (var annotation : annotationsToDelete) {
