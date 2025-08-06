@@ -1,8 +1,11 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.listeners;
+
+import java.util.Arrays;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -80,7 +83,20 @@ public final class FileOpener implements DumbService.DumbModeListener {
 
             // Even though we exited dumb mode, the index operations below may throw IndexNotReadyExceptions,
             // so defensively wrap this in a smart mode action
-            DumbService.getInstance(project).runReadActionInSmartMode(() -> findAnOpenMainMethod(project, directory));
+
+            // - pauses current thread until dumb mode is finished
+            // - runs the provided runnable
+            // -> it is guaranteed that indexes are available for the runnable
+            // might throw a ProcessCanceledException if the project is closed during dumb mode
+
+            // This returns a value that is unused, because they deprecated the method
+            // that takes a Runnable and the documentation says to use a Callable instead
+            ReadAction.nonBlocking(() -> {
+                        findAnOpenMainMethod(project, directory);
+                        return 0;
+                    })
+                    .inSmartMode(project)
+                    .executeSynchronously();
         });
     }
 
@@ -91,15 +107,11 @@ public final class FileOpener implements DumbService.DumbModeListener {
         PsiType stringType =
                 PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
         for (var method : mainMethods) {
-            // Is public & static
+            // Is public & static & returns void
             var modifiers = method.getModifierList();
             if (!modifiers.hasExplicitModifier(PsiModifier.PUBLIC)
-                    || !modifiers.hasExplicitModifier(PsiModifier.STATIC)) {
-                continue;
-            }
-
-            // Returns void
-            if (!PsiTypes.voidType().equals(method.getReturnType())) {
+                    || !modifiers.hasExplicitModifier(PsiModifier.STATIC)
+                    || !PsiTypes.voidType().equals(method.getReturnType())) {
                 continue;
             }
 
@@ -122,21 +134,31 @@ public final class FileOpener implements DumbService.DumbModeListener {
             }
 
             // All checks passed, this is a main method!
-            var file = method.getContainingFile().getVirtualFile();
-            int offset = method.getTextOffset();
-
-            ApplicationManager.getApplication().invokeLater(() -> {
-                // Open the file in an editor, and place the caret at the main method's declaration
-                FileEditorManager.getInstance(project)
-                        .openTextEditor(new OpenFileDescriptor(project, file, offset), true);
-
-                // Expand the project view and select the file
-                ProjectView.getInstance(IntellijUtil.getActiveProject()).select(null, file, true);
-            });
-
+            openFile(project, method.getContainingFile().getVirtualFile(), method.getTextOffset());
             return;
         }
 
         LOG.info("No main class found");
+
+        // if it could not find a main class, open the first class in the directory:
+        for (String className : PsiShortNamesCache.getInstance(project).getAllClassNames()) {
+            var psiClass = Arrays.stream(PsiShortNamesCache.getInstance(project).getClassesByName(className, scope))
+                    .findFirst();
+            if (psiClass.isPresent()) {
+                var file = psiClass.get().getContainingFile().getVirtualFile();
+                openFile(project, file, 0);
+                return;
+            }
+        }
+    }
+
+    private static void openFile(Project project, VirtualFile file, int offset) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            // Open the file in an editor, and place the caret at the main method's declaration
+            FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), true);
+
+            // Expand the project view and select the file
+            ProjectView.getInstance(IntellijUtil.getActiveProject()).select(null, file, true);
+        });
     }
 }

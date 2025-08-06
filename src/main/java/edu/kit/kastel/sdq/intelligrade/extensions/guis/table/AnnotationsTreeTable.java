@@ -261,20 +261,23 @@ public class AnnotationsTreeTable extends TreeTable {
                 .changeCustomMessage(annotationNode.getAnnotation());
     }
 
-    public void deleteSelection() {
+    public List<Annotation> getSelectedAnnotations() {
         TreePath[] paths = getTree().getSelectionPaths();
         if (paths == null || paths.length == 0) {
-            return;
+            return List.of();
         }
 
-        // First collect all annotations to delete, then delete them
-        // If delete them one by one, the row indices change and the wrong annotations are deleted
-        var annotationsToDelete = Arrays.stream(paths)
+        // Collect all annotations from the selected paths
+        return Arrays.stream(paths)
                 .map(TreePath::getLastPathComponent)
                 .map(AnnotationsTreeNode.class::cast)
                 .map(AnnotationsTreeNode::listAnnotations)
                 .flatMap(List::stream)
                 .toList();
+    }
+
+    public void deleteSelection() {
+        List<Annotation> annotationsToDelete = getSelectedAnnotations();
 
         LOG.debug("Deleting annotations: " + annotationsToDelete);
         var assessment = PluginState.getInstance().getActiveAssessment().orElseThrow();

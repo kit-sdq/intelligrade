@@ -1,12 +1,9 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.state;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,13 +14,9 @@ import java.util.function.Consumer;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.ui.jcef.JBCefApp;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
-import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.ArtemisInstance;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
@@ -36,14 +29,16 @@ import edu.kit.kastel.sdq.artemis4j.grading.User;
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
-import edu.kit.kastel.sdq.intelligrade.extensions.guis.SplashDialog;
+import edu.kit.kastel.sdq.intelligrade.AssessmentTracker;
+import edu.kit.kastel.sdq.intelligrade.EndAssessmentService;
+import edu.kit.kastel.sdq.intelligrade.ReopenAssessmentService;
+import edu.kit.kastel.sdq.intelligrade.StartAssessmentService;
+import edu.kit.kastel.sdq.intelligrade.SubmitAction;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisCredentialsProvider;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.login.CefUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
-import org.apache.commons.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
 
 public class PluginState {
     private static final Logger LOG = Logger.getInstance(PluginState.class);
@@ -54,11 +49,35 @@ public class PluginState {
     private final List<Consumer<Optional<ProgrammingExercise>>> exerciseSelectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
+    private final List<Runnable> missingGradingConfigListeners = new ArrayList<>();
 
     private ArtemisConnection connection;
     private ProgrammingExercise activeExercise;
 
     private ActiveAssessment activeAssessment;
+
+    private PluginState() {
+        // The code for opening/closing assessments is in kotlin, but this class keeps track of the active assessment
+        // as well.
+        //
+        // With this, PluginState will be notified when an assessment changes.
+        AssessmentTracker.INSTANCE.addListener(changedAssessment -> {
+            activeAssessment = changedAssessment;
+
+            // The invokeLater ensures that the listeners are running on EDT, which is required for UI updates.
+            if (changedAssessment == null) {
+                // Notify listeners that the assessment was closed
+                for (Runnable listener : assessmentClosedListeners) {
+                    ApplicationManager.getApplication().invokeLater(listener);
+                }
+            } else {
+                // Notify listeners that the assessment was started
+                for (Consumer<ActiveAssessment> listener : assessmentStartedListeners) {
+                    ApplicationManager.getApplication().invokeLater(() -> listener.accept(changedAssessment));
+                }
+            }
+        });
+    }
 
     public static PluginState getInstance() {
         if (pluginState == null) {
@@ -146,6 +165,17 @@ public class PluginState {
                 });
     }
 
+    /**
+     * Registers a listener that is called when intelligrade needs the grading config, but it is missing.
+     * <p>
+     * This is used to highlight the input text box in which the grading config should be entered.
+     *
+     * @param listener the listener to be called
+     */
+    public void registerMissingGradingConfigListeners(Runnable listener) {
+        this.missingGradingConfigListeners.add(listener);
+    }
+
     public void registerConnectedListener(Consumer<ArtemisConnection> listener) {
         this.connectedListeners.add(listener);
         listener.accept(this.connection);
@@ -169,7 +199,7 @@ public class PluginState {
     }
 
     private void internalStartAssessment(ProgrammingSubmission submission, CorrectionRound correctionRound) {
-        if (activeAssessment != null) {
+        if (isAssessing()) {
             ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
         }
@@ -184,75 +214,48 @@ public class PluginState {
             return;
         }
 
-        new StartAssessmentTask(submission, correctionRound, gradingConfig.get()).queue();
+        StartAssessmentService.getInstance(IntellijUtil.getActiveProject())
+                .queue(correctionRound, gradingConfig.get(), activeExercise);
     }
 
     public void saveAssessment() {
-        if (activeAssessment == null) {
+        if (!isAssessing()) {
             ArtemisUtils.displayNoAssessmentBalloon();
             return;
         }
 
-        try {
-            activeAssessment.getAssessment().save();
-            ArtemisUtils.displayGenericInfoBalloon("Assessment saved", "The assessment has been saved.");
-        } catch (ArtemisNetworkException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayNetworkErrorBalloon("Could not save assessment", e);
-        } catch (AnnotationMappingException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Could not save assessment",
-                    "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
-        }
+        EndAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(SubmitAction.SAVE);
     }
 
     public void submitAssessment() {
-        if (activeAssessment == null) {
+        if (!isAssessing()) {
             ArtemisUtils.displayNoAssessmentBalloon();
             return;
         }
 
-        try {
-            activeAssessment.getAssessment().submit();
-            this.cleanupAssessment();
-        } catch (ArtemisNetworkException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayNetworkErrorBalloon("Could not submit assessment", e);
-        } catch (AnnotationMappingException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayGenericErrorBalloon(
-                    "Could not submit assessment",
-                    "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!");
-        }
+        EndAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(SubmitAction.SUBMIT);
     }
 
     public void cancelAssessment() {
-        if (activeAssessment == null) {
+        if (!isAssessing()) {
             ArtemisUtils.displayNoAssessmentBalloon();
             return;
         }
 
-        try {
-            activeAssessment.getAssessment().cancel();
-            this.cleanupAssessment();
-        } catch (ArtemisNetworkException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayNetworkErrorBalloon("Could not submit assessment", e);
-        }
+        EndAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(SubmitAction.CANCEL);
     }
 
     public void closeAssessment() {
-        if (activeAssessment == null) {
+        if (!isAssessing()) {
             ArtemisUtils.displayNoAssessmentBalloon();
             return;
         }
 
-        this.cleanupAssessment();
+        EndAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(SubmitAction.CLOSE);
     }
 
     public void reopenAssessment(PackedAssessment assessment) {
-        if (activeAssessment != null) {
+        if (isAssessing()) {
             ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
         }
@@ -267,25 +270,7 @@ public class PluginState {
             return;
         }
 
-        // If we have a review config and are not opening a review assessment, ask
-        if (gradingConfig.get().isReview() && assessment.round() != CorrectionRound.REVIEW) {
-            var confirmed = MessageDialogBuilder
-                    .okCancel("Reopening in non-review mode!", "The grading config is a review config, but you are opening the assessment in non-review mode. Are you sure you know what you are doing?")
-                    .asWarning()
-                    .guessWindowAndAsk();
-
-            if (!confirmed) {
-                return;
-            }
-        }
-
-        // We can't start a review assessment without a review config
-        if (assessment.round() == CorrectionRound.REVIEW && !gradingConfig.get().isReview()) {
-            ArtemisUtils.displayGenericErrorBalloon("Could not start review", "No review grading config selected");
-            return;
-        }
-
-        new ReopenAssessmentTask(assessment, gradingConfig.get()).queue();
+        ReopenAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(submission, gradingConfig.get());
     }
 
     public Optional<ProgrammingExercise> getActiveExercise() {
@@ -321,7 +306,8 @@ public class PluginState {
     private void resetState() {
         connection = null;
         activeExercise = null;
-        activeAssessment = null;
+
+        AssessmentTracker.INSTANCE.clearAssessment();
     }
 
     private CompletableFuture<String> retrieveJWT() {
@@ -365,88 +351,14 @@ public class PluginState {
         });
     }
 
-    private boolean initializeAssessment(Assessment assessment) {
-        try {
-            // Cleanup first, in case there are files left from a previous assessment
-            this.cleanupProjectDirectory();
-
-            // Clone the new submission
-            var clonedSubmission =
-                    switch (ArtemisSettingsState.getInstance().getVcsAccessOption()) {
-                        case SSH -> {
-                            // We need to switch the classloader here (same as
-                            // https://plugins.jetbrains.com/docs/intellij/plugin-class-loaders.html#using-serviceloader)
-                            // Somewhere deep in the auth libs, an instanceof check is performed, which returns false in
-                            // some cases where the same class was loaded with two different class loaders (the plugin
-                            // and the platform ones)
-                            Thread currentThread = Thread.currentThread();
-                            ClassLoader originalClassLoader = currentThread.getContextClassLoader();
-                            ClassLoader pluginClassLoader = this.getClass().getClassLoader();
-                            try {
-                                currentThread.setContextClassLoader(pluginClassLoader);
-                                yield assessment
-                                        .getSubmission()
-                                        .cloneViaSSHInto(IntellijUtil.getProjectRootDirectory());
-                            } finally {
-                                currentThread.setContextClassLoader(originalClassLoader);
-                            }
-                        }
-                        case TOKEN -> assessment
-                                .getSubmission()
-                                .cloneViaVCSTokenInto(IntellijUtil.getProjectRootDirectory(), null);
-                    };
-
-            // Refresh all files, so that they are up-to-date for the maven update
-            IntellijUtil.forceFilesSync(() -> {
-                // Force IntelliJ to update the Maven project
-                IntellijUtil.getMavenManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-            });
-
-            this.activeAssessment = new ActiveAssessment(assessment, clonedSubmission);
-            for (Consumer<ActiveAssessment> listener : this.assessmentStartedListeners) {
-                listener.accept(activeAssessment);
-            }
-
-            return true;
-        } catch (ArtemisClientException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayGenericErrorBalloon("Error cloning submission", e.getMessage());
-
-            // Cancel the assessment to prevent spurious locks
-            try {
-                assessment.cancel();
-            } catch (ArtemisNetworkException ex) {
-                LOG.warn(ex);
-                ArtemisUtils.displayGenericErrorBalloon("Failed to free the assessment lock", ex.getMessage());
-            }
-
-            return false;
-        }
-    }
-
-    private void cleanupAssessment() {
-        this.activeAssessment = null;
-
-        // Do not close the ClonedProgrammingSubmission, since this would try to delete the workspace file
-        // Instead, we delete the project directory manually
-        this.cleanupProjectDirectory();
-
-        // Tell IntelliJ's VCS manager that the Git repo is gone
-        // This prevents an annoying popup that warns about a missing Git root
-        IntellijUtil.forceFilesSync(() -> {
-            IntellijUtil.getVcsManager().setDirectoryMappings(List.of());
-            IntellijUtil.getVcsManager().fireDirectoryMappingsChanged();
-        });
-
-        for (Runnable assessmentClosedListener : this.assessmentClosedListeners) {
-            assessmentClosedListener.run();
-        }
-    }
-
     private Optional<GradingConfig> createGradingConfig() {
         var gradingConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
         if (gradingConfigPath == null) {
             ArtemisUtils.displayGenericErrorBalloon("No grading config", "Please select a grading config");
+            // notify listeners that the grading config is missing
+            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
+                missingGradingConfigListener.run();
+            }
             return Optional.empty();
         }
 
@@ -456,151 +368,11 @@ public class PluginState {
         } catch (IOException | InvalidGradingConfigException e) {
             LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
+            // notify listeners that the grading config is missing/invalid
+            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
+                missingGradingConfigListener.run();
+            }
             return Optional.empty();
-        }
-    }
-
-    private void cleanupProjectDirectory() {
-        // Close all open editors
-        var editorManager = FileEditorManager.getInstance(IntellijUtil.getActiveProject());
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-            for (var editor : editorManager.getAllEditors()) {
-                editorManager.closeFile(editor.getFile());
-            }
-        });
-
-        var rootPath = IntellijUtil.getProjectRootDirectory();
-        // Delete all directory contents, but not the directory itself
-        try {
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    FileUtils.forceDelete(file.toFile());
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    if (!dir.equals(rootPath)) {
-                        FileUtils.forceDelete(dir.toFile());
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            LOG.warn(e);
-            ArtemisUtils.displayGenericErrorBalloon("Error cleaning up project directory", e.getMessage());
-        }
-    }
-
-    private class StartAssessmentTask extends Task.Modal {
-        private final CorrectionRound correctionRound;
-        private final ProgrammingSubmission submission;
-        private final GradingConfig gradingConfig;
-
-        public StartAssessmentTask(ProgrammingSubmission submission, CorrectionRound correctionRound, GradingConfig gradingConfig) {
-            super(IntellijUtil.getActiveProject(), "Starting Assessment", false);
-            this.correctionRound = correctionRound;
-            this.submission = submission;
-            this.gradingConfig = gradingConfig;
-        }
-
-        @Override
-        public void run(@NotNull ProgressIndicator progressIndicator) {
-            try {
-                progressIndicator.setText("Locking...");
-
-                Optional<Assessment> nextAssessment;
-                if (this.submission == null) {
-                    nextAssessment = activeExercise.tryLockNextSubmission(correctionRound, gradingConfig);
-                } else {
-                    try {
-                        nextAssessment = activeExercise.tryLockSubmission(submission.getId(), correctionRound, gradingConfig);
-                    } catch (MoreRecentSubmissionException ex) {
-                        LOG.warn(ex);
-                        ArtemisUtils.displayGenericErrorBalloon(
-                                "Could not start assessment",
-                                "The student has submitted a newer version of his code.");
-                        return;
-                    }
-                }
-
-                if (nextAssessment.isPresent()) {
-                    progressIndicator.setText("Cloning...");
-                    if (!initializeAssessment(nextAssessment.get())) {
-                        return;
-                    }
-
-                    SplashDialog.showMaybe();
-
-                    // Now everything is done - the submission is properly locked, and the repository is cloned
-                    if (activeAssessment.getAssessment().getAllAnnotations().isEmpty()) {
-                        activeAssessment.runAutograder();
-                    } else {
-                        ArtemisUtils.displayGenericInfoBalloon(
-                                "Skipping Autograder",
-                                "The submission already has annotations. Skipping the Autograder.");
-                    }
-
-                    ArtemisUtils.displayGenericInfoBalloon(
-                            "Assessment started",
-                            "You can now grade the submission. Please make sure that are familiar with all "
-                                    + "grading guidelines.");
-                } else {
-                    ArtemisUtils.displayGenericInfoBalloon(
-                            "Could not start assessment",
-                            "There are no more submissions to assess. Thanks for your work :)");
-                }
-            } catch (ArtemisNetworkException e) {
-                LOG.warn(e);
-                ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
-            } catch (AnnotationMappingException e) {
-                LOG.warn(e);
-                ArtemisUtils.displayGenericErrorBalloon(
-                        "Could not parse assessment",
-                        "Could not parse previous assessment. This is a serious bug; please contact the "
-                                + "Übungsleitung!");
-            }
-        }
-    }
-
-    private class ReopenAssessmentTask extends Task.Modal {
-        private final PackedAssessment packedAssessment;
-        private final GradingConfig gradingConfig;
-
-        public ReopenAssessmentTask(PackedAssessment assessment, GradingConfig gradingConfig) {
-            super(IntellijUtil.getActiveProject(), "Reopening Assessment", false);
-            this.packedAssessment = assessment;
-            this.gradingConfig = gradingConfig;
-        }
-
-        @Override
-        public void run(@NotNull ProgressIndicator progressIndicator) {
-            try {
-                progressIndicator.setText("Locking...");
-                var assessment = packedAssessment.lockAndOpen(gradingConfig);
-                if (assessment.isPresent()) {
-                    progressIndicator.setText("Cloning...");
-                    initializeAssessment(assessment.get());
-                } else {
-                    ArtemisUtils.displayGenericErrorBalloon(
-                            "Failed to reopen assessment", "Most likely, your lock has been taken by someone else.");
-                }
-
-            } catch (ArtemisNetworkException e) {
-                LOG.warn(e);
-                ArtemisUtils.displayNetworkErrorBalloon("Could not lock assessment", e);
-            } catch (AnnotationMappingException e) {
-                LOG.warn(e);
-                ArtemisUtils.displayGenericErrorBalloon(
-                        "Could not parse assessment",
-                        "Could not parse previous assessment. This is a serious bug; please contact the "
-                                + "Übungsleitung!");
-            } catch (MoreRecentSubmissionException e) {
-                LOG.warn(e);
-                ArtemisUtils.displayGenericErrorBalloon(
-                        "Could not reopen assessment", "The student has submitted a newer version of his code.");
-            }
         }
     }
 }

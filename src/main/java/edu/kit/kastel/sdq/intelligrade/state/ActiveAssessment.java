@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.state;
 
 import java.awt.EventQueue;
@@ -15,8 +15,12 @@ import javax.swing.JButton;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanel;
@@ -27,13 +31,14 @@ import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
+import edu.kit.kastel.sdq.artemis4j.grading.location.LineColumn;
+import edu.kit.kastel.sdq.artemis4j.grading.location.Location;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.autograder.AutograderTask;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.AutograderOption;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
-import edu.kit.kastel.sdq.intelligrade.utils.CodeSelection;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
 
@@ -65,36 +70,73 @@ public class ActiveAssessment {
         return assessment.getCorrectionRound() == CorrectionRound.REVIEW;
     }
 
+    private static LineColumn translateToLineColumn(Document document, int offset) {
+        // The line number in the document is 0-based, and LineColumn expects 0-based as well.
+        int line = document.getLineNumber(offset);
+        // The column is the offset in the line (0-based), it should satisfy:
+        // lineStartOffset + column = offset
+        // <-> column = offset - lineStartOffset
+        int column = offset - document.getLineStartOffset(line);
+
+        return new LineColumn(line, column);
+    }
+
+    private static Location createLocationFromSelection(Editor editor, String path) {
+        var caret = editor.getCaretModel().getPrimaryCaret();
+
+        if (!caret.hasSelection()) {
+            // highlight the entire line if no selection was made:
+            int offset = ReadAction.compute(caret::getOffset);
+            int lineNumber = editor.getDocument().getLineNumber(offset);
+            return new Location(path, lineNumber, lineNumber);
+        }
+
+        TextRange textRange = ReadAction.compute(caret::getSelectionRange);
+
+        int startOffset = textRange.getStartOffset();
+        int endOffset = textRange.getEndOffset();
+
+        if (startOffset == endOffset) {
+            // no selection made -> highlight the entire line
+            int lineNumber = editor.getDocument().getLineNumber(startOffset);
+            return new Location(path, lineNumber, lineNumber);
+        }
+
+        var start = translateToLineColumn(editor.getDocument(), startOffset);
+        // The end offset provided by the text range is exclusive (last character is not included),
+        // therefore 1 is subtracted to get the correct end position:
+        var end = translateToLineColumn(editor.getDocument(), endOffset - 1);
+
+        return new Location(path, start, end);
+    }
+
     public void addAnnotationAtCaret(MistakeType mistakeType, boolean withCustomMessage) {
         if (assessment == null) {
             throw new IllegalStateException("No active assessment");
         }
 
-        var selection = CodeSelection.fromCaret();
-        if (selection.isEmpty()) {
+        var editor = IntellijUtil.getActiveEditor();
+        if (editor == null) {
+            // no editor open or no selection made
             ArtemisUtils.displayGenericErrorBalloon(
                     "No code selected", "Cannot create annotation without code selection");
             return;
         }
 
-        var editor = IntellijUtil.getActiveEditor();
-        int startLine = editor.getDocument().getLineNumber(selection.get().startOffset());
-        int endLine = editor.getDocument().getLineNumber(selection.get().endOffset());
-        String path = Path.of(IntellijUtil.getActiveProject().getBasePath())
+        var path = Path.of(IntellijUtil.getActiveProject().getBasePath())
                 .resolve(ASSIGNMENT_SUB_PATH)
-                .relativize(selection.get().path())
+                .relativize(editor.getVirtualFile().toNioPath())
                 .toString()
                 .replace("\\", "/");
+        var location = createLocationFromSelection(editor, path);
 
         if (mistakeType.isCustomAnnotation()) {
-            addCustomAnnotation(mistakeType, startLine, endLine, path);
+            addCustomAnnotation(mistakeType, location);
+        } else if (withCustomMessage) {
+            addPredefinedAnnotationWithCustomMessage(mistakeType, location);
         } else {
-            if (withCustomMessage) {
-                addPredefinedAnnotationWithCustomMessage(mistakeType, startLine, endLine, path);
-            } else {
-                assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, null);
-                this.notifyListeners();
-            }
+            assessment.addPredefinedAnnotation(mistakeType, location, null);
+            this.notifyListeners();
         }
     }
 
@@ -161,18 +203,17 @@ public class ActiveAssessment {
         }
     }
 
-    private void addPredefinedAnnotationWithCustomMessage(
-            MistakeType mistakeType, int startLine, int endLine, String path) {
+    private void addPredefinedAnnotationWithCustomMessage(MistakeType mistakeType, Location location) {
         showCustomMessageDialog("", customMessage -> {
-            this.assessment.addPredefinedAnnotation(mistakeType, path, startLine, endLine, customMessage);
+            this.assessment.addPredefinedAnnotation(mistakeType, location, customMessage);
             this.notifyListeners();
         });
     }
 
-    private void addCustomAnnotation(MistakeType mistakeType, int startLine, int endLine, String path) {
+    private void addCustomAnnotation(MistakeType mistakeType, Location location) {
         showCustomAnnotationDialog(mistakeType, "", 0.0, messageWithPoints -> {
             this.assessment.addCustomAnnotation(
-                    mistakeType, path, startLine, endLine, messageWithPoints.message(), messageWithPoints.points());
+                    mistakeType, location, messageWithPoints.message(), messageWithPoints.points());
             this.notifyListeners();
         });
     }

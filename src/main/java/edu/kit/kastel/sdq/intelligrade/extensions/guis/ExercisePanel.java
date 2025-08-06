@@ -1,13 +1,17 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ItemEvent;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +32,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
+import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentStatsDTO;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
@@ -36,6 +41,9 @@ import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
@@ -57,6 +65,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private JButton startGradingRound1Button;
     private JButton startGradingRound2Button;
     private TextFieldWithBrowseButton gradingConfigPathInput;
+    private transient Border originalGradingConfigBorder = null;
 
     private JPanel statisticsPanel;
     private JBLabel totalStatisticsLabel;
@@ -119,6 +128,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         PluginState.getInstance().registerAssessmentStartedListener(this::handleAssessmentStarted);
 
         PluginState.getInstance().registerAssessmentClosedListener(this::handleAssessmentClosed);
+
+        PluginState.getInstance().registerMissingGradingConfigListeners(this::handleMissingGradingConfig);
     }
 
     private void createGeneralPanel() {
@@ -144,6 +155,15 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             @Override
             protected void textChanged(@NotNull DocumentEvent documentEvent) {
                 ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPathInput.getText());
+
+                // When nothing is selected, the border is red. This code is called when something has been selected
+                // -> remove the red border
+                if (originalGradingConfigBorder != null) {
+                    gradingConfigPathInput.getTextField().setBorder(originalGradingConfigBorder);
+                    originalGradingConfigBorder = null;
+                }
+
+                updateSelectedExercise();
             }
         });
         generalPanel.add(gradingConfigPathInput, "growx");
@@ -152,6 +172,41 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         innerTextField.getEmptyText().setText("Path to grading config");
         innerTextField.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)
                 f -> f.getText().isEmpty());
+    }
+
+    private void updateSelectedExercise() {
+        String configString = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
+        if (configString == null) {
+            return;
+        }
+
+        Path configPath = Path.of(configString);
+        if (!Files.exists(configPath)) {
+            return;
+        }
+
+        GradingConfig.GradingConfigDTO config;
+        try {
+            config = GradingConfig.readDTOFromString(Files.readString(configPath));
+        } catch (InvalidGradingConfigException | IOException e) {
+            return;
+        }
+
+        // if the selected exercise is compatible with the grading config, do nothing
+        int selectedIndex = exerciseSelector.getSelectedIndex();
+        if (config.isAllowedForExercise(
+                exerciseSelector.getItemAt(selectedIndex).getId())) {
+            return;
+        }
+
+        // this searches for the first exercise that the grading config can be used with
+        for (int i = 0; i < exerciseSelector.getItemCount(); i++) {
+            ProgrammingExercise exercise = exerciseSelector.getItemAt(i);
+            if (config.isAllowedForExercise(exercise.getId())) {
+                exerciseSelector.setSelectedIndex(i);
+                return;
+            }
+        }
     }
 
     private void createStatisticsPanel() {
@@ -262,6 +317,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch exercise info", ex);
         }
 
+        updateSelectedExercise();
+
         updateUI();
     }
 
@@ -284,6 +341,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 for (Exam exam : course.getExams()) {
                     examSelector.addItem(new OptionalExam(exam));
                 }
+                updateSelectedExercise();
+
                 updateUI();
             } catch (ArtemisNetworkException ex) {
                 LOG.warn(ex);
@@ -334,7 +393,10 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
     private void handleAssessmentClosed() {
         startGradingRound1Button.setEnabled(true);
-        startGradingRound2Button.setEnabled(exerciseSelector.getItem().hasSecondCorrectionRound());
+        // If no exercise is selected (e.g. not connected to artemis), the getItem() will return null.
+        if (exerciseSelector.getItem() != null) {
+            startGradingRound2Button.setEnabled(exerciseSelector.getItem().hasSecondCorrectionRound());
+        }
 
         assessmentPanel.setEnabled(false);
         submitAssessmentButton.setEnabled(false);
@@ -344,6 +406,12 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         reRunAutograder.setEnabled(false);
 
         updateBacklogAndStats();
+    }
+
+    private void handleMissingGradingConfig() {
+        originalGradingConfigBorder = gradingConfigPathInput.getTextField().getBorder();
+        // Add a red border to the field to indicate that the grading config is missing:
+        gradingConfigPathInput.getTextField().setBorder(JBUI.Borders.customLine(JBColor.RED));
     }
 
     private void updateBacklogAndStats() {

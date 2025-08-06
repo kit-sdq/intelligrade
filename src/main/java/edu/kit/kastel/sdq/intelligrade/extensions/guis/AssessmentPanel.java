@@ -1,7 +1,8 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -38,6 +39,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.RatingGroup;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.StackingPenaltyRule;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.ThresholdPenaltyRule;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
+import edu.kit.kastel.sdq.intelligrade.extensions.settings.ThemeColor;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
@@ -83,45 +85,80 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
         PluginState.getInstance().registerAssessmentClosedListener(this::showNoActiveAssessment);
     }
 
+    private Component addGroupPanel(
+            ActiveAssessment assessment, RatingGroup ratingGroup, List<MistakeType> mistakeTypes, int buttonsPerRow) {
+        var separator = new TitledSeparator(getRatingGroupTitle(assessment.getAssessment(), ratingGroup));
+        separator.setTitleFont(JBFont.h3().asBold());
+        this.ratingGroupBorders.put(ratingGroup, separator);
+        this.content.add(separator, "growx");
+
+        var panel = new JBPanel<>(new MigLayout("fill, gap 0, wrap " + buttonsPerRow));
+        for (var mistakeType : mistakeTypes) {
+            var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
+
+            // no tooltip for custom comment
+            if (!mistakeType.isCustomAnnotation()) {
+                button.setToolTipText(mistakeType.getMessage().translateTo(LOCALE));
+            }
+            button.setMargin(JBUI.emptyInsets());
+
+            var iconRenderer = new MistakeTypeIconRenderer();
+            var layer = new LayerUI<>() {
+                @Override
+                public void paint(Graphics g, JComponent c) {
+                    super.paint(g, c);
+                    iconRenderer.paint((Graphics2D) g, c);
+                }
+            };
+            JPanel buttonPanel = new JPanel(new MigLayout("fill, insets 0"));
+            buttonPanel.add(button, "growx");
+            panel.add(new JLayer<>(buttonPanel, layer), "growx, sizegroup main");
+
+            button.addActionListener(a -> assessment.addAnnotationAtCaret(
+                    mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
+            this.assessmentButtons.add(new AssessmentButton(mistakeType, button, iconRenderer));
+        }
+
+        return panel;
+    }
+
+    private static List<MistakeType> getDirectMistakeTypes(RatingGroup ratingGroup) {
+        // Mistake types that are not in a subgroup
+        List<MistakeType> directMistakeTypes = new ArrayList<>();
+        for (var mistakeType : ratingGroup.getAllMistakeTypes()) {
+            if (mistakeType.getRatingGroup().equals(ratingGroup)) {
+                directMistakeTypes.add(mistakeType);
+            }
+        }
+
+        return directMistakeTypes;
+    }
+
+    private static List<RatingGroup> getAllRatingGroups(RatingGroup ratingGroup) {
+        List<RatingGroup> groups = new ArrayList<>(List.of(ratingGroup));
+        for (var group : ratingGroup.listSubGroups()) {
+            groups.addAll(getAllRatingGroups(group));
+        }
+
+        return groups;
+    }
+
     private void createMistakeButtons(ActiveAssessment assessment) {
         int buttonsPerRow = ArtemisSettingsState.getInstance().getColumnsPerRatingGroup();
         for (var ratingGroup : assessment.getGradingConfig().getRatingGroups()) {
-            if (ratingGroup.getMistakeTypes().isEmpty()) {
+            if (ratingGroup.getAllMistakeTypes().isEmpty()) {
                 continue;
             }
 
-            var separator = new TitledSeparator(getRatingGroupTitle(assessment.getAssessment(), ratingGroup));
-            separator.setTitleFont(JBFont.h3().asBold());
-            this.ratingGroupBorders.put(ratingGroup, separator);
-            this.content.add(separator, "growx");
-
-            var panel = new JBPanel<>(new MigLayout("fill, gap 0, wrap " + buttonsPerRow));
-            for (var mistakeType : ratingGroup.getMistakeTypes()) {
-                var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
-
-                // no tooltip for custom comment
-                if (!mistakeType.isCustomAnnotation()) {
-                    button.setToolTipText(mistakeType.getMessage().translateTo(LOCALE));
+            for (RatingGroup group : getAllRatingGroups(ratingGroup)) {
+                List<MistakeType> mistakeTypes = getDirectMistakeTypes(group);
+                if (mistakeTypes.isEmpty()) {
+                    continue;
                 }
-                button.setMargin(JBUI.emptyInsets());
 
-                var iconRenderer = new MistakeTypeIconRenderer();
-                var layer = new LayerUI<>() {
-                    @Override
-                    public void paint(Graphics g, JComponent c) {
-                        super.paint(g, c);
-                        iconRenderer.paint((Graphics2D) g, c);
-                    }
-                };
-                JPanel buttonPanel = new JPanel(new MigLayout("fill, insets 0"));
-                buttonPanel.add(button, "growx");
-                panel.add(new JLayer<>(buttonPanel, layer), "growx, sizegroup main");
-
-                button.addActionListener(a -> assessment.addAnnotationAtCaret(
-                        mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
-                this.assessmentButtons.add(new AssessmentButton(mistakeType, button, iconRenderer));
+                var panel = addGroupPanel(assessment, group, mistakeTypes, buttonsPerRow);
+                this.content.add(panel, "growx");
             }
-            this.content.add(panel, "growx");
         }
 
         assessment.registerAnnotationsUpdatedListener(annotations -> {
@@ -147,7 +184,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             var mistakeType = assessmentButton.mistakeType();
 
             StringBuilder iconText = new StringBuilder();
-            Color color;
+            ThemeColor color;
             Font font = JBFont.regular();
 
             if (mistakeType.getReporting().shouldScore()) {
@@ -189,8 +226,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 color = settings.getReportingAssessmentButtonColor();
             }
 
-            assessmentButton.iconRenderer().update(iconText.toString(), color);
-            assessmentButton.button().setForeground(color);
+            assessmentButton.iconRenderer().update(iconText.toString(), color.toColor());
+            assessmentButton.button().setForeground(color.toColor());
             assessmentButton.button().setFont(font);
         }
     }

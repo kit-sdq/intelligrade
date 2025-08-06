@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.highlighter;
 
 import java.awt.Font;
@@ -31,8 +31,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.JBColor;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
+import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.AnnotationsListPanel;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.icons.ArtemisIcons;
@@ -40,6 +40,9 @@ import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This class manages the highlights (the colored lines that indicate an annotation) in the editor.
+ */
 public class HighlighterManager {
     private static final Map<Editor, List<HighlighterWithAnnotations>> highlightersPerEditor = new IdentityHashMap<>();
 
@@ -54,7 +57,7 @@ public class HighlighterManager {
             public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
                 var editor = source.getSelectedTextEditor();
 
-                if (PluginState.getInstance().isAssessing()) {
+                if (PluginState.getInstance().isAssessing() && editor != null) {
                     editor.getDocument().setReadOnly(true);
                     updateHighlightersForEditor(editor);
                 }
@@ -128,24 +131,60 @@ public class HighlighterManager {
         // }
     }
 
-    private static void createHighlighter(Editor editor, int startLine, List<Annotation> annotations) {
+    /**
+     * Creates a highlighter for all the provided annotations that start on that line.
+     *
+     * @param editor the editor on which the highlighter should be created
+     * @param annotations the annotations to be highlighted
+     */
+    private static void createHighlighter(Editor editor, List<Annotation> annotations) {
         var document = FileDocumentManager.getInstance().getDocument(editor.getVirtualFile());
 
-        int startOffset = document.getLineStartOffset(startLine);
-        int endOffset = document.getLineEndOffset(
-                annotations.stream().mapToInt(Annotation::getEndLine).max().orElse(startLine));
+        if (document == null) {
+            return;
+        }
 
         var annotationColor = ArtemisSettingsState.getInstance().getAnnotationColor();
-        var attributes = new TextAttributes(
-                null, new JBColor(annotationColor, annotationColor), null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN);
 
-        var highlighter = editor.getMarkupModel()
-                .addRangeHighlighter(
-                        startOffset,
-                        endOffset,
-                        HighlighterLayer.SELECTION - 1,
-                        attributes,
-                        HighlighterTargetArea.LINES_IN_RANGE);
+        List<RangeHighlighter> highlighters = new ArrayList<>();
+        for (Annotation annotation : annotations) {
+            // Lines that have NONE as highlight, should still be highlighted, but invisible to the user.
+            // This is necessary for the gutter icon.
+            var attributes = new TextAttributes(
+                    null, annotationColor.toJBColor(), null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN);
+
+            if (annotation.getMistakeType().getHighlight() == MistakeType.Highlight.NONE) {
+                attributes = new TextAttributes();
+            }
+
+            var location = annotation.getLocation();
+
+            // resolve the start of the annotation (the start offset of the line + column)
+            int startOffset = document.getLineStartOffset(location.start().line())
+                    + location.start().column().orElse(0);
+            // if the column is present, it has to be added to the start offset of the last line
+            // otherwise the end offset is the end of the line
+            //
+            // The endOffset seems to be exclusive. The getLineEndOffset will return the correct offset,
+            // but for our calculated column through the start offset, we have to add 1 to obtain the correct end
+            // offset.
+            int endOffset = location.end()
+                    .column()
+                    .map(endColumn -> document.getLineStartOffset(location.end().line()) + endColumn + 1)
+                    .orElseGet(() -> document.getLineEndOffset(location.end().line()));
+
+            var range = HighlighterTargetArea.EXACT_RANGE;
+            if (startOffset == endOffset) {
+                // if the start and end offset are the same, we highlight the entire line
+                range = HighlighterTargetArea.LINES_IN_RANGE;
+            }
+
+            highlighters.add(editor.getMarkupModel()
+                    .addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, attributes, range));
+        }
+
+        // use the first highlighter for the gutter icon
+        var highlighter = highlighters.getFirst();
 
         String gutterTooltip = annotations.stream()
                 .map(a -> {
@@ -204,7 +243,11 @@ public class HighlighterManager {
         });
 
         highlightersPerEditor.computeIfAbsent(editor, e -> new ArrayList<>());
-        highlightersPerEditor.get(editor).add(new HighlighterWithAnnotations(highlighter, annotations));
+        for (int i = 0; i < highlighters.size(); i++) {
+            highlightersPerEditor
+                    .get(editor)
+                    .add(new HighlighterWithAnnotations(highlighters.get(i), List.of(annotations.get(i))));
+        }
     }
 
     private static void cancelLastPopup() {
@@ -247,8 +290,8 @@ public class HighlighterManager {
         var annotationsByLine = assessment.getNonDeletedAnnotations().stream()
                 .filter(a -> IntellijUtil.getAnnotationPath(a).equals(filePath))
                 .collect(Collectors.groupingBy(Annotation::getStartLine));
-        for (var entry : annotationsByLine.entrySet()) {
-            createHighlighter(editor, entry.getKey(), entry.getValue());
+        for (var annotations : annotationsByLine.values()) {
+            createHighlighter(editor, annotations);
         }
     }
 
