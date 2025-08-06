@@ -1,8 +1,9 @@
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 plugins {
-    id("org.jetbrains.intellij.platform") version "2.2.1"
+    id("org.jetbrains.intellij.platform") version "2.6.0"
     id 'java'
-    id 'com.diffplug.spotless' version '6.25.0'
+    id 'com.diffplug.spotless' version '7.2.0'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.0'
 }
 
 group 'edu.kit.kastel.sdq'
@@ -13,6 +14,12 @@ java {
     targetCompatibility = "21"
 }
 
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
@@ -20,28 +27,30 @@ repositories {
         defaultRepositories()
     }
     maven {
-        url 'https://s01.oss.sonatype.org/content/repositories/snapshots'
+        url 'https://central.sonatype.com/repository/maven-snapshots/'
     }
 }
 
 dependencies {
+    // Tests
+    testImplementation 'junit:junit:' + JUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
+    testImplementation 'com.tngtech.archunit:archunit-junit4:' + ARCHUNIT_VERSION
+
     intellijPlatform {
-        intellijIdeaCommunity('2024.2.1')
+        intellijIdeaCommunity('2025.1.1')
         pluginVerifier()
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.idea.maven")
+        bundledPlugin("Git4Idea")
         instrumentationTools()
         def localJbr = System.getenv("LOCAL_JBR")
         if (localJbr != null) {
             jetbrainsRuntimeLocal(localJbr)
         }
     }
-    implementation 'edu.kit.kastel.sdq:artemis4j:7.7.5-SNAPSHOT'
-    // Tests
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:' + JUNIT_VERSION
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + JUNIT_VERSION
-    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
-    testImplementation 'com.tngtech.archunit:archunit-junit5:' + ARCHUNIT_VERSION
+
+    implementation 'edu.kit.kastel.sdq:artemis4j:8.0.0'
 }
 
 intellijPlatform {
@@ -54,6 +63,13 @@ patchPluginXml {
 }
 test {
     useJUnitPlatform()
+    testLogging {
+        events "PASSED", "SKIPPED", "FAILED"
+        exceptionFormat "full"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
 }
 
 tasks {
@@ -72,7 +88,7 @@ spotless {
     format 'misc', {
         target '*.gradle', '.gitattributes', '.gitignore', '*.md'
         trimTrailingWhitespace()
-        indentWithSpaces()
+        leadingTabsToSpaces()
         endWithNewline()
     }
     java {
