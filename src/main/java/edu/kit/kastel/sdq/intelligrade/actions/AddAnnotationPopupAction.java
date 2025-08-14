@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.actions;
 
 import java.awt.event.ActionEvent;
@@ -22,7 +22,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
-import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class AddAnnotationPopupAction extends AnAction {

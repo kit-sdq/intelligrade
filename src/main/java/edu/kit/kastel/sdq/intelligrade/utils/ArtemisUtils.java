@@ -10,11 +10,8 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
-
-import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
-import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 
 /**
@@ -92,6 +89,7 @@ public final class ArtemisUtils {
     }
 
     public static void displayInvalidReviewOperationBalloon() {
-        displayGenericWarningBalloon("Review Mode", "You can only delete annotations in review mode. You can't add or edit annotations.");
+        displayGenericWarningBalloon(
+                "Review Mode", "You can only delete annotations in review mode. You can't add or edit annotations.");
     }
 }

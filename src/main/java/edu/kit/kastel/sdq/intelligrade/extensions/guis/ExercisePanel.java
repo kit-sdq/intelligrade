@@ -155,8 +155,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         openInstructorDialog = new JButton("Show All Submissions");
         startGradingRound1Button.setForeground(JBColor.GREEN);
-        openInstructorDialog.addActionListener(
-                a -> SubmissionsInstructorDialog.showDialog());
+        openInstructorDialog.addActionListener(a -> SubmissionsInstructorDialog.showDialog());
         generalPanel.add(openInstructorDialog, "growx");
 
         gradingConfigPathInput = new TextFieldWithBrowseButton();
@@ -196,8 +195,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         // if the selected exercise is compatible with the grading config, do nothing
         int selectedIndex = exerciseSelector.getSelectedIndex();
-        if (config.get().isAllowedForExercise(
-                exerciseSelector.getItemAt(selectedIndex).getId())) {
+        if (config.get()
+                .isAllowedForExercise(exerciseSelector.getItemAt(selectedIndex).getId())) {
             return;
         }
 
@@ -283,8 +282,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         cancelReviewButton = new JButton("Cancel Review");
         cancelReviewButton.addActionListener(a -> {
-            var confirmed = MessageDialogBuilder.okCancel(
-                            "Cancel Review?", "Your review will be discarded.")
+            var confirmed = MessageDialogBuilder.okCancel("Cancel Review?", "Your review will be discarded.")
                     .guessWindowAndAsk();
 
             if (confirmed) {
@@ -415,7 +413,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             try {
                 // Enable/disable instructor button(s)
                 // Can't use PluginState::isInstructor here, since the exercise is not yet initialized
-                openInstructorDialog.setEnabled(course.isInstructor(PluginState.getInstance().getAssessor()));
+                openInstructorDialog.setEnabled(
+                        course.isInstructor(PluginState.getInstance().getAssessor()));
 
                 // Update the exam selector with the exams of the course
                 // This triggers an item event in the exam selector, which updates the exercise selector
@@ -579,8 +578,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         }
         totalStatisticsLabel.setText(totalText);
 
-        int submittedSubmissions = (int)
-                assessments.stream().filter(PackedAssessment::isSubmitted).count();
+        int submittedSubmissions =
+                (int) assessments.stream().filter(PackedAssessment::isSubmitted).count();
         int lockedSubmissions = assessments.size() - submittedSubmissions;
         String userText = "%d (%d locked)".formatted(submittedSubmissions, lockedSubmissions);
         userStatisticsLabel.setText(userText);

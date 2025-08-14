@@ -1,4 +1,17 @@
+/* Licensed under EPL-2.0 2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.table.AbstractTableModel;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,21 +38,6 @@ import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.Action;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.Component;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 public class SubmissionsInstructorDialog extends DialogWrapper {
     private static final Logger LOG = Logger.getInstance(SubmissionsInstructorDialog.class);
@@ -86,7 +84,8 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         searchPanel.add(shownSubmissionsLabel, "");
 
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
-        refreshButton.addActionListener(a -> fetchSubmissions(PluginState.getInstance().getActiveExercise()));
+        refreshButton.addActionListener(
+                a -> fetchSubmissions(PluginState.getInstance().getActiveExercise()));
         searchPanel.add(refreshButton);
 
         panel.add(searchPanel, "growx");
@@ -97,7 +96,8 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         studentsTable.getSelectionModel().addListSelectionListener(listSelectionEvent -> {
             var selectedRow = studentsTable.getSelectedRow();
             if (selectedRow >= 0) {
-                var selectedSubmission = ((SubmissionsTableModel) studentsTable.getModel()).submissions.get(selectedRow);
+                var selectedSubmission =
+                        ((SubmissionsTableModel) studentsTable.getModel()).submissions.get(selectedRow);
                 setSelectedSubmission(selectedSubmission);
             }
         });
@@ -108,7 +108,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
 
     @Override
     protected Action @NotNull [] createActions() {
-        return new Action[]{this.myCancelAction};
+        return new Action[] {this.myCancelAction};
     }
 
     private void fetchSubmissions(Optional<ProgrammingExercise> exercise) {
@@ -154,11 +154,13 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
 
         var automaticResult = submission.getAutomaticResult();
         if (automaticResult.isPresent()) {
-            studentPanel.add(new JBLabel("Tests: Passed %d/%d (%.2fP)".formatted(
-                    automaticResult.get().passedTestCaseCount(),
-                    automaticResult.get().testCaseCount(),
-                    automaticResult.get().score() * submission.getSubmission().getExercise().getMaxPoints() / 100.0
-            )));
+            studentPanel.add(new JBLabel("Tests: Passed %d/%d (%.2fP)"
+                    .formatted(
+                            automaticResult.get().passedTestCaseCount(),
+                            automaticResult.get().testCaseCount(),
+                            automaticResult.get().score()
+                                    * submission.getSubmission().getExercise().getMaxPoints()
+                                    / 100.0)));
         } else {
             studentPanel.add(new JBLabel("No tests executed"));
         }
@@ -179,13 +181,31 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         JPanel roundsPanel = new JBPanel<>(new MigLayout("wrap 3", "[grow, sg] [grow, sg] [grow, sg]", "[top, 250px]"));
 
         boolean allowFirstRoundEdit = !review && !submission.isSecondRoundStarted();
-        roundsPanel.add(buildRoundPanel(submission.getFirstRoundAssessment(), CorrectionRound.FIRST, allowFirstRoundEdit, submission.getSubmission()), "grow");
+        roundsPanel.add(
+                buildRoundPanel(
+                        submission.getFirstRoundAssessment(),
+                        CorrectionRound.FIRST,
+                        allowFirstRoundEdit,
+                        submission.getSubmission()),
+                "grow");
         if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
             boolean allowSecondRoundEdit = !review && submission.isFirstRoundFinished();
-            roundsPanel.add(buildRoundPanel(submission.getSecondRoundAssessment(), CorrectionRound.SECOND, allowSecondRoundEdit, submission.getSubmission()), "grow");
+            roundsPanel.add(
+                    buildRoundPanel(
+                            submission.getSecondRoundAssessment(),
+                            CorrectionRound.SECOND,
+                            allowSecondRoundEdit,
+                            submission.getSubmission()),
+                    "grow");
 
             boolean allowReviewEdit = review && submission.isSecondRoundFinished();
-            roundsPanel.add(buildRoundPanel(submission.getReviewAssessment(), CorrectionRound.REVIEW, allowReviewEdit, submission.getSubmission()), "grow");
+            roundsPanel.add(
+                    buildRoundPanel(
+                            submission.getReviewAssessment(),
+                            CorrectionRound.REVIEW,
+                            allowReviewEdit,
+                            submission.getSubmission()),
+                    "grow");
         } else {
             // These panels are just for visual uniformity
             roundsPanel.add(buildRoundPanel(null, CorrectionRound.SECOND, false, submission.getSubmission()), "grow");
@@ -197,14 +217,17 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         this.updateUI();
     }
 
-    private JComponent buildRoundPanel(PackedAssessment assessment, CorrectionRound round, boolean allowEdit, ProgrammingSubmission submission) {
-        var panel = new JBPanel<>(new MigLayout("wrap 1, fill, aligny top", "[50px, center]", "[top, grow] [bottom, grow]"));
+    private JComponent buildRoundPanel(
+            PackedAssessment assessment, CorrectionRound round, boolean allowEdit, ProgrammingSubmission submission) {
+        var panel = new JBPanel<>(
+                new MigLayout("wrap 1, fill, aligny top", "[50px, center]", "[top, grow] [bottom, grow]"));
 
-        String roundName = switch (round) {
-            case FIRST -> "Round 1";
-            case SECOND -> "Round 2";
-            case REVIEW -> "Review";
-        };
+        String roundName =
+                switch (round) {
+                    case FIRST -> "Round 1";
+                    case SECOND -> "Round 2";
+                    case REVIEW -> "Review";
+                };
         panel.add(new JBLabel(roundName).withFont(JBFont.h4()));
 
         JButton actionButton;
@@ -213,12 +236,14 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
             // TODO Also, we maybe don't want to show this confidential information to students in the review session
             // // Points
             // // We do not have the feedbacks here, so we can't show the automatic/manual points split
-            // double points = assessment.result().score() * assessment.submission().getExercise().getMaxPoints() / 100.0;
+            // double points = assessment.result().score() * assessment.submission().getExercise().getMaxPoints() /
+            // 100.0;
             // panel.add(new JBLabel("%.2f%% (~%.2fP)".formatted(assessment.result().score(), points)));
             //
             // // Assessment completion date
             // if (assessment.isSubmitted()) {
-            //     panel.add(new JBLabel("At " + assessment.result().completionDate().withZoneSameInstant(ZoneId.systemDefault())
+            //     panel.add(new JBLabel("At " +
+            // assessment.result().completionDate().withZoneSameInstant(ZoneId.systemDefault())
             //             .format(ArtemisUtils.DATE_TIME_PATTERN)));
             // } else {
             //     panel.add(new JBLabel("In progress"));
@@ -248,8 +273,8 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
             actionButton = new JButton("Start");
             actionButton.setForeground(JBColor.GREEN);
             actionButton.addActionListener(a -> {
-               this.close(OK_EXIT_CODE);
-               PluginState.getInstance().startAssessment(submission, round);
+                this.close(OK_EXIT_CODE);
+                PluginState.getInstance().startAssessment(submission, round);
             });
         }
         actionButton.setEnabled(allowEdit);
@@ -304,7 +329,8 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
 
     // private static class SubmissionTableCellRenderer extends DefaultTableCellRenderer {
     //     @Override
-    //     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    //     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean
+    // hasFocus, int row, int column) {
     //         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     //
     //         var model = (SubmissionsTableModel) table.getModel();
@@ -312,9 +338,11 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
     //         if (submission.getFirstRoundAssessment() != null) {
     //             boolean finished;
     //             if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
-    //                 finished = submission.getSecondRoundAssessment() != null && submission.getSecondRoundAssessment().isSubmitted();
+    //                 finished = submission.getSecondRoundAssessment() != null &&
+    // submission.getSecondRoundAssessment().isSubmitted();
     //             } else {
-    //                 finished = submission.getFirstRoundAssessment() != null && submission.getFirstRoundAssessment().isSubmitted();
+    //                 finished = submission.getFirstRoundAssessment() != null &&
+    // submission.getFirstRoundAssessment().isSubmitted();
     //             }
     //
     //             if (finished) {

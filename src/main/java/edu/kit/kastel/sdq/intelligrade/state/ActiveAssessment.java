@@ -26,7 +26,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.JBFont;
-import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
@@ -154,8 +153,7 @@ public class ActiveAssessment {
             this.assessment.unsuppressAnnotation(annotation);
         } else {
             ArtemisUtils.displayGenericWarningBalloon(
-                    "Cannot restore annotation",
-                    "You can only restore annotations in review mode.");
+                    "Cannot restore annotation", "You can only restore annotations in review mode.");
             LOG.warn("Cannot restore annotation outside of review");
         }
         this.notifyListeners();

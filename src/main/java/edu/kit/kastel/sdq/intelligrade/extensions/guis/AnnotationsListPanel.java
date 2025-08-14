@@ -163,9 +163,13 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 Map.entry("Path", location.filePath()),
                 Map.entry("Start", location.start().toString()),
                 Map.entry("End", location.end().toString()),
-                Map.entry("Created By", annotation.getCreatorId().map(Object::toString).orElse("")),
+                Map.entry(
+                        "Created By",
+                        annotation.getCreatorId().map(Object::toString).orElse("")),
                 Map.entry("Suppressed", annotation.isSuppressed() ? "Yes" : "No"),
-                Map.entry("Suppressed By", annotation.getSuppressorId().map(Object::toString).orElse("")),
+                Map.entry(
+                        "Suppressed By",
+                        annotation.getSuppressorId().map(Object::toString).orElse("")),
                 Map.entry("Classifiers", annotation.getClassifiers().toString()));
 
         for (var entry : data) {

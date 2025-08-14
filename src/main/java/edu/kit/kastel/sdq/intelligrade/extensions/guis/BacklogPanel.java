@@ -1,9 +1,8 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ActionEvent;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -87,7 +86,8 @@ public class BacklogPanel extends JPanel {
     public void setAssessments(List<PackedAssessment> assessments) {
         this.lastFetchedAssessments = new ArrayList<>(assessments);
         // Sort by submission date, which matches the ordering in the Artemis backlog
-        this.lastFetchedAssessments.sort(Comparator.comparing(a -> a.submission().getSubmissionDate()));
+        this.lastFetchedAssessments.sort(
+                Comparator.comparing(a -> a.submission().getSubmissionDate()));
         this.updateBacklog();
     }
 
@@ -105,7 +105,8 @@ public class BacklogPanel extends JPanel {
 
         int shown = 0;
         for (var assessment : this.lastFetchedAssessments) {
-            if (searchText != null && !assessment.submission().getParticipantIdentifier().contains(searchText)) {
+            if (searchText != null
+                    && !assessment.submission().getParticipantIdentifier().contains(searchText)) {
                 continue;
             }
 
@@ -123,11 +124,12 @@ public class BacklogPanel extends JPanel {
             backlogList.add(new JBLabel(assessment.submission().getParticipantIdentifier()));
             addResultDateLabel(assessment);
             // Correction Round
-            backlogList.add(new JBLabel(switch (assessment.round()) {
-                case FIRST -> "Round 1";
-                case SECOND -> "Round 2";
-                case REVIEW -> "Review";
-            }));
+            backlogList.add(new JBLabel(
+                    switch (assessment.round()) {
+                        case FIRST -> "Round 1";
+                        case SECOND -> "Round 2";
+                        case REVIEW -> "Review";
+                    }));
             addScoreItem(assessment);
             addActionButton(assessment);
         }
@@ -140,7 +142,8 @@ public class BacklogPanel extends JPanel {
     private void addResultDateLabel(PackedAssessment assessment) {
         String resultText = "";
         if (assessment.isSubmitted()) {
-            resultText = assessment.result()
+            resultText = assessment
+                    .result()
                     .completionDate()
                     .withZoneSameInstant(ZoneId.systemDefault())
                     .format(ArtemisUtils.DATE_TIME_PATTERN);
