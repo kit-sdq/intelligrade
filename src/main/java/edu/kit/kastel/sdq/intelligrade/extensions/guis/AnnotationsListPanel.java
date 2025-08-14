@@ -107,6 +107,19 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         };
         group.addAction(deleteButton);
 
+        var restoreButton = new AnActionButton("Restore") {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                table.restoreSelection();
+            }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+                return ActionUpdateThread.EDT;
+            }
+        };
+        group.addAction(restoreButton);
+
         // Adds a debug button to the right-click menu in the table.
         //
         // There is some data regarding the annotations that is not visible in the table,
@@ -150,6 +163,9 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 Map.entry("Path", location.filePath()),
                 Map.entry("Start", location.start().toString()),
                 Map.entry("End", location.end().toString()),
+                Map.entry("Created By", annotation.getCreatorId().map(Object::toString).orElse("")),
+                Map.entry("Suppressed", annotation.isSuppressed() ? "Yes" : "No"),
+                Map.entry("Suppressed By", annotation.getSuppressorId().map(Object::toString).orElse("")),
                 Map.entry("Classifiers", annotation.getClassifiers().toString()));
 
         for (var entry : data) {

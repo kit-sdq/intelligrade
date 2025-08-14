@@ -9,6 +9,7 @@ import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.grading.MoreRecentSubmissionException
+import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig
@@ -29,23 +30,23 @@ class ReopenAssessmentService(private val project: Project, private val cs: Coro
         }
     }
 
-    fun queue(submission: ProgrammingSubmission, gradingConfig: GradingConfig) {
+    fun queue(assessment: PackedAssessment, gradingConfig: GradingConfig) {
         // Launch the coroutine in the given scope with a progress indicator.
         // modal = progress is in the foreground and not in the right bottom corner
         cs.launch {
             withModalProgress(project, "Reopening assessment") {
                 // A size of 100 = 100% progress
-                reportProgress(100) { reporter -> run(reporter, submission, gradingConfig) }
+                reportProgress(100) { reporter -> run(reporter, assessment, gradingConfig) }
             }
         }
     }
 
-    suspend fun run(reporter: ProgressReporter, submission: ProgrammingSubmission, gradingConfig: GradingConfig) {
+    suspend fun run(reporter: ProgressReporter, packedAssessment: PackedAssessment, gradingConfig: GradingConfig) {
         // TODO check for review config/assessment
         try {
             val assessment = reporter.sizedStep(20, "Locking...") {
                 withContext(Dispatchers.IO) {
-                    submission.tryLock(gradingConfig)
+                    packedAssessment.lockAndOpen(gradingConfig)
                 }
             }
 

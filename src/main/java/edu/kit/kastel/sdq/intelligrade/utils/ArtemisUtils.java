@@ -53,12 +53,6 @@ public final class ArtemisUtils {
         }
     }
 
-    public static boolean isSubmissionStarted(ProgrammingSubmission submission) {
-        return !submission.isSubmitted()
-                && submission.getLatestResult().isPresent()
-                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
-    }
-
     public static void displayGenericErrorBalloon(String title, String content) {
         NotificationGroupManager.getInstance()
                 .getNotificationGroup("IntelliGrade Notifications")
@@ -95,5 +89,9 @@ public final class ArtemisUtils {
         displayGenericWarningBalloon(
                 "Finish assessment first",
                 "Please finish the current assessment first. If you do not want to, please cancel it.");
+    }
+
+    public static void displayInvalidReviewOperationBalloon() {
+        displayGenericWarningBalloon("Review Mode", "You can only delete annotations in review mode. You can't add or edit annotations.");
     }
 }

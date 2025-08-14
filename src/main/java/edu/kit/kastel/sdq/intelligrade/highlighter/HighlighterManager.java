@@ -287,7 +287,7 @@ public class HighlighterManager {
         var filePath = editor.getVirtualFile().toNioPath();
         var state = PluginState.getInstance();
         var assessment = state.getActiveAssessment().orElseThrow().getAssessment();
-        var annotationsByLine = assessment.getNonDeletedAnnotations().stream()
+        var annotationsByLine = assessment.streamAllAnnotations(false)
                 .filter(a -> IntellijUtil.getAnnotationPath(a).equals(filePath))
                 .collect(Collectors.groupingBy(Annotation::getStartLine));
         for (var annotations : annotationsByLine.values()) {

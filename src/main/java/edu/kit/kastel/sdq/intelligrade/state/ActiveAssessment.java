@@ -141,8 +141,8 @@ public class ActiveAssessment {
     }
 
     public void deleteAnnotation(Annotation annotation) {
-        if (this.isReview() && annotation.getSource() != AnnotationSource.REVIEW) {
-            annotation.setDeletedInReview(true);
+        if (this.isReview()) {
+            this.assessment.suppressAnnotation(annotation);
         } else {
             this.assessment.removeAnnotation(annotation);
         }
@@ -150,9 +150,12 @@ public class ActiveAssessment {
     }
 
     public void restoreAnnotation(Annotation annotation) {
-        if (this.isReview() && annotation.getSource() != AnnotationSource.REVIEW) {
-            annotation.setDeletedInReview(false);
+        if (this.isReview()) {
+            this.assessment.unsuppressAnnotation(annotation);
         } else {
+            ArtemisUtils.displayGenericWarningBalloon(
+                    "Cannot restore annotation",
+                    "You can only restore annotations in review mode.");
             LOG.warn("Cannot restore annotation outside of review");
         }
         this.notifyListeners();
@@ -176,8 +179,9 @@ public class ActiveAssessment {
     }
 
     public void changeCustomMessage(Annotation annotation) {
-        if (this.isReview() && annotation.getSource() != AnnotationSource.REVIEW) {
-            ArtemisUtils.displayGenericErrorBalloon("Cannot change annotation in review", "Cannot change existing annotations in review. You can delete this annotation or add a new one.");
+        if (this.isReview()) {
+            // Annotations can't be changed in review mode
+            ArtemisUtils.displayInvalidReviewOperationBalloon();
             return;
         }
 

@@ -3,8 +3,8 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -24,7 +24,9 @@ import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -39,22 +41,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
-    private static final Logger LOG = Logger.getInstance(SubmissionsInstructorPanel.class);
+public class SubmissionsInstructorDialog extends DialogWrapper {
+    private static final Logger LOG = Logger.getInstance(SubmissionsInstructorDialog.class);
 
-    private final JPanel statusPanel;
-    private final SearchTextField searchField;
-    private final JBLabel shownSubmissionsLabel;
-    private final JBTable studentsTable;
+    private JPanel statusPanel;
+    private SearchTextField searchField;
+    private JBLabel shownSubmissionsLabel;
+    private JBTable studentsTable;
 
     private List<ProgrammingSubmissionWithResults> allSubmissions = new ArrayList<>();
 
-    public SubmissionsInstructorPanel() {
-        super(true, true);
+    public static void showDialog() {
+        ApplicationManager.getApplication().invokeLater(() -> new SubmissionsInstructorDialog().show());
+    }
 
-        var panel = new JBPanel<>(new MigLayout("wrap 1, fill", "[grow]", "[] 20px [] [grow]"));
+    public SubmissionsInstructorDialog() {
+        super((Project) null);
 
-        statusPanel = new JBPanel<>(new MigLayout("wrap 3, debug", "[grow][grow][grow]", "[50px:50px] [160px:160px]"));
+        this.setTitle("All Submissions");
+        this.setModal(false);
+        this.init();
+        PluginState.getInstance().registerExerciseSelectedListener(this::fetchSubmissions);
+    }
+
+    @Override
+    protected @Nullable JComponent createCenterPanel() {
+        var panel = new JBPanel<>(new MigLayout("wrap 1, fill", "[400px:400px]", "[] 20px [] [200px:null, grow]"));
+
+        statusPanel = new JBPanel<>(new MigLayout("wrap 3", "[grow][grow][grow]", "[50px:50px] [] [80:80px]"));
         panel.add(statusPanel, "spanx 3, growx");
 
         var searchPanel = new JBPanel<>(new MigLayout("wrap 3", "[grow] [] 20px []"));
@@ -78,7 +92,7 @@ public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
         panel.add(searchPanel, "growx");
 
         this.studentsTable = new JBTable(new SubmissionsTableModel(List.of()));
-        this.studentsTable.setDefaultRenderer(Object.class, new SubmissionTableCellRenderer());
+        // this.studentsTable.setDefaultRenderer(Object.class, new SubmissionTableCellRenderer());
         studentsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         studentsTable.getSelectionModel().addListSelectionListener(listSelectionEvent -> {
             var selectedRow = studentsTable.getSelectedRow();
@@ -89,9 +103,12 @@ public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
         });
         panel.add(ScrollPaneFactory.createScrollPane(studentsTable), "spanx 3, grow");
 
-        this.setContent(panel);
+        return panel;
+    }
 
-        PluginState.getInstance().registerExerciseSelectedListener(this::fetchSubmissions);
+    @Override
+    protected Action @NotNull [] createActions() {
+        return new Action[]{this.myCancelAction};
     }
 
     private void fetchSubmissions(Optional<ProgrammingExercise> exercise) {
@@ -126,7 +143,6 @@ public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
 
         if (submission == null) {
             statusPanel.add(new JBLabel("No submission selected").withFont(JBFont.h1()), "spanx 3, growx");
-
             this.updateUI();
             return;
         }
@@ -149,18 +165,31 @@ public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
 
         statusPanel.add(studentPanel, "spanx 3, growx");
 
-        // correction rounds
-        JPanel roundsPanel;
-        if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
-            roundsPanel = new JBPanel<>(new MigLayout("wrap 3", "[grow, sg] [grow, sg] [grow, sg]"));
+        // action button
+        boolean review = PluginState.getInstance().hasReviewConfig();
+        JBLabel configInfo = new JBLabel();
+        if (review) {
+            configInfo.setText("You have a review config");
         } else {
-            roundsPanel = new JBPanel<>(new MigLayout("wrap 1", "[grow, sg]"));
+            configInfo.setText("You have a regular config");
         }
-        roundsPanel.add(buildRoundPanel(submission.getSubmission(), submission.getFirstRoundAssessment(), CorrectionRound.FIRST, submission.getSecondRoundAssessment() == null), "grow");
+        statusPanel.add(configInfo, "spanx 3, center");
 
+        // correction rounds
+        JPanel roundsPanel = new JBPanel<>(new MigLayout("wrap 3", "[grow, sg] [grow, sg] [grow, sg]", "[top, 250px]"));
+
+        boolean allowFirstRoundEdit = !review && !submission.isSecondRoundStarted();
+        roundsPanel.add(buildRoundPanel(submission.getFirstRoundAssessment(), CorrectionRound.FIRST, allowFirstRoundEdit, submission.getSubmission()), "grow");
         if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
-            roundsPanel.add(buildRoundPanel(submission.getSubmission(), submission.getSecondRoundAssessment(), CorrectionRound.SECOND, submission.getFirstRoundAssessment() != null && submission.getFirstRoundAssessment().isSubmitted()), "grow");
-            roundsPanel.add(buildRoundPanel(submission.getSubmission(), submission.getReviewAssessment(), CorrectionRound.REVIEW, submission.getSecondRoundAssessment() != null && submission.getSecondRoundAssessment().isSubmitted()), "grow");
+            boolean allowSecondRoundEdit = !review && submission.isFirstRoundFinished();
+            roundsPanel.add(buildRoundPanel(submission.getSecondRoundAssessment(), CorrectionRound.SECOND, allowSecondRoundEdit, submission.getSubmission()), "grow");
+
+            boolean allowReviewEdit = review && submission.isSecondRoundFinished();
+            roundsPanel.add(buildRoundPanel(submission.getReviewAssessment(), CorrectionRound.REVIEW, allowReviewEdit, submission.getSubmission()), "grow");
+        } else {
+            // These panels are just for visual uniformity
+            roundsPanel.add(buildRoundPanel(null, CorrectionRound.SECOND, false, submission.getSubmission()), "grow");
+            roundsPanel.add(buildRoundPanel(null, CorrectionRound.REVIEW, false, submission.getSubmission()), "grow");
         }
 
         statusPanel.add(roundsPanel, "spanx 3, growx");
@@ -168,8 +197,8 @@ public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
         this.updateUI();
     }
 
-    private JComponent buildRoundPanel(ProgrammingSubmission submission, PackedAssessment assessment, CorrectionRound round, boolean allowEdit) {
-        var panel = new JBPanel<>(new MigLayout("wrap 1, fill, aligny top", "[grow, center]", "[top, grow] [grow] [grow] [grow] [grow]"));
+    private JComponent buildRoundPanel(PackedAssessment assessment, CorrectionRound round, boolean allowEdit, ProgrammingSubmission submission) {
+        var panel = new JBPanel<>(new MigLayout("wrap 1, fill, aligny top", "[50px, center]", "[top, grow] [bottom, grow]"));
 
         String roundName = switch (round) {
             case FIRST -> "Round 1";
@@ -180,43 +209,59 @@ public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
 
         JButton actionButton;
         if (assessment != null) {
-            // Points
-            // We do not have the feedbacks here, so we can't show the automatic/manual points split
-            double points = assessment.result().score() * submission.getExercise().getMaxPoints() / 100.0;
-            panel.add(new JBLabel("%.2f%% (~%.2fP)".formatted(assessment.result().score(), points)));
-
-            // Assessment completion date
-            if (assessment.isSubmitted()) {
-                panel.add(new JBLabel("At " + assessment.result().completionDate().withZoneSameInstant(ZoneId.systemDefault())
-                        .format(ArtemisUtils.DATE_TIME_PATTERN)));
-            } else {
-                panel.add(new JBLabel("In progress"));
-            }
-
-            // Assessor
-            panel.add(new JBLabel("By " + assessment.getAssessor().getLogin()));
+            // TODO More info would be nice, but we can't reliably get it from the second round/review assessment
+            // TODO Also, we maybe don't want to show this confidential information to students in the review session
+            // // Points
+            // // We do not have the feedbacks here, so we can't show the automatic/manual points split
+            // double points = assessment.result().score() * assessment.submission().getExercise().getMaxPoints() / 100.0;
+            // panel.add(new JBLabel("%.2f%% (~%.2fP)".formatted(assessment.result().score(), points)));
+            //
+            // // Assessment completion date
+            // if (assessment.isSubmitted()) {
+            //     panel.add(new JBLabel("At " + assessment.result().completionDate().withZoneSameInstant(ZoneId.systemDefault())
+            //             .format(ArtemisUtils.DATE_TIME_PATTERN)));
+            // } else {
+            //     panel.add(new JBLabel("In progress"));
+            // }
+            //
+            // // Assessor
+            // panel.add(new JBLabel("By " + assessment.getAssessor().getLogin()));
 
             // Action button
             if (round != CorrectionRound.REVIEW) {
                 if (assessment.isSubmitted()) {
                     actionButton = new JButton("Reopen");
+                    actionButton.setForeground(JBColor.GREEN);
                 } else {
                     actionButton = new JButton("Continue");
                     actionButton.setForeground(JBColor.ORANGE);
                 }
             } else {
                 actionButton = new JButton("Review");
+                actionButton.setForeground(JBColor.GREEN);
             }
-            actionButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(assessment));
-
+            actionButton.addActionListener(a -> {
+                this.close(OK_EXIT_CODE);
+                PluginState.getInstance().reopenAssessment(assessment);
+            });
         } else {
             actionButton = new JButton("Start");
-            actionButton.addActionListener(a -> PluginState.getInstance().startAssessment(submission, round));
+            actionButton.setForeground(JBColor.GREEN);
+            actionButton.addActionListener(a -> {
+               this.close(OK_EXIT_CODE);
+               PluginState.getInstance().startAssessment(submission, round);
+            });
         }
         actionButton.setEnabled(allowEdit);
         panel.add(actionButton);
 
         return panel;
+    }
+
+    private void updateUI() {
+        // Both seems to be needed
+        this.statusPanel.revalidate();
+        this.repaint();
     }
 
     private static class SubmissionsTableModel extends AbstractTableModel {
@@ -257,29 +302,29 @@ public class SubmissionsInstructorPanel extends SimpleToolWindowPanel {
         }
     }
 
-    private static class SubmissionTableCellRenderer extends DefaultTableCellRenderer {
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-            var model = (SubmissionsTableModel) table.getModel();
-            var submission = model.submissions.get(row);
-            if (submission.getFirstRoundAssessment() != null) {
-                boolean finished;
-                if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
-                    finished = submission.getSecondRoundAssessment() != null && submission.getSecondRoundAssessment().isSubmitted();
-                } else {
-                    finished = submission.getFirstRoundAssessment() != null && submission.getFirstRoundAssessment().isSubmitted();
-                }
-
-                if (finished) {
-                    c.setBackground(JBColor.GREEN);
-                } else {
-                    c.setBackground(JBColor.ORANGE);
-                }
-            }
-
-            return c;
-        }
-    }
+    // private static class SubmissionTableCellRenderer extends DefaultTableCellRenderer {
+    //     @Override
+    //     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    //         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    //
+    //         var model = (SubmissionsTableModel) table.getModel();
+    //         var submission = model.submissions.get(row);
+    //         if (submission.getFirstRoundAssessment() != null) {
+    //             boolean finished;
+    //             if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
+    //                 finished = submission.getSecondRoundAssessment() != null && submission.getSecondRoundAssessment().isSubmitted();
+    //             } else {
+    //                 finished = submission.getFirstRoundAssessment() != null && submission.getFirstRoundAssessment().isSubmitted();
+    //             }
+    //
+    //             if (finished) {
+    //                 c.setBackground(JBColor.GREEN);
+    //             } else {
+    //                 c.setBackground(JBColor.ORANGE);
+    //             }
+    //         }
+    //
+    //         return c;
+    //     }
+    // }
 }
