@@ -286,6 +286,16 @@ public class AnnotationsTreeTable extends TreeTable {
         }
     }
 
+    public void restoreSelection() {
+        List<Annotation> annotationsToDelete = getSelectedAnnotations();
+
+        LOG.debug("Restoring annotations: " + annotationsToDelete);
+        var assessment = PluginState.getInstance().getActiveAssessment().orElseThrow();
+        for (var annotation : annotationsToDelete) {
+            assessment.restoreAnnotation(annotation);
+        }
+    }
+
     @Override
     public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
         TreeTableCellRenderer tableRenderer = new TreeTableCellRenderer(this, this.getTree()) {

@@ -4,11 +4,13 @@ package edu.kit.kastel.sdq.intelligrade.utils;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
 
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
+
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentType;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
@@ -20,6 +22,8 @@ import edu.kit.kastel.sdq.intelligrade.state.PluginState;
  * creating a new client and logging in or creating Error messages.
  */
 public final class ArtemisUtils {
+    public static final DateTimeFormatter DATE_TIME_PATTERN = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
     private ArtemisUtils() {}
 
     public static boolean doesUrlExist(String url) {
@@ -47,12 +51,6 @@ public final class ArtemisUtils {
         } finally {
             currentThread.setContextClassLoader(originalClassLoader);
         }
-    }
-
-    public static boolean isSubmissionStarted(ProgrammingSubmission submission) {
-        return !submission.isSubmitted()
-                && submission.getLatestResult().isPresent()
-                && submission.getLatestResult().get().assessmentType() != AssessmentType.AUTOMATIC;
     }
 
     public static void displayGenericErrorBalloon(String title, String content) {
@@ -91,5 +89,9 @@ public final class ArtemisUtils {
         displayGenericWarningBalloon(
                 "Finish assessment first",
                 "Please finish the current assessment first. If you do not want to, please cancel it.");
+    }
+
+    public static void displayInvalidReviewOperationBalloon() {
+        displayGenericWarningBalloon("Review Mode", "You can only delete annotations in review mode. You can't add or edit annotations.");
     }
 }

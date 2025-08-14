@@ -116,6 +116,10 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
             button.addActionListener(a -> assessment.addAnnotationAtCaret(
                     mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
+
+            // All buttons are disabled in review mode
+            button.setEnabled(!assessment.isReview());
+
             this.assessmentButtons.add(new AssessmentButton(mistakeType, button, iconRenderer));
         }
 
@@ -188,7 +192,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
             Font font = JBFont.regular();
 
             if (mistakeType.getReporting().shouldScore()) {
-                int count = assessment.getAnnotations(mistakeType).size();
+                int count = (int) assessment.streamAllAnnotations(mistakeType, false).count();
                 var rule = mistakeType.getRule();
 
                 switch (rule) {

@@ -8,7 +8,9 @@ import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise
+import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.SplashDialog
@@ -27,21 +29,25 @@ class StartAssessmentService(private val project: Project, private val cs: Corou
         }
     }
 
-    fun queue(correctionRound: Int, gradingConfig: GradingConfig, activeExercise: ProgrammingExercise) {
+    fun queue(correctionRound: CorrectionRound, gradingConfig: GradingConfig, activeExercise: ProgrammingExercise, submission: ProgrammingSubmission?) {
         // Launch the coroutine in the given scope with a progress indicator.
         // modal = progress is in the foreground and not in the right bottom corner
         cs.launch {
             withModalProgress(project, "Starting assessment") {
                 // A size of 100 = 100% progress
-                reportProgress(100) { reporter -> run(reporter, correctionRound, gradingConfig, activeExercise) }
+                reportProgress(100) { reporter -> run(reporter, correctionRound, gradingConfig, activeExercise, submission) }
             }
         }
     }
 
-    suspend fun run(reporter: ProgressReporter, correctionRound: Int, gradingConfig: GradingConfig, activeExercise: ProgrammingExercise) {
+    suspend fun run(reporter: ProgressReporter, correctionRound: CorrectionRound, gradingConfig: GradingConfig, activeExercise: ProgrammingExercise, submission: ProgrammingSubmission?) {
         try {
             val nextAssessment = reporter.sizedStep(20, "Locking...") {
-                activeExercise.tryLockNextSubmission(correctionRound, gradingConfig)
+                if (submission == null) {
+                    activeExercise.tryLockNextSubmission(correctionRound, gradingConfig)
+                } else {
+                    activeExercise.tryLockSubmission(submission.id, correctionRound, gradingConfig)
+                }
             }
 
             if (nextAssessment.isEmpty) {
@@ -64,7 +70,7 @@ class StartAssessmentService(private val project: Project, private val cs: Corou
             SplashDialog.showMaybe()
 
             // Now everything is done - the submission is properly locked, and the repository is cloned
-            if (activeAssessment.assessment.annotations.isEmpty()) {
+            if (activeAssessment.assessment.allAnnotations.isEmpty()) {
                 activeAssessment.runAutograder()
             } else {
                 ArtemisUtils.displayGenericInfoBalloon(

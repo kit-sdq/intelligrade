@@ -26,9 +26,11 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.JBFont;
+import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.location.LineColumn;
 import edu.kit.kastel.sdq.artemis4j.grading.location.Location;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
@@ -57,11 +59,15 @@ public class ActiveAssessment {
 
     public void registerAnnotationsUpdatedListener(Consumer<List<Annotation>> listener) {
         annotationsUpdatedListener.add(listener);
-        listener.accept(assessment.getAnnotations());
+        listener.accept(assessment.getAllAnnotations());
     }
 
     public GradingConfig getGradingConfig() {
         return assessment.getConfig();
+    }
+
+    public boolean isReview() {
+        return assessment.getCorrectionRound() == CorrectionRound.REVIEW;
     }
 
     private static LineColumn translateToLineColumn(Document document, int offset) {
@@ -135,11 +141,31 @@ public class ActiveAssessment {
     }
 
     public void deleteAnnotation(Annotation annotation) {
-        this.assessment.removeAnnotation(annotation);
+        if (this.isReview()) {
+            this.assessment.suppressAnnotation(annotation);
+        } else {
+            this.assessment.removeAnnotation(annotation);
+        }
+        this.notifyListeners();
+    }
+
+    public void restoreAnnotation(Annotation annotation) {
+        if (this.isReview()) {
+            this.assessment.unsuppressAnnotation(annotation);
+        } else {
+            ArtemisUtils.displayGenericWarningBalloon(
+                    "Cannot restore annotation",
+                    "You can only restore annotations in review mode.");
+            LOG.warn("Cannot restore annotation outside of review");
+        }
         this.notifyListeners();
     }
 
     public void runAutograder() {
+        if (this.isReview()) {
+            return;
+        }
+
         var settings = ArtemisSettingsState.getInstance();
         if (settings.getAutograderOption() == AutograderOption.SKIP) {
             return;
@@ -153,6 +179,12 @@ public class ActiveAssessment {
     }
 
     public void changeCustomMessage(Annotation annotation) {
+        if (this.isReview()) {
+            // Annotations can't be changed in review mode
+            ArtemisUtils.displayInvalidReviewOperationBalloon();
+            return;
+        }
+
         if (annotation.getMistakeType().isCustomAnnotation()) {
             showCustomAnnotationDialog(
                     annotation.getMistakeType(),
@@ -192,7 +224,7 @@ public class ActiveAssessment {
 
     private void notifyListeners() {
         for (Consumer<List<Annotation>> listener : this.annotationsUpdatedListener) {
-            listener.accept(this.assessment.getAnnotations());
+            listener.accept(this.assessment.getAllAnnotations());
         }
     }
 
