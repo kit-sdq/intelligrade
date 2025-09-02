@@ -301,10 +301,7 @@ public class PluginState {
             var gradingConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
             if (gradingConfigPath == null) {
                 if (required) {
-                    ArtemisUtils.displayGenericErrorBalloon("No grading config", "Please select a grading config");
-                    for (Runnable missingGradingConfigListener : this.missingGradingConfigListeners) {
-                        missingGradingConfigListener.run();
-                    }
+                    onInvalidGradingConfig("Please select a grading config");
                 }
                 return Optional.empty();
             }
@@ -319,10 +316,7 @@ public class PluginState {
             } catch (IOException | InvalidGradingConfigException e) {
                 LOG.warn(e);
                 if (required) {
-                    ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
-                    for (Runnable missingGradingConfigListener : this.missingGradingConfigListeners) {
-                        missingGradingConfigListener.run();
-                    }
+                    onInvalidGradingConfig(e.getMessage());
                 }
                 return Optional.empty();
             }
@@ -381,6 +375,13 @@ public class PluginState {
         activeExercise = null;
 
         AssessmentTracker.INSTANCE.clearAssessment();
+    }
+
+    private void onInvalidGradingConfig(String message) {
+        ArtemisUtils.displayGenericErrorBalloon("No/invalid grading config", message);
+        for (Runnable missingGradingConfigListener : this.missingGradingConfigListeners) {
+            missingGradingConfigListener.run();
+        }
     }
 
     private CompletableFuture<String> retrieveJWT() {
