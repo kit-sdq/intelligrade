@@ -10,7 +10,6 @@ import com.intellij.platform.util.progress.reportProgress
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.grading.MoreRecentSubmissionException
 import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment
-import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils
@@ -42,7 +41,6 @@ class ReopenAssessmentService(private val project: Project, private val cs: Coro
     }
 
     suspend fun run(reporter: ProgressReporter, packedAssessment: PackedAssessment, gradingConfig: GradingConfig) {
-        // TODO check for review config/assessment
         try {
             val assessment = reporter.sizedStep(20, "Locking...") {
                 withContext(Dispatchers.IO) {
