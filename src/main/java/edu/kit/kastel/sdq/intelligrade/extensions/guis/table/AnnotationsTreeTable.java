@@ -287,11 +287,11 @@ public class AnnotationsTreeTable extends TreeTable {
     }
 
     public void restoreSelection() {
-        List<Annotation> annotationsToDelete = getSelectedAnnotations();
+        List<Annotation> annotationsToRestore = getSelectedAnnotations();
 
-        LOG.debug("Restoring annotations: " + annotationsToDelete);
+        LOG.debug("Restoring annotations: " + annotationsToRestore);
         var assessment = PluginState.getInstance().getActiveAssessment().orElseThrow();
-        for (var annotation : annotationsToDelete) {
+        for (var annotation : annotationsToRestore) {
             assessment.restoreAnnotation(annotation);
         }
     }
