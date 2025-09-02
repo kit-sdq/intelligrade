@@ -27,7 +27,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.table.AnnotationsTableModel;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.table.AnnotationsTreeTable;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
-import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
