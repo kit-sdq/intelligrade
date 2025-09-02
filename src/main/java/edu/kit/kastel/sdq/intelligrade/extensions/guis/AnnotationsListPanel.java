@@ -27,6 +27,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.table.AnnotationsTableModel;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.table.AnnotationsTreeTable;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
+import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -107,6 +108,21 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         };
         group.addAction(deleteButton);
 
+        var restoreButton = new AnActionButton("Restore") {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                table.restoreSelection();
+            }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+                return ActionUpdateThread.EDT;
+            }
+        };
+        group.addAction(restoreButton);
+        PluginState.getInstance()
+                .registerAssessmentStartedListener(assessment -> restoreButton.setEnabled(assessment.isReview()));
+
         // Adds a debug button to the right-click menu in the table.
         //
         // There is some data regarding the annotations that is not visible in the table,
@@ -150,6 +166,13 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 Map.entry("Path", location.filePath()),
                 Map.entry("Start", location.start().toString()),
                 Map.entry("End", location.end().toString()),
+                Map.entry(
+                        "Created By",
+                        annotation.getCreatorId().map(Object::toString).orElse("?")),
+                Map.entry("Suppressed", annotation.isSuppressed() ? "Yes" : "No"),
+                Map.entry(
+                        "Suppressed By",
+                        annotation.getSuppressorId().map(Object::toString).orElse("?")),
                 Map.entry("Classifiers", annotation.getClassifiers().toString()));
 
         for (var entry : data) {

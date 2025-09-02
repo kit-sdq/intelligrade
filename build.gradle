@@ -50,7 +50,7 @@ dependencies {
         }
     }
 
-    implementation 'edu.kit.kastel.sdq:artemis4j:8.0.0'
+    implementation 'edu.kit.kastel.sdq:artemis4j:8.1.0-SNAPSHOT'
 }
 
 intellijPlatform {

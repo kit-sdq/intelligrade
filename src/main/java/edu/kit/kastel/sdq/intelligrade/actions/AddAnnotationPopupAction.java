@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.actions;
 
 import java.awt.event.ActionEvent;
@@ -21,6 +21,7 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
+import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AddAnnotationPopupAction extends AnAction {
@@ -51,12 +52,16 @@ public class AddAnnotationPopupAction extends AnAction {
             return;
         }
 
+        var assessment = PluginState.getInstance().getActiveAssessment().orElseThrow();
+
+        // in review mode, no new annotations can be created
+        if (assessment.isReview()) {
+            ArtemisUtils.displayInvalidReviewOperationBalloon();
+            return;
+        }
+
         // collect all mistake types that can be annotated
-        var mistakeTypes = PluginState.getInstance()
-                .getActiveAssessment()
-                .orElseThrow()
-                .getGradingConfig()
-                .getMistakeTypes();
+        var mistakeTypes = assessment.getGradingConfig().getMistakeTypes();
 
         var actions = new DefaultActionGroup();
         for (var mistakeType : mistakeTypes) {
