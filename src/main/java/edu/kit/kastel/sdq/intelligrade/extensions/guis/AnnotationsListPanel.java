@@ -119,6 +119,8 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
             }
         };
         group.addAction(restoreButton);
+        PluginState.getInstance()
+                .registerAssessmentStartedListener(assessment -> restoreButton.setEnabled(assessment.isReview()));
 
         // Adds a debug button to the right-click menu in the table.
         //
@@ -165,11 +167,11 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 Map.entry("End", location.end().toString()),
                 Map.entry(
                         "Created By",
-                        annotation.getCreatorId().map(Object::toString).orElse("")),
+                        annotation.getCreatorId().map(Object::toString).orElse("?")),
                 Map.entry("Suppressed", annotation.isSuppressed() ? "Yes" : "No"),
                 Map.entry(
                         "Suppressed By",
-                        annotation.getSuppressorId().map(Object::toString).orElse("")),
+                        annotation.getSuppressorId().map(Object::toString).orElse("?")),
                 Map.entry("Classifiers", annotation.getClassifiers().toString()));
 
         for (var entry : data) {

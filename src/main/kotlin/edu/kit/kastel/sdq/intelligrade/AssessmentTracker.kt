@@ -127,7 +127,7 @@ object AssessmentTracker {
 
             // Cancel the assessment to prevent spurious locks
             // but only if the assessment does not have any user-made annotations yet (non autograder annotations):
-            val hasUserAnnotations = assessment.allAnnotations.stream()
+            val hasUserAnnotations = assessment.getAnnotations(true).stream()
                 .anyMatch { annotation: Annotation? ->
                     assessment.correctionRound == CorrectionRound.FIRST
                             && annotation!!.source == AnnotationSource.MANUAL_FIRST_ROUND

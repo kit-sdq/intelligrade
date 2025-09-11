@@ -464,23 +464,6 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     }
 
     private void handleAssessmentStarted(ActiveAssessment assessment) {
-        // startGradingRound1Button.setEnabled(false);
-        // startGradingRound2Button.setEnabled(false);
-        //
-        // if (assessment.isReview()) {
-        //     assessmentPanel.setEnabled(false);
-        //     reviewPanel.setEnabled(true);
-        // } else {
-        //     assessmentPanel.setEnabled(true);
-        //     reviewPanel.setEnabled(false);
-        //
-        //     submitAssessmentButton.setEnabled(true);
-        //     cancelAssessmentButton.setEnabled(
-        //             !assessment.getAssessment().isSubmitted());
-        //     saveAssessmentButton.setEnabled(true);
-        //     closeAssessmentButton.setEnabled(true);
-        //     reRunAutograder.setEnabled(true);
-        // }
         updateAvailableActions();
 
         // We don't want the grading config to change while an assessment is in progress
@@ -490,24 +473,6 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     }
 
     private void handleAssessmentClosed() {
-        // boolean review = PluginState.getInstance().hasReviewConfig();
-        // startGradingRound1Button.setEnabled(!review);
-        // // If no exercise is selected (e.g. not connected to artemis), the getItem() will return null.
-        // if (exerciseSelector.getItem() != null) {
-        //     startGradingRound2Button.setEnabled(!review && exerciseSelector.getItem().hasSecondCorrectionRound());
-        // }
-        //
-        // assessmentPanel.setEnabled(false);
-        // submitAssessmentButton.setEnabled(false);
-        // cancelAssessmentButton.setEnabled(false);
-        // saveAssessmentButton.setEnabled(false);
-        // closeAssessmentButton.setEnabled(false);
-        // reRunAutograder.setEnabled(false);
-        //
-        // reviewPanel.setEnabled(false);
-        // submitReviewButton.setEnabled(false);
-        // cancelReviewButton.setEnabled(false);
-
         updateAvailableActions();
         gradingConfigPathInput.setEnabled(true);
         updateBacklogAndStats();

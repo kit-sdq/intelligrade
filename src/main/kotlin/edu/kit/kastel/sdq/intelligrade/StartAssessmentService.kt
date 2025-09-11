@@ -70,7 +70,7 @@ class StartAssessmentService(private val project: Project, private val cs: Corou
             SplashDialog.showMaybe()
 
             // Now everything is done - the submission is properly locked, and the repository is cloned
-            if (activeAssessment.assessment.allAnnotations.isEmpty()) {
+            if (activeAssessment.assessment.getAnnotations(true).isEmpty()) {
                 activeAssessment.runAutograder()
             } else {
                 ArtemisUtils.displayGenericInfoBalloon(
