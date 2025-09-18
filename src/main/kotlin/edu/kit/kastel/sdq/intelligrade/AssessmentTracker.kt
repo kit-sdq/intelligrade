@@ -14,6 +14,7 @@ import edu.kit.kastel.sdq.artemis4j.ArtemisClientException
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment
+import edu.kit.kastel.sdq.artemis4j.grading.Annotation
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState
