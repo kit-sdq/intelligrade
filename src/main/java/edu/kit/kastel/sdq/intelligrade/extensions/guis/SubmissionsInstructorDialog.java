@@ -3,7 +3,6 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -84,8 +83,8 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         searchPanel.add(shownSubmissionsLabel, "");
 
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
-        refreshButton.addActionListener(
-                a -> fetchSubmissions(PluginState.getInstance().getActiveExercise()));
+        refreshButton.addActionListener(a ->
+                fetchSubmissions(PluginState.getInstance().getActiveExercise().orElse(null)));
         searchPanel.add(refreshButton);
 
         panel.add(searchPanel, "growx");
@@ -111,11 +110,11 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         return new Action[] {this.myCancelAction};
     }
 
-    private void fetchSubmissions(Optional<ProgrammingExercise> exercise) {
+    private void fetchSubmissions(ProgrammingExercise exercise) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            if (exercise.isPresent()) {
+            if (exercise != null) {
                 try {
-                    this.allSubmissions = exercise.get().fetchAllSubmissions();
+                    this.allSubmissions = exercise.fetchAllSubmissions();
                 } catch (ArtemisNetworkException e) {
                     ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch assessments", e);
                 }

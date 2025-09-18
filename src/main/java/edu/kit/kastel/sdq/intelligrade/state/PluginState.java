@@ -44,7 +44,7 @@ public class PluginState {
     private static PluginState pluginState;
 
     private final List<Consumer<ArtemisConnection>> connectedListeners = new ArrayList<>();
-    private final List<Consumer<Optional<ProgrammingExercise>>> exerciseSelectedListeners = new ArrayList<>();
+    private final List<Consumer<ProgrammingExercise>> exerciseSelectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
     private final List<Consumer<GradingConfig.GradingConfigDTO>> gradingConfigChangedListeners = new ArrayList<>();
@@ -199,9 +199,9 @@ public class PluginState {
         listener.accept(this.connection);
     }
 
-    public void registerExerciseSelectedListener(Consumer<Optional<ProgrammingExercise>> listener) {
+    public void registerExerciseSelectedListener(Consumer<ProgrammingExercise> listener) {
         this.exerciseSelectedListeners.add(listener);
-        listener.accept(Optional.ofNullable(this.activeExercise));
+        listener.accept(this.activeExercise);
     }
 
     public boolean isAssessing() {
@@ -339,7 +339,7 @@ public class PluginState {
     public void setActiveExercise(ProgrammingExercise exercise) {
         this.activeExercise = exercise;
         for (var listener : this.exerciseSelectedListeners) {
-            listener.accept(Optional.ofNullable(exercise));
+            listener.accept(exercise);
         }
     }
 
