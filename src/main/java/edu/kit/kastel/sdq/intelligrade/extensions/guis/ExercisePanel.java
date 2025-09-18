@@ -38,7 +38,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.Course;
 import edu.kit.kastel.sdq.artemis4j.grading.Exam;
 import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
-import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
@@ -133,7 +132,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         PluginState.getInstance().registerAssessmentClosedListener(this::handleAssessmentClosed);
 
-        PluginState.getInstance().registerGradingConfigChangedListener(this::handleGradingConfigChanged);
+        PluginState.getInstance()
+                .registerGradingConfigChangedListener(gradingConfigDTO -> this.handleGradingConfigChanged());
 
         PluginState.getInstance().registerMissingGradingConfigListeners(this::handleMissingGradingConfig);
     }
@@ -459,7 +459,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         updateUI();
     }
 
-    private void handleGradingConfigChanged(GradingConfig.GradingConfigDTO gradingConfigDTO) {
+    private void handleGradingConfigChanged() {
         updateAvailableActions();
     }
 
