@@ -99,6 +99,13 @@ public class BacklogPanel extends JPanel {
     private void updateBacklog() {
         backlogList.removeAll();
 
+        if (PluginState.getInstance().hasReviewConfig()) {
+            shownSubmissionsLabel.setText("Disabled");
+            backlogList.add(new JBLabel("No backlog in review mode"));
+            this.updateUI();
+            return;
+        }
+
         String searchText = searchField.getText();
         boolean firstRound = showFirstRound.isSelected();
         boolean secondRound = showSecondRound.isSelected();

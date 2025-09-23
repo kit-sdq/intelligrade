@@ -314,8 +314,8 @@ public class PluginState {
                     listener.accept(this.cachedGradingConfigDTO);
                 }
             } catch (IOException | InvalidGradingConfigException e) {
-                LOG.warn(e);
                 if (required) {
+                    LOG.warn(e);
                     onInvalidGradingConfig(e.getMessage());
                 }
                 return Optional.empty();

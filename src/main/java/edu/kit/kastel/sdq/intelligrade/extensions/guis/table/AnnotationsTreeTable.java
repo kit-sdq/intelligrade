@@ -29,12 +29,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
-import com.intellij.util.ui.UIUtil;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
@@ -299,51 +296,7 @@ public class AnnotationsTreeTable extends TreeTable {
 
     @Override
     public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
-        TreeTableCellRenderer tableRenderer = new TreeTableCellRenderer(this, this.getTree()) {
-            @Override
-            public Component getTableCellRendererComponent(
-                    JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component component;
-                try {
-                    component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                } catch (NullPointerException exception) {
-                    // There is a bug somewhere in IntelliJ that causes a NPE when an element is removed from the
-                    // tree table.
-                    //
-                    // I spent at least 15 hours debugging, trying out different things, and searching the internet.
-                    // The bug is still there, and I do not want to spend more time on this.
-                    //
-                    // https://youtrack.jetbrains.com/issue/IJPL-106934/Branches-popup-NPE-on-scrolling-branches-list
-                    //
-                    // The code below seems to fix this issue.
-                    component = new SimpleColoredComponent();
-                    var background = UIUtil.getTreeBackground();
-                    UIUtil.changeBackGround(component, background);
-                    var foreground = isSelected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground();
-
-                    component.setForeground(foreground);
-                }
-
-                // Change background color if there are suppressed annotations in the node
-                var node = (AnnotationsTreeNode) getTree().getPathForRow(row).getLastPathComponent();
-                var annotations = node.listAnnotations();
-                int suppresedCount = 0;
-                for (var annotation : annotations) {
-                    if (annotation.isSuppressed()) {
-                        suppresedCount++;
-                        component.setBackground(JBColor.RED);
-                    }
-                }
-
-                if (suppresedCount == annotations.size()) {
-                    UIUtil.changeBackGround(component, JBColor.RED);
-                } else if (suppresedCount > 0) {
-                    UIUtil.changeBackGround(component, JBColor.ORANGE);
-                }
-
-                return component;
-            }
-        };
+        TreeTableCellRenderer tableRenderer = new TreeTableCellRenderer(this, this.getTree());
         tableRenderer.setRootVisible(false);
         tableRenderer.setShowsRootHandles(true);
 

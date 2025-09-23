@@ -128,7 +128,18 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
 
     private void updateShownSubmissions() {
         var submissions = this.allSubmissions.stream()
-                .filter(s -> s.getSubmission().getStudent().get().getLogin().contains(searchField.getText()))
+                .filter(submission -> {
+                    String query = searchField.getText().trim().toLowerCase();
+                    var student = submission.getSubmission().getStudent().orElseThrow();
+
+                    // Login name, i.e. u-Kürzel
+                    if (student.getLogin().toLowerCase().contains(query)) {
+                        return true;
+                    }
+
+                    // Student id, i.e. matriculation number
+                    return String.valueOf(student.getId()).contains(query);
+                })
                 .toList();
         ((SubmissionsTableModel) this.studentsTable.getModel()).setSubmissions(submissions);
         shownSubmissionsLabel.setText("Showing %d/%d".formatted(submissions.size(), this.allSubmissions.size()));
@@ -233,23 +244,6 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         if (assessment != null) {
             // TODO More info would be nice, but we can't reliably get it from the second round/review assessment
             // TODO Also, we maybe don't want to show this confidential information to students in the review session
-            // // Points
-            // // We do not have the feedbacks here, so we can't show the automatic/manual points split
-            // double points = assessment.result().score() * assessment.submission().getExercise().getMaxPoints() /
-            // 100.0;
-            // panel.add(new JBLabel("%.2f%% (~%.2fP)".formatted(assessment.result().score(), points)));
-            //
-            // // Assessment completion date
-            // if (assessment.isSubmitted()) {
-            //     panel.add(new JBLabel("At " +
-            // assessment.result().completionDate().withZoneSameInstant(ZoneId.systemDefault())
-            //             .format(ArtemisUtils.DATE_TIME_PATTERN)));
-            // } else {
-            //     panel.add(new JBLabel("In progress"));
-            // }
-            //
-            // // Assessor
-            // panel.add(new JBLabel("By " + assessment.getAssessor().getLogin()));
 
             // Action button
             if (round != CorrectionRound.REVIEW) {

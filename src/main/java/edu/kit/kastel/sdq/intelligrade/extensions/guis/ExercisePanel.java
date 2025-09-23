@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.AssessmentStatsDTO;
@@ -56,6 +57,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private final ComboBox<ProgrammingExercise> exerciseSelector;
 
     private JPanel generalPanel;
+    private JBLabel modeInfoLabel;
     private JButton startGradingRound1Button;
     private JButton startGradingRound2Button;
     private JButton openInstructorDialog;
@@ -141,6 +143,11 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private void createGeneralPanel() {
         generalPanel = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
 
+        modeInfoLabel = new JBLabel();
+        modeInfoLabel.setForeground(JBColor.GREEN);
+        modeInfoLabel.setFont(JBFont.h3().asBold());
+        generalPanel.add(modeInfoLabel, "align center");
+
         startGradingRound1Button = new JButton("Start Grading Round 1");
         startGradingRound1Button.setForeground(JBColor.GREEN);
         startGradingRound1Button.addActionListener(
@@ -154,7 +161,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         generalPanel.add(startGradingRound2Button, "growx");
 
         openInstructorDialog = new JButton("Show All Submissions");
-        startGradingRound1Button.setForeground(JBColor.GREEN);
+        openInstructorDialog.setForeground(JBColor.GREEN);
         openInstructorDialog.addActionListener(a -> SubmissionsInstructorDialog.showDialog());
         generalPanel.add(openInstructorDialog, "growx");
 
@@ -294,7 +301,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
     private void updateAvailableActions() {
         // This functions consolidates all the logic that enables/disables buttons and panels
-        // based on whether we have an active assessment and review/not review
+        // based on whether we have an active assessment and review/don't review
+
+        if (PluginState.getInstance().hasReviewConfig()) {
+            modeInfoLabel.setText("Review Mode (you have a review config)");
+        } else {
+            modeInfoLabel.setText("");
+        }
 
         if (PluginState.getInstance().isAssessing()) {
             var assessment = PluginState.getInstance().getActiveAssessment().orElseThrow();
@@ -461,6 +474,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
     private void handleGradingConfigChanged() {
         updateAvailableActions();
+        updateBacklogAndStats();
     }
 
     private void handleAssessmentStarted(ActiveAssessment assessment) {
