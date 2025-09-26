@@ -319,33 +319,4 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
             fireTableDataChanged();
         }
     }
-
-    // private static class SubmissionTableCellRenderer extends DefaultTableCellRenderer {
-    //     @Override
-    //     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean
-    // hasFocus, int row, int column) {
-    //         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-    //
-    //         var model = (SubmissionsTableModel) table.getModel();
-    //         var submission = model.submissions.get(row);
-    //         if (submission.getFirstRoundAssessment() != null) {
-    //             boolean finished;
-    //             if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
-    //                 finished = submission.getSecondRoundAssessment() != null &&
-    // submission.getSecondRoundAssessment().isSubmitted();
-    //             } else {
-    //                 finished = submission.getFirstRoundAssessment() != null &&
-    // submission.getFirstRoundAssessment().isSubmitted();
-    //             }
-    //
-    //             if (finished) {
-    //                 c.setBackground(JBColor.GREEN);
-    //             } else {
-    //                 c.setBackground(JBColor.ORANGE);
-    //             }
-    //         }
-    //
-    //         return c;
-    //     }
-    // }
 }
