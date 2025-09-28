@@ -34,7 +34,6 @@ repositories {
 dependencies {
     // Tests
     testImplementation 'junit:junit:' + JUNIT_VERSION
-    testImplementation 'com.tngtech.archunit:archunit:' + ARCHUNIT_VERSION
     testImplementation 'com.tngtech.archunit:archunit-junit4:' + ARCHUNIT_VERSION
 
     intellijPlatform {
@@ -50,7 +49,7 @@ dependencies {
         }
     }
 
-    implementation 'edu.kit.kastel.sdq:artemis4j:8.0.0'
+    implementation 'edu.kit.kastel.sdq:artemis4j:8.4.0-SNAPSHOT'
 }
 
 intellijPlatform {

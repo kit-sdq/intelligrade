@@ -15,6 +15,10 @@ import java.util.stream.Collectors;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import com.intellij.DynamicBundle;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.ColumnInfo;
 import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource;
@@ -40,8 +44,49 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
         new DefaultColumnInfo("Custom Penalty", String.class)
     };
 
+    record TextStyleHelper(AnnotationsTreeNode node, PresentationData data) implements NavigationItem {
+        private static final SimpleTextAttributes NORMAL_ATTRIBUTES = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        private static final SimpleTextAttributes SUPPRESSED_ATTRIBUTES =
+                new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, JBColor.RED);
+        private static final SimpleTextAttributes PARTIALLY_SUPPRESSED_ATTRIBUTES =
+                new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.ORANGE);
+
+        @Override
+        public String getName() {
+            return this.node.toString();
+        }
+
+        @Override
+        public @NotNull PresentationData getPresentation() {
+            this.data.clear();
+
+            var attributes = NORMAL_ATTRIBUTES;
+            List<Annotation> annotations = this.node.listAnnotations();
+            if (annotations.size() == 1 && annotations.getFirst().isSuppressed()) {
+                attributes = SUPPRESSED_ATTRIBUTES;
+            }
+
+            if (annotations.size() > 1) {
+                var numberOfSuppressed =
+                        annotations.stream().filter(Annotation::isSuppressed).count();
+                if (numberOfSuppressed != 0) {
+                    if (numberOfSuppressed == annotations.size()) {
+                        attributes = SUPPRESSED_ATTRIBUTES;
+                    } else {
+                        attributes = PARTIALLY_SUPPRESSED_ATTRIBUTES;
+                    }
+                }
+            }
+
+            this.data.addText(getName(), attributes);
+            return this.data;
+        }
+    }
+
     protected AnnotationsTreeNode(boolean allowsChildren) {
-        super(allowsChildren);
+        super(null, allowsChildren);
+
+        this.setUserObject(new TextStyleHelper(this, new PresentationData()));
     }
 
     public static ColumnInfo[] columns() {

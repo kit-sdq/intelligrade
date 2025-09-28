@@ -17,10 +17,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.ui.jcef.JBCefApp;
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException;
+import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.client.ArtemisInstance;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnection;
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
+import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.User;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.GradingConfig;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.InvalidGradingConfigException;
 import edu.kit.kastel.sdq.intelligrade.AssessmentTracker;
@@ -40,12 +44,15 @@ public class PluginState {
     private static PluginState pluginState;
 
     private final List<Consumer<ArtemisConnection>> connectedListeners = new ArrayList<>();
+    private final List<Consumer<ProgrammingExercise>> exerciseSelectedListeners = new ArrayList<>();
     private final List<Consumer<ActiveAssessment>> assessmentStartedListeners = new ArrayList<>();
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
+    private final List<Consumer<GradingConfig.GradingConfigDTO>> gradingConfigChangedListeners = new ArrayList<>();
     private final List<Runnable> missingGradingConfigListeners = new ArrayList<>();
 
     private ArtemisConnection connection;
     private ProgrammingExercise activeExercise;
+    private GradingConfig.GradingConfigDTO cachedGradingConfigDTO;
 
     private ActiveAssessment activeAssessment;
 
@@ -70,6 +77,9 @@ public class PluginState {
                 }
             }
         });
+
+        // Try to parse the grading config once from storage
+        getGradingConfigDTO(false);
     }
 
     public static PluginState getInstance() {
@@ -169,16 +179,44 @@ public class PluginState {
         this.missingGradingConfigListeners.add(listener);
     }
 
+    /**
+     * Registers a listener that is called when the grading config changes.
+     * <p>
+     * This is used to update the UI when the grading config changes.
+     *
+     * @param listener the listener to be called
+     */
+    public void registerGradingConfigChangedListener(Consumer<GradingConfig.GradingConfigDTO> listener) {
+        this.gradingConfigChangedListeners.add(listener);
+        if (this.cachedGradingConfigDTO != null) {
+            // If the grading config is already loaded, call the listener immediately
+            listener.accept(this.cachedGradingConfigDTO);
+        }
+    }
+
     public void registerConnectedListener(Consumer<ArtemisConnection> listener) {
         this.connectedListeners.add(listener);
         listener.accept(this.connection);
+    }
+
+    public void registerExerciseSelectedListener(Consumer<ProgrammingExercise> listener) {
+        this.exerciseSelectedListeners.add(listener);
+        listener.accept(this.activeExercise);
     }
 
     public boolean isAssessing() {
         return activeAssessment != null;
     }
 
-    public void startNextAssessment(int correctionRound) {
+    public void startNextAssessment(CorrectionRound correctionRound) {
+        this.internalStartAssessment(correctionRound, null);
+    }
+
+    public void startAssessment(ProgrammingSubmission submission, CorrectionRound correctionRound) {
+        this.internalStartAssessment(correctionRound, submission);
+    }
+
+    private void internalStartAssessment(CorrectionRound correctionRound, ProgrammingSubmission submission) {
         if (isAssessing()) {
             ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
@@ -189,13 +227,13 @@ public class PluginState {
             return;
         }
 
-        var gradingConfig = createGradingConfig();
+        var gradingConfig = this.createGradingConfig();
         if (gradingConfig.isEmpty()) {
             return;
         }
 
         StartAssessmentService.getInstance(IntellijUtil.getActiveProject())
-                .queue(correctionRound, gradingConfig.get(), activeExercise);
+                .queue(correctionRound, gradingConfig.get(), activeExercise, submission);
     }
 
     public void saveAssessment() {
@@ -234,7 +272,7 @@ public class PluginState {
         EndAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(SubmitAction.CLOSE);
     }
 
-    public void reopenAssessment(ProgrammingSubmission submission) {
+    public void reopenAssessment(PackedAssessment assessment) {
         if (isAssessing()) {
             ArtemisUtils.displayFinishAssessmentFirstBalloon();
             return;
@@ -245,12 +283,53 @@ public class PluginState {
             return;
         }
 
-        var gradingConfig = createGradingConfig();
+        var gradingConfig = this.createGradingConfig();
         if (gradingConfig.isEmpty()) {
             return;
         }
 
-        ReopenAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(submission, gradingConfig.get());
+        ReopenAssessmentService.getInstance(IntellijUtil.getActiveProject()).queue(assessment, gradingConfig.get());
+    }
+
+    public void setSelectedGradingConfigPath(String path) {
+        ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(path);
+        this.cachedGradingConfigDTO = null;
+    }
+
+    public Optional<GradingConfig.GradingConfigDTO> getGradingConfigDTO(boolean required) {
+        if (this.cachedGradingConfigDTO == null) {
+            var gradingConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
+            if (gradingConfigPath == null) {
+                if (required) {
+                    onInvalidGradingConfig("Please select a grading config");
+                }
+                return Optional.empty();
+            }
+
+            try {
+                var fileContent = Files.readString(Path.of(gradingConfigPath));
+                this.cachedGradingConfigDTO = GradingConfig.readDTOFromString(fileContent);
+
+                for (var listener : this.gradingConfigChangedListeners) {
+                    listener.accept(this.cachedGradingConfigDTO);
+                }
+            } catch (IOException | InvalidGradingConfigException e) {
+                if (required) {
+                    LOG.warn(e);
+                    onInvalidGradingConfig(e.getMessage());
+                }
+                return Optional.empty();
+            }
+        }
+        return Optional.of(cachedGradingConfigDTO);
+    }
+
+    public boolean hasReviewConfig() {
+        var gradingConfigDTO = this.getGradingConfigDTO(false);
+        if (gradingConfigDTO.isEmpty()) {
+            return false;
+        }
+        return gradingConfigDTO.get().review();
     }
 
     public Optional<ProgrammingExercise> getActiveExercise() {
@@ -259,10 +338,25 @@ public class PluginState {
 
     public void setActiveExercise(ProgrammingExercise exercise) {
         this.activeExercise = exercise;
+        for (var listener : this.exerciseSelectedListeners) {
+            listener.accept(exercise);
+        }
     }
 
     public Optional<ActiveAssessment> getActiveAssessment() {
         return Optional.ofNullable(activeAssessment);
+    }
+
+    public User getAssessor() throws ArtemisNetworkException {
+        return connection.getAssessor();
+    }
+
+    public boolean isInstructor() throws ArtemisNetworkException {
+        if (activeExercise == null) {
+            return false;
+        }
+
+        return activeExercise.getCourse().isInstructor(getAssessor());
     }
 
     public void registerAssessmentStartedListener(Consumer<ActiveAssessment> listener) {
@@ -281,6 +375,13 @@ public class PluginState {
         activeExercise = null;
 
         AssessmentTracker.INSTANCE.clearAssessment();
+    }
+
+    private void onInvalidGradingConfig(String message) {
+        ArtemisUtils.displayGenericErrorBalloon("No/invalid grading config", message);
+        for (Runnable missingGradingConfigListener : this.missingGradingConfigListeners) {
+            missingGradingConfigListener.run();
+        }
     }
 
     private CompletableFuture<String> retrieveJWT() {
@@ -325,26 +426,16 @@ public class PluginState {
     }
 
     private Optional<GradingConfig> createGradingConfig() {
-        var gradingConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
-        if (gradingConfigPath == null) {
-            ArtemisUtils.displayGenericErrorBalloon("No grading config", "Please select a grading config");
-            // notify listeners that the grading config is missing
-            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
-                missingGradingConfigListener.run();
-            }
+        var gradingConfigDTO = this.getGradingConfigDTO(true);
+        if (gradingConfigDTO.isEmpty()) {
             return Optional.empty();
         }
 
         try {
-            return Optional.of(
-                    GradingConfig.readFromString(Files.readString(Path.of(gradingConfigPath)), activeExercise));
-        } catch (IOException | InvalidGradingConfigException e) {
+            return Optional.of(GradingConfig.fromDTO(gradingConfigDTO.get(), activeExercise));
+        } catch (InvalidGradingConfigException e) {
             LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
-            // notify listeners that the grading config is missing/invalid
-            for (Runnable missingGradingConfigListener : missingGradingConfigListeners) {
-                missingGradingConfigListener.run();
-            }
             return Optional.empty();
         }
     }

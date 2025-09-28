@@ -13,9 +13,10 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource
-import edu.kit.kastel.sdq.artemis4j.grading.Annotation
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment
+import edu.kit.kastel.sdq.artemis4j.grading.Annotation
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.VCSAccessOption
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment
@@ -126,11 +127,11 @@ object AssessmentTracker {
 
             // Cancel the assessment to prevent spurious locks
             // but only if the assessment does not have any user-made annotations yet (non autograder annotations):
-            val hasUserAnnotations = assessment.annotations.stream()
+            val hasUserAnnotations = assessment.getAnnotations(true).stream()
                 .anyMatch { annotation: Annotation? ->
-                    assessment.correctionRound == 0
+                    assessment.correctionRound == CorrectionRound.FIRST
                             && annotation!!.source == AnnotationSource.MANUAL_FIRST_ROUND
-                            || assessment.correctionRound == 1
+                            || assessment.correctionRound == CorrectionRound.SECOND
                             && annotation!!.source == AnnotationSource.MANUAL_SECOND_ROUND
                 }
 

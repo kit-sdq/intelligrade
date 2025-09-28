@@ -1,9 +1,8 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.event.ActionEvent;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -20,7 +19,8 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
-import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
+import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
+import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import net.miginfocom.swing.MigLayout;
@@ -33,7 +33,7 @@ public class BacklogPanel extends JPanel {
     private final JBLabel shownSubmissionsLabel;
     private final JPanel backlogList;
 
-    private List<ProgrammingSubmission> lastFetchedSubmissions = new ArrayList<>();
+    private List<PackedAssessment> lastFetchedAssessments = new ArrayList<>();
     private final List<Runnable> onBacklogUpdate = new ArrayList<>();
 
     public BacklogPanel() {
@@ -83,9 +83,11 @@ public class BacklogPanel extends JPanel {
         onBacklogUpdate.add(listener);
     }
 
-    public void setSubmissions(List<ProgrammingSubmission> submissions) {
-        this.lastFetchedSubmissions = new ArrayList<>(submissions);
-        this.lastFetchedSubmissions.sort(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
+    public void setAssessments(List<PackedAssessment> assessments) {
+        this.lastFetchedAssessments = new ArrayList<>(assessments);
+        // Sort by submission date, which matches the ordering in the Artemis backlog
+        this.lastFetchedAssessments.sort(
+                Comparator.comparing(a -> a.submission().getSubmissionDate()));
         this.updateBacklog();
     }
 
@@ -97,78 +99,84 @@ public class BacklogPanel extends JPanel {
     private void updateBacklog() {
         backlogList.removeAll();
 
+        if (PluginState.getInstance().hasReviewConfig()) {
+            shownSubmissionsLabel.setText("Disabled");
+            backlogList.add(new JBLabel("No backlog in review mode"));
+            this.updateUI();
+            return;
+        }
+
         String searchText = searchField.getText();
         boolean firstRound = showFirstRound.isSelected();
         boolean secondRound = showSecondRound.isSelected();
 
         int shown = 0;
-        for (ProgrammingSubmission submission : lastFetchedSubmissions) {
-            if (searchText != null && !submission.getParticipantIdentifier().contains(searchText)) {
+        for (var assessment : this.lastFetchedAssessments) {
+            if (searchText != null
+                    && !assessment.submission().getParticipantIdentifier().contains(searchText)) {
                 continue;
             }
 
-            if (!firstRound && submission.getCorrectionRound() == 0) {
+            if (!firstRound && assessment.round() == CorrectionRound.FIRST) {
                 continue;
             }
 
-            if (!secondRound && submission.getCorrectionRound() == 1) {
+            if (!secondRound && assessment.round() == CorrectionRound.SECOND) {
                 continue;
             }
 
             shown++;
 
             // Participant
-            backlogList.add(new JBLabel(submission.getParticipantIdentifier()));
-            addResultDateLabel(submission);
+            backlogList.add(new JBLabel(assessment.submission().getParticipantIdentifier()));
+            addResultDateLabel(assessment);
             // Correction Round
-            backlogList.add(new JBLabel("Round " + (submission.getCorrectionRound() + 1)));
-            addScoreItem(submission);
-            addActionButton(submission);
+            backlogList.add(new JBLabel(
+                    switch (assessment.round()) {
+                        case FIRST -> "Round 1";
+                        case SECOND -> "Round 2";
+                        case REVIEW -> "Review";
+                    }));
+            addScoreItem(assessment);
+            addActionButton(assessment);
         }
 
-        shownSubmissionsLabel.setText("Showing %d/%d".formatted(shown, lastFetchedSubmissions.size()));
+        shownSubmissionsLabel.setText("Showing %d/%d".formatted(shown, lastFetchedAssessments.size()));
 
         this.updateUI();
     }
 
-    private void addResultDateLabel(ProgrammingSubmission submission) {
-        var latestResult = submission.getLatestResult();
+    private void addResultDateLabel(PackedAssessment assessment) {
         String resultText = "";
-        if (submission.isSubmitted()) {
-            resultText = latestResult
-                    .map(resultDTO -> resultDTO
-                            .completionDate()
-                            .withZoneSameInstant(ZoneId.systemDefault())
-                            .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")))
-                    .orElse("???");
+        if (assessment.isSubmitted()) {
+            resultText = assessment
+                    .result()
+                    .completionDate()
+                    .withZoneSameInstant(ZoneId.systemDefault())
+                    .format(ArtemisUtils.DATE_TIME_PATTERN);
         }
         backlogList.add(new JBLabel(resultText), "alignx right");
     }
 
-    private void addScoreItem(ProgrammingSubmission submission) {
+    private void addScoreItem(PackedAssessment assessment) {
         // Score in percent
-        var latestResult = submission.getLatestResult();
         String resultText = "";
-        if (submission.isSubmitted()) {
-            resultText = latestResult
-                    .map(resultDTO -> "%.0f%%".formatted(resultDTO.score()))
-                    .orElse("???");
+        if (assessment.isSubmitted()) {
+            resultText = "%.0f%%".formatted(assessment.result().score());
         }
         backlogList.add(new JBLabel(resultText), "alignx right");
     }
 
-    private void addActionButton(ProgrammingSubmission submission) {
+    private void addActionButton(PackedAssessment assessment) {
         // Action Button
         JButton reopenButton;
-        if (submission.isSubmitted()) {
+        if (assessment.isSubmitted()) {
             reopenButton = new JButton("Reopen");
-        } else if (ArtemisUtils.isSubmissionStarted(submission)) {
+        } else {
             reopenButton = new JButton("Continue");
             reopenButton.setForeground(JBColor.ORANGE);
-        } else {
-            reopenButton = new JButton("Start");
         }
-        reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(submission));
+        reopenButton.addActionListener(a -> PluginState.getInstance().reopenAssessment(assessment));
         backlogList.add(reopenButton, "growx");
     }
 }
