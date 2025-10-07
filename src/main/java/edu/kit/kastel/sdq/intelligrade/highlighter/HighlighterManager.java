@@ -174,7 +174,7 @@ public class HighlighterManager {
                     .orElseGet(() -> document.getLineEndOffset(location.end().line()));
 
             var range = HighlighterTargetArea.EXACT_RANGE;
-            if (startOffset == endOffset) {
+            if (startOffset == endOffset || startOffset + 1 == endOffset) {
                 // if the start and end offset are the same, we highlight the entire line
                 range = HighlighterTargetArea.LINES_IN_RANGE;
             }
