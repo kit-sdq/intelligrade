@@ -152,8 +152,6 @@ public class BacklogPanel extends JPanel {
             }
 
             if (assessment.round() != this.selectedRound && assessment.round() != REVIEW) {
-                System.out.println("Skipping assessment in round %s, selected %s"
-                        .formatted(assessment.round(), this.selectedRound));
                 continue;
             }
 
