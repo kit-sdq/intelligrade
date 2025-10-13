@@ -139,7 +139,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     }
 
     private void createGeneralPanel() {
-        generalPanel = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
+        generalPanel = new JBPanel<>(new MigLayout("wrap 1, hidemode 3", "[grow]"));
 
         modeInfoLabel = new JBLabel();
         modeInfoLabel.setForeground(JBColor.GREEN);
@@ -161,6 +161,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         openInstructorDialog = new JButton("Show All Submissions");
         openInstructorDialog.setForeground(JBColor.GREEN);
         openInstructorDialog.addActionListener(a -> SubmissionsInstructorDialog.showDialog());
+        openInstructorDialog.setVisible(false);
         generalPanel.add(openInstructorDialog, "growx");
 
         gradingConfigPathInput = new TextFieldWithBrowseButton();
@@ -287,8 +288,12 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
         if (PluginState.getInstance().hasReviewConfig()) {
             modeInfoLabel.setText("Review Mode (you have a review config)");
+            // Show the instructor button:
+            openInstructorDialog.setVisible(true);
         } else {
             modeInfoLabel.setText("");
+            // Hide the button:
+            openInstructorDialog.setVisible(false);
         }
 
         if (PluginState.getInstance().isAssessing()) {

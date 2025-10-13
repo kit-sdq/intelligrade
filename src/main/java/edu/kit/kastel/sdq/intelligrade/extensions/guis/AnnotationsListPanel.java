@@ -36,6 +36,7 @@ import org.jspecify.annotations.NonNull;
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
     private final AnnotationsTableModel model;
     private final AnnotationsTreeTable table;
+    private AnActionButton restoreButton;
 
     public static AnnotationsListPanel getPanel() {
         var toolWindow =
@@ -109,7 +110,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         };
         group.addAction(deleteButton);
 
-        var restoreButton = new AnActionButton("Restore") {
+        this.restoreButton = new AnActionButton("Restore") {
             @Override
             public void actionPerformed(@NonNull AnActionEvent e) {
                 table.restoreSelection();
@@ -120,9 +121,14 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 return ActionUpdateThread.EDT;
             }
         };
-        group.addAction(restoreButton);
-        PluginState.getInstance()
-                .registerAssessmentStartedListener(assessment -> restoreButton.setEnabled(assessment.isReview()));
+        // only show the restore button in review mode
+        PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
+            if (assessment.isReview()) {
+                group.addAction(restoreButton);
+            } else {
+                group.remove(restoreButton);
+            }
+        });
 
         // Adds a debug button to the right-click menu in the table.
         //
