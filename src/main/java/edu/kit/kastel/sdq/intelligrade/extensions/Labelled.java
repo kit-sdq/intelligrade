@@ -1,13 +1,14 @@
+/* Licensed under EPL-2.0 2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions;
+
+import java.awt.Color;
+import java.awt.Component;
 
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
-
-import java.awt.Color;
-import java.awt.Component;
 
 public class Labelled<T extends Component> extends JBPanel<JBPanel<?>> {
     private final T component;

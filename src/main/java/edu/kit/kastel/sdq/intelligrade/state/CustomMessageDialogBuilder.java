@@ -1,4 +1,15 @@
+/* Licensed under EPL-2.0 2025. */
 package edu.kit.kastel.sdq.intelligrade.state;
+
+import java.awt.EventQueue;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.function.Consumer;
+
+import javax.swing.JButton;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -8,15 +19,6 @@ import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.extensions.CustomCommentField;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
-
-import javax.swing.JButton;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import java.awt.EventQueue;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.function.Consumer;
 
 public class CustomMessageDialogBuilder {
     private final ComponentPopupBuilder builder;
@@ -37,7 +39,8 @@ public class CustomMessageDialogBuilder {
 
         // The second parameter is the text area, on which the popup will focus.
         // This allows to immediately start typing without having to use the mouse
-        this.builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this.mainPanel, this.field.commentField())
+        this.builder = JBPopupFactory.getInstance()
+                .createComponentPopupBuilder(this.mainPanel, this.field.commentField())
                 .setTitle("Custom Comment")
                 .setFocusable(true)
                 .setRequestFocus(true)
@@ -47,7 +50,8 @@ public class CustomMessageDialogBuilder {
                 .setBelongsToGlobalPopupStack(true)
                 .setCancelKeyEnabled(true)
                 .setMayBeParent(true)
-                .setDimensionServiceKey(IntellijUtil.getActiveProject(), this.getClass().getCanonicalName(), false)
+                .setDimensionServiceKey(
+                        IntellijUtil.getActiveProject(), this.getClass().getCanonicalName(), false)
                 .setCancelCallback(this::canExit);
 
         this.field.commentField().addKeyListener(new KeyAdapter() {
@@ -75,7 +79,8 @@ public class CustomMessageDialogBuilder {
 
     public CustomMessageDialogBuilder onSubmit(Consumer<MessageWithPoints> onSubmit) {
         this.builder.setOkHandler(() -> {
-            onSubmit.accept(new MessageWithPoints(this.field.text(), this.customScore == null ? 0.0 : (Double) this.customScore.getValue()));
+            onSubmit.accept(new MessageWithPoints(
+                    this.field.text(), this.customScore == null ? 0.0 : (Double) this.customScore.getValue()));
         });
 
         return this;
@@ -102,7 +107,6 @@ public class CustomMessageDialogBuilder {
         return this;
     }
 
-
     public void showNotModal() {
         this.builder.setModalContext(false);
         this.popup = this.builder.createPopup();
@@ -114,7 +118,6 @@ public class CustomMessageDialogBuilder {
         this.popup = this.builder.createPopup();
         this.popup.showCenteredInCurrentWindow(IntellijUtil.getActiveProject());
     }
-
 
     public record MessageWithPoints(String message, double points) {}
 }
