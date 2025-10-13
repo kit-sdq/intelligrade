@@ -158,8 +158,9 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         PopupHandler.installPopupMenu(table, group, "popup@AnnotationsListPanel");
     }
 
-    private String mapAssessorId(Optional<Long> id) {
-        return id.map(aLong -> "%s (%d)"
+    private String mapAssessorId(Long id) {
+        return Optional.ofNullable(id)
+                .map(aLong -> "%s (%d)"
                         .formatted(
                                 PluginState.getInstance()
                                         .resolveAssessorId(aLong)
@@ -184,9 +185,11 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 Map.entry("Path", location.filePath()),
                 Map.entry("Start", location.start().toString()),
                 Map.entry("End", location.end().toString()),
-                Map.entry("Created By", mapAssessorId(annotation.getCreatorId())),
+                Map.entry("Created By", mapAssessorId(annotation.getCreatorId().orElse(null))),
                 Map.entry("Suppressed", annotation.isSuppressed() ? "Yes" : "No"),
-                Map.entry("Suppressed By", mapAssessorId(annotation.getSuppressorId())),
+                Map.entry(
+                        "Suppressed By",
+                        mapAssessorId(annotation.getSuppressorId().orElse(null))),
                 Map.entry("Classifiers", annotation.getClassifiers().toString()));
 
         for (var entry : data) {
