@@ -1,12 +1,15 @@
 /* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
+import static edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound.REVIEW;
+
 import java.awt.event.ActionEvent;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
@@ -16,9 +19,9 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBRadioButton;
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
@@ -28,8 +31,8 @@ import org.jspecify.annotations.NonNull;
 
 public class BacklogPanel extends JPanel {
     private final SearchTextField searchField;
-    private final JBCheckBox showFirstRound;
-    private final JBCheckBox showSecondRound;
+    private CorrectionRound selectedRound;
+    private final ButtonGroup buttonGroup;
     private final JBLabel shownSubmissionsLabel;
     private final JPanel backlogList;
 
@@ -55,15 +58,22 @@ public class BacklogPanel extends JPanel {
             }
         });
 
-        showFirstRound = new JBCheckBox("Round 1");
-        showFirstRound.setSelected(true);
-        showFirstRound.addActionListener(a -> updateBacklog());
-        filterPanel.add(showFirstRound);
-
-        showSecondRound = new JBCheckBox("Round 2");
-        showSecondRound.setSelected(true);
-        showSecondRound.addActionListener(a -> updateBacklog());
-        filterPanel.add(showSecondRound);
+        // The button group ensures that only one button can be selected at a time
+        this.buttonGroup = new ButtonGroup();
+        int roundNumber = 1;
+        for (var correctionRound : List.of(CorrectionRound.FIRST, CorrectionRound.SECOND)) {
+            var button = new JBRadioButton("Round %d".formatted(roundNumber));
+            if (correctionRound == CorrectionRound.FIRST) {
+                button.setSelected(true);
+            }
+            button.addActionListener(a -> {
+                this.selectedRound = correctionRound;
+                updateBacklog();
+            });
+            buttonGroup.add(button);
+            filterPanel.add(button);
+            roundNumber += 1;
+        }
 
         backlogList = new JBPanel<>(new MigLayout("wrap 5, gapx 10", "[][][][][grow]"));
         this.add(ScrollPaneFactory.createScrollPane(backlogList, true), "spanx 2, growx");
@@ -88,6 +98,33 @@ public class BacklogPanel extends JPanel {
         // Sort by submission date, which matches the ordering in the Artemis backlog
         this.lastFetchedAssessments.sort(
                 Comparator.comparing(a -> a.submission().getSubmissionDate()));
+        if (!this.lastFetchedAssessments.isEmpty()) {
+            // The first one will be the oldest date, and the last one the newest date.
+            var submissions = new ArrayList<>(this.lastFetchedAssessments);
+            // Find the last assessment that has been submitted:
+            submissions.sort(Comparator.comparing(a -> a.result().completionDate()));
+
+            var latestSubmission = submissions.getLast();
+            int number =
+                    switch (latestSubmission.round()) {
+                        case FIRST -> 1;
+                        case SECOND -> 2;
+                        case REVIEW -> 3;
+                    };
+            this.buttonGroup.clearSelection();
+
+            int i = 1;
+            for (var e = this.buttonGroup.getElements(); e.hasMoreElements(); ) {
+                var button = e.nextElement();
+                if (i == number) {
+                    button.setSelected(true);
+                    this.selectedRound = latestSubmission.round();
+                    break;
+                }
+                i += 1;
+            }
+        }
+
         this.updateBacklog();
     }
 
@@ -107,9 +144,6 @@ public class BacklogPanel extends JPanel {
         }
 
         String searchText = searchField.getText();
-        boolean firstRound = showFirstRound.isSelected();
-        boolean secondRound = showSecondRound.isSelected();
-
         int shown = 0;
         for (var assessment : this.lastFetchedAssessments) {
             if (searchText != null
@@ -117,11 +151,9 @@ public class BacklogPanel extends JPanel {
                 continue;
             }
 
-            if (!firstRound && assessment.round() == CorrectionRound.FIRST) {
-                continue;
-            }
-
-            if (!secondRound && assessment.round() == CorrectionRound.SECOND) {
+            if (assessment.round() != this.selectedRound && assessment.round() != REVIEW) {
+                System.out.println("Skipping assessment in round %s, selected %s"
+                        .formatted(assessment.round(), this.selectedRound));
                 continue;
             }
 
