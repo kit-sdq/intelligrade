@@ -217,7 +217,10 @@ public class ActiveAssessment {
     }
 
     private void showCustomAnnotationDialog(
-            MistakeType mistakeType, String initialMessage, double initialPoints, Consumer<CustomMessageDialogBuilder.MessageWithPoints> onOk) {
+            MistakeType mistakeType,
+            String initialMessage,
+            double initialPoints,
+            Consumer<CustomMessageDialogBuilder.MessageWithPoints> onOk) {
         CustomMessageDialogBuilder.create(initialMessage)
                 .onSubmit(onOk)
                 .allowCustomScore(mistakeType, initialPoints)
