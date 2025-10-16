@@ -213,7 +213,7 @@ public class ActiveAssessment {
     public static void showCustomMessageDialog(String initialMessage, Consumer<String> onOk) {
         CustomMessageDialogBuilder.create(initialMessage)
                 .onSubmit(messageWithPoints -> onOk.accept(messageWithPoints.message()))
-                .show();
+                .showNotModal();
     }
 
     private void showCustomAnnotationDialog(

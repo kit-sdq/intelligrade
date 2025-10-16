@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -51,6 +51,7 @@ import org.jspecify.annotations.NonNull;
 public class ExercisePanel extends SimpleToolWindowPanel {
     private static final Logger LOG = Logger.getInstance(ExercisePanel.class);
 
+    private final ToolWindow parentToolWindow;
     private final JBLabel connectedLabel;
 
     private final ComboBox<Course> courseSelector;
@@ -83,8 +84,10 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
     private final BacklogPanel backlogPanel;
 
-    public ExercisePanel() {
+    public ExercisePanel(ToolWindow toolWindow) {
         super(true, true);
+
+        this.parentToolWindow = toolWindow;
 
         connectedLabel = new JBLabel();
         JPanel content = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
@@ -165,7 +168,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         generalPanel.add(openInstructorDialog, "growx");
 
         gradingConfigPathInput = new TextFieldWithBrowseButton();
-        new ComponentValidator(Disposer.newDisposable())
+        new ComponentValidator(this.parentToolWindow.getDisposable())
                 .withValidator(() -> {
                     if (gradingConfigPathInput.getText().isBlank()) {
                         return new ValidationInfo("No grading config selected", gradingConfigPathInput);

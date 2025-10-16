@@ -35,7 +35,7 @@ public class CustomMessageDialogBuilder {
 
     private CustomMessageDialogBuilder(String initialMessage) {
         this.mainPanel = new JBPanel<>(new MigLayout("wrap 2, fill", "[250lp] []"));
-        this.field = CustomCommentField.with(initialMessage, null);
+        this.field = CustomCommentField.with(initialMessage);
 
         // The second parameter is the text area, on which the popup will focus.
         // This allows to immediately start typing without having to use the mouse
@@ -108,14 +108,18 @@ public class CustomMessageDialogBuilder {
     }
 
     public void showNotModal() {
-        this.builder.setModalContext(false);
-        this.popup = this.builder.createPopup();
-        this.popup.showCenteredInCurrentWindow(IntellijUtil.getActiveProject());
+        showMaybeModal(false);
     }
 
     public void show() {
-        this.builder.setModalContext(true);
+        showMaybeModal(true);
+    }
+
+    private void showMaybeModal(boolean modal) {
+        this.builder.setModalContext(modal);
         this.popup = this.builder.createPopup();
+        // Attach the validator to the lifecycle of the popup:
+        this.field.registerValidator(this.popup);
         this.popup.showCenteredInCurrentWindow(IntellijUtil.getActiveProject());
     }
 

@@ -7,12 +7,11 @@ import javax.swing.JScrollPane;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.JBFont;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class CustomCommentField extends Labelled<JScrollPane> {
     private static final String LABEL_PROGRESS_TEMPLATE = "%d/%d";
@@ -47,7 +46,7 @@ public class CustomCommentField extends Labelled<JScrollPane> {
         };
     }
 
-    public static CustomCommentField with(String initialMessage, @Nullable Disposable parentDisposable) {
+    public static CustomCommentField with(String initialMessage) {
         var customMessage = new JBTextArea(initialMessage);
         customMessage.setFont(JBFont.regular());
         customMessage.setLineWrap(true);
@@ -56,19 +55,20 @@ public class CustomCommentField extends Labelled<JScrollPane> {
                 BorderFactory.createLineBorder(JBColor.border()), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         customMessage.setCaretPosition(initialMessage.length());
 
-        var scrollPane = ScrollPaneFactory.createScrollPane(customMessage);
-        var result = new CustomCommentField(scrollPane, customMessage, "?/?", LabelKind.HINT);
+        return new CustomCommentField(
+                ScrollPaneFactory.createScrollPane(customMessage), customMessage, "?/?", LabelKind.HINT);
+    }
 
-        new ComponentValidator(parentDisposable == null ? Disposer.newDisposable() : parentDisposable)
-                .withValidator(result::validator)
-                // .andStartOnFocusLost()
-                .andRegisterOnDocumentListener(customMessage)
-                .installOn(customMessage);
+    public void registerValidator(@NotNull Disposable parentDisposable) {
+        // A ComponentValidator needs to be disposed of when the parent component in which `this` is,
+        // is disposed of, otherwise intellij will complain about a memory leak/invalid parent.
+        new ComponentValidator(parentDisposable)
+                .withValidator(this::validator)
+                .andRegisterOnDocumentListener(this.commentField)
+                .installOn(this.commentField);
 
         // trigger the initial validation of the initialMessage:
-        ComponentValidator.getInstance(customMessage).ifPresent(ComponentValidator::revalidate);
-
-        return result;
+        ComponentValidator.getInstance(this.commentField).ifPresent(ComponentValidator::revalidate);
     }
 
     public JBTextArea commentField() {

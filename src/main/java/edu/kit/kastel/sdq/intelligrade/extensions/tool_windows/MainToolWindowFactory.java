@@ -20,7 +20,8 @@ public class MainToolWindowFactory implements ToolWindowFactory, DumbAware {
     public void createToolWindowContent(@NonNull Project project, @NonNull ToolWindow toolWindow) {
         toolWindow
                 .getContentManager()
-                .addContent(ContentFactory.getInstance().createContent(new ExercisePanel(), "Exercise", false));
+                .addContent(
+                        ContentFactory.getInstance().createContent(new ExercisePanel(toolWindow), "Exercise", false));
         toolWindow
                 .getContentManager()
                 .addContent(ContentFactory.getInstance().createContent(new AssessmentPanel(), "Grading", false));
