@@ -1,8 +1,6 @@
 /* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
-import static edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound.REVIEW;
-
 import java.awt.event.ActionEvent;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -60,9 +58,9 @@ public class BacklogPanel extends JPanel {
 
         // The button group ensures that only one button can be selected at a time
         this.buttonGroup = new ButtonGroup();
-        int roundNumber = 1;
         for (var correctionRound : List.of(CorrectionRound.FIRST, CorrectionRound.SECOND)) {
-            var button = new JBRadioButton("Round %d".formatted(roundNumber));
+            var button = new JBRadioButton(getRoundName(correctionRound));
+            // Select the first round by default
             if (correctionRound == CorrectionRound.FIRST) {
                 button.setSelected(true);
             }
@@ -72,7 +70,6 @@ public class BacklogPanel extends JPanel {
             });
             buttonGroup.add(button);
             filterPanel.add(button);
-            roundNumber += 1;
         }
 
         backlogList = new JBPanel<>(new MigLayout("wrap 5, gapx 10", "[][][][][grow]"));
@@ -81,6 +78,21 @@ public class BacklogPanel extends JPanel {
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
         refreshButton.addActionListener(this::refreshButtonClicked);
         this.add(refreshButton, "skip 1, alignx right");
+    }
+
+    private static int getRoundNumber(CorrectionRound round) {
+        return switch (round) {
+            case FIRST -> 1;
+            case SECOND -> 2;
+            case REVIEW -> 3;
+        };
+    }
+
+    private static String getRoundName(CorrectionRound round) {
+        return switch (round) {
+            case REVIEW -> "Review";
+            case FIRST, SECOND -> "Round %d".formatted(getRoundNumber(round));
+        };
     }
 
     private void refreshButtonClicked(ActionEvent actionEvent) {
@@ -100,17 +112,19 @@ public class BacklogPanel extends JPanel {
                 Comparator.comparing(a -> a.submission().getSubmissionDate()));
         if (!this.lastFetchedAssessments.isEmpty()) {
             // The first one will be the oldest date, and the last one the newest date.
-            var submissions = new ArrayList<>(this.lastFetchedAssessments);
+            //
             // Find the last assessment that has been submitted:
-            submissions.sort(Comparator.comparing(a -> a.result().completionDate()));
+            var latestSubmission = this.lastFetchedAssessments.stream()
+                    // If the assessment has not been submitted, it has no completion date -> skip these
+                    .filter(PackedAssessment::isSubmitted)
+                    // The dates are sorted from the oldest (smallest) to the newest (largest),
+                    // thus the max is the latest date
+                    .max(Comparator.comparing(
+                            packedAssessment -> packedAssessment.result().completionDate()))
+                    // This can happen if no assessment has been submitted yet
+                    .orElse(this.lastFetchedAssessments.getFirst());
 
-            var latestSubmission = submissions.getLast();
-            int number =
-                    switch (latestSubmission.round()) {
-                        case FIRST -> 1;
-                        case SECOND -> 2;
-                        case REVIEW -> 3;
-                    };
+            int number = getRoundNumber(latestSubmission.round());
             this.buttonGroup.clearSelection();
 
             int i = 1;
@@ -151,7 +165,7 @@ public class BacklogPanel extends JPanel {
                 continue;
             }
 
-            if (assessment.round() != this.selectedRound && assessment.round() != REVIEW) {
+            if (assessment.round() != this.selectedRound && assessment.round() != CorrectionRound.REVIEW) {
                 continue;
             }
 
@@ -161,12 +175,7 @@ public class BacklogPanel extends JPanel {
             backlogList.add(new JBLabel(assessment.submission().getParticipantIdentifier()));
             addResultDateLabel(assessment);
             // Correction Round
-            backlogList.add(new JBLabel(
-                    switch (assessment.round()) {
-                        case FIRST -> "Round 1";
-                        case SECOND -> "Round 2";
-                        case REVIEW -> "Review";
-                    }));
+            backlogList.add(new JBLabel(getRoundName(assessment.round())));
             addScoreItem(assessment);
             addActionButton(assessment);
         }
