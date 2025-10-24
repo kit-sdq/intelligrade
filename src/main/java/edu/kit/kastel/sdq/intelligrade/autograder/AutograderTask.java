@@ -59,7 +59,7 @@ public class AutograderTask extends Task.Backgroundable {
         try {
             Consumer<String> statusConsumer = status -> indicator.setText("Autograder: " + status);
 
-            var stats = AutograderRunner.runAutograder(assessment, clonedSubmission, Locale.GERMANY, 2, statusConsumer);
+            var stats = AutograderRunner.runAutograderFallible(assessment, clonedSubmission, Locale.GERMANY, 2, statusConsumer, null);
 
             String message = "Autograder made %d annotation(s). Please double-check all of them for false-positives!"
                     .formatted(stats.annotationsMade());
