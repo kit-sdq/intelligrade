@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.font.TextAttribute;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -43,6 +44,8 @@ import edu.kit.kastel.sdq.intelligrade.extensions.settings.ThemeColor;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.KeyPress;
+import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 
 public class AssessmentPanel extends SimpleToolWindowPanel {
@@ -67,8 +70,10 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
             content.add(pointsLabel, "alignx center");
 
-            var infoLabel = new JBLabel("Hold Ctrl to add a custom message");
-            infoLabel.setForeground(JBColor.GRAY);
+            var infoLabel = TextBuilder.htmlText("Hold ", JBColor.GRAY)
+                    .addKeyShortcut(KeyPress.of(KeyEvent.VK_CONTROL))
+                    .addText(", while pressing a button, to add a custom message")
+                    .label();
             content.add(infoLabel, "alignx center");
 
             assessment.registerAnnotationsUpdatedListener(annotations -> {

@@ -1,6 +1,8 @@
 /* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
+import java.awt.Color;
+import java.awt.event.KeyEvent;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAmount;
@@ -10,29 +12,47 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JSeparator;
 
+import com.intellij.codeInsight.hints.presentation.MouseButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBFont;
-import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import com.intellij.util.ui.JBUI;
+import edu.kit.kastel.sdq.intelligrade.utils.KeyPress;
 import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class SplashDialog extends DialogWrapper {
+    private static final Color SUBTEXT_COLOR = JBUI.CurrentTheme.ContextHelp.FOREGROUND;
     private static final TemporalAmount SPLASH_INTERVAL = Duration.ofMinutes(60);
 
-    private static final List<String> REMINDER_LINES = List.of(
-            "<span style=\"\">Be fair.</span> <span style=\"color: %s\">Follow our official grading guidelines, not your own style preferences. Only deduct points if there is a matching button.</span>",
-            "<span style=\"\">Be nice.</span> <span style=\"color: %s\">Nobody submits bad code on purpose or to upset you. Also - it's okay to deduct no points :)</span>",
-            "<span style=\"\">Ask!</span> <span style=\"color: %1$s\">- if you are unsure about anything. Everyone is on Element. Also check out the </span><a href=\"https://sdq.kastel.kit.edu/programmieren/Hauptseite\">Wiki</a><span style=\"color: %1$s\">.</span>");
+    private static final List<TextBuilder.HtmlTextBuilder> REMINDER_LINES = List.of(
+            TextBuilder.htmlText("Be fair. ")
+                    .addText(
+                            "Follow our official grading guidelines, not your own style preferences. Only deduct points if there is a matching button.",
+                            SUBTEXT_COLOR),
+            TextBuilder.htmlText("Be nice. ")
+                    .addText(
+                            "Nobody submits bad code on purpose or to upset you. Also - it's okay to deduct no points :)",
+                            SUBTEXT_COLOR),
+            TextBuilder.htmlText("Ask! ")
+                    .addText(
+                            "- if you are unsure about anything. Everyone is on Element. Also check out the ",
+                            SUBTEXT_COLOR)
+                    .addLink("Wiki", "https://s.kit.edu/wiki")
+                    .addText(".", SUBTEXT_COLOR));
 
-    private static final List<String> KEYBINDING_LINES = List.of(
-            "Add Annotation  <span style=\"color: %s\">Press Button or Alt + A</span>",
-            "Add Custom Message  <span style=\"color: %s\">Hold Ctrl</span>");
+    private static final List<TextBuilder.HtmlTextBuilder> KEYBINDING_LINES = List.of(
+            TextBuilder.htmlText("Add Annotation  ")
+                    .addKeyShortcut(KeyPress.click(MouseButton.Left))
+                    .addText(" on button or press ", SUBTEXT_COLOR)
+                    .addKeyShortcut(KeyPress.of(KeyEvent.VK_ALT), KeyPress.of(KeyEvent.VK_A)),
+            TextBuilder.htmlText("Add Custom Message  ")
+                    .addKeyShortcut(KeyPress.of(KeyEvent.VK_CONTROL), KeyPress.click(MouseButton.Left))
+                    .addText(" on button.", SUBTEXT_COLOR));
 
     private static Instant lastShown = Instant.EPOCH;
 
@@ -56,13 +76,13 @@ public class SplashDialog extends DialogWrapper {
         var panel = new JBPanel<>(new MigLayout("wrap 1, fill, gapy 15", "[grow]"));
 
         for (var line : REMINDER_LINES) {
-            panel.add(createHtmlLabel(line.formatted(IntellijUtil.colorToCSS(JBColor.GRAY))), "growx");
+            panel.add(line.font(JBFont.regular().biggerOn(2.0f)).label(), "growx");
         }
 
         panel.add(new JSeparator(), "growx");
 
         for (var line : KEYBINDING_LINES) {
-            panel.add(createHtmlLabel(line.formatted(IntellijUtil.colorToCSS(JBColor.GRAY))), "growx");
+            panel.add(line.font(JBFont.regular().biggerOn(2.0f)).label(), "growx");
         }
 
         return panel;
@@ -71,9 +91,5 @@ public class SplashDialog extends DialogWrapper {
     @Override
     protected Action @NonNull [] createActions() {
         return new Action[] {this.myOKAction};
-    }
-
-    private static JComponent createHtmlLabel(String content) {
-        return TextBuilder.html(content).font(JBFont.regular().biggerOn(2.0f)).label();
     }
 }

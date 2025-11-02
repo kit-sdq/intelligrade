@@ -3,7 +3,9 @@ package edu.kit.kastel.sdq.intelligrade.widgets;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.Arrays;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
@@ -22,6 +24,9 @@ import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.KeyPress;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Texts are painful in swing. There are many different widgets, all supporting different capabilities.
@@ -33,6 +38,14 @@ public final class TextBuilder {
 
     public static HtmlTextBuilder html(String text) {
         return new HtmlTextBuilder(text);
+    }
+
+    public static HtmlTextBuilder htmlText(String text) {
+        return htmlText(text, null);
+    }
+
+    public static HtmlTextBuilder htmlText(String text, Color color) {
+        return new HtmlTextBuilder(spanText(text, color), color);
     }
 
     public static TextAreaBuilder immutable(String text) {
@@ -226,10 +239,22 @@ public final class TextBuilder {
         return scrollPane;
     }
 
+    private static String spanText(String text, @Nullable Color color) {
+        if (color != null) {
+            return "<span style=\"color: %s\">%s</span>".formatted(IntellijUtil.colorToCSS(color), text);
+        } else {
+            return "<span style=\"\">%s</span>".formatted(text);
+        }
+    }
+
     @SuppressWarnings("UnstableApiUsage")
-    public record HtmlTextBuilder(DslLabel label) {
+    public record HtmlTextBuilder(DslLabel label, Color defaultTextColor) {
         private HtmlTextBuilder(String text) {
-            this(new DslLabel(DslLabelType.LABEL));
+            this(text, JBUI.CurrentTheme.Label.foreground());
+        }
+
+        private HtmlTextBuilder(String text, Color defaultTextColor) {
+            this(new DslLabel(DslLabelType.LABEL), defaultTextColor);
             this.label.setFont(JBFont.regular());
             this.label.setText(text);
             // Enable clickable links
@@ -238,6 +263,29 @@ public final class TextBuilder {
 
         public HtmlTextBuilder maxLineLength(int maxLineLength) {
             this.label.setMaxLineLength(maxLineLength);
+            return this;
+        }
+
+        public HtmlTextBuilder addText(String additionalText, Color color) {
+            return this.addHtml(spanText(additionalText, color));
+        }
+
+        public HtmlTextBuilder addLink(String text, String link) {
+            return this.addHtml("<a href=\"%s\">%s</a>".formatted(link, text));
+        }
+
+        public HtmlTextBuilder addKeyShortcut(KeyPress... keys) {
+            return this.addText(
+                    Arrays.stream(keys).map(KeyPress::toString).collect(Collectors.joining(" + ")),
+                    JBUI.CurrentTheme.Link.Foreground.ENABLED);
+        }
+
+        public HtmlTextBuilder addText(String additionalText) {
+            return this.addHtml(spanText(additionalText, this.defaultTextColor));
+        }
+
+        private HtmlTextBuilder addHtml(String text) {
+            this.label.setText(this.label.getUserText() + text);
             return this;
         }
 

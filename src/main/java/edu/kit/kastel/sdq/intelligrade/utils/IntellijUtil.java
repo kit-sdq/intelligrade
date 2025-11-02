@@ -1,6 +1,7 @@
 /* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.utils;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 
@@ -90,7 +90,7 @@ public final class IntellijUtil {
         return file;
     }
 
-    public static String colorToCSS(JBColor color) {
+    public static String colorToCSS(Color color) {
         return "rgb(%d, %d, %d)".formatted(color.getRed(), color.getGreen(), color.getBlue());
     }
 }
