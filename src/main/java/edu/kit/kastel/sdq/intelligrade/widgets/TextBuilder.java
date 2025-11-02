@@ -208,35 +208,36 @@ public final class TextBuilder {
         public JBTextArea textArea() {
             return this.textArea;
         }
-    }
 
-    /**
-     * This is a copy of {@link Messages#wrapToScrollPaneIfNeeded(JComponent, int, int, int)}, where the border
-     * is not removed from the scrollbar and the max width is not set (prevents a horizontal scrollbar from appearing).
-     *
-     * @param component the component to wrap
-     * @param maxLines the maximum number of lines to show without scrolling
-     * @return the wrapped component
-     */
-    private static JScrollPane wrapScrollPane(JComponent component, int maxLines) {
-        int lines = 4;
-        int columns = 0;
+        /**
+         * This is a copy of {@link Messages#wrapToScrollPaneIfNeeded(JComponent, int, int, int)}, where the border
+         * is not removed from the scrollbar and the max width is not set (prevents a horizontal scrollbar from appearing).
+         *
+         * @param component the component to wrap
+         * @param maxLines the maximum number of lines to show without scrolling
+         * @return the wrapped component
+         */
+        private static JScrollPane wrapScrollPane(JComponent component, int maxLines) {
+            int lines = 4;
+            int columns = 0;
 
-        float fontSize = component.getFont().getSize2D();
-        Dimension maxDim = new Dimension((int) (fontSize * columns), (int) (fontSize * maxLines));
-        Dimension prefDim = component.getPreferredSize();
+            float fontSize = component.getFont().getSize2D();
+            Dimension maxDim = new Dimension((int) (fontSize * columns), (int) (fontSize * maxLines));
+            Dimension prefDim = component.getPreferredSize();
 
-        JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(component);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        int barWidth = UIUtil.getScrollBarWidth();
-        Dimension preferredSize = new Dimension(
-                Math.min(prefDim.width, maxDim.width) + barWidth, Math.min(prefDim.height, maxDim.height) + barWidth);
-        if (prefDim.width > maxDim.width) { // Too wide a single-line message should be wrapped
-            preferredSize.height = Math.max(preferredSize.height, (int) (lines * fontSize) + barWidth);
+            JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(component);
+            scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            int barWidth = UIUtil.getScrollBarWidth();
+            Dimension preferredSize = new Dimension(
+                    Math.min(prefDim.width, maxDim.width) + barWidth,
+                    Math.min(prefDim.height, maxDim.height) + barWidth);
+            if (prefDim.width > maxDim.width) { // Too wide a single-line message should be wrapped
+                preferredSize.height = Math.max(preferredSize.height, (int) (lines * fontSize) + barWidth);
+            }
+            scrollPane.setPreferredSize(preferredSize);
+            return scrollPane;
         }
-        scrollPane.setPreferredSize(preferredSize);
-        return scrollPane;
     }
 
     private static String spanText(String text, @Nullable Color color) {
