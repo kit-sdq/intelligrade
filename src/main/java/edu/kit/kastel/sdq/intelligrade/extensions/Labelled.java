@@ -2,31 +2,25 @@
 package edu.kit.kastel.sdq.intelligrade.extensions;
 
 import java.awt.Color;
-import java.awt.Component;
+
+import javax.swing.JComponent;
 
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
-import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
+import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 
-public class Labelled<T extends Component> extends JBPanel<JBPanel<?>> {
-    private final T component;
+public class Labelled extends JBPanel<JBPanel<?>> {
     private final JBTextArea label;
 
-    public Labelled(T component, String labelText, LabelKind kind) {
+    public Labelled(JComponent component, String labelText, LabelKind kind) {
         super(new MigLayout("wrap 1", "[grow]", "[grow][]"));
-        this.component = component;
 
-        this.add(this.component, "grow");
+        this.add(component, "grow");
 
         // Effectively a JLabel, but works with multi-line text
-        this.label = new JBTextArea(labelText);
-        this.label.setEditable(false);
-        this.label.setLineWrap(true);
-        this.label.setFocusable(false);
-        this.label.setFont(JBFont.regular());
-        this.label.setForeground(kind.color);
+        this.label = TextBuilder.immutable(labelText).foreground(kind.color).textArea();
 
         // Without the explicit width and hmin constraints, the text area would not shrink
         // properly/and or ignore the border
@@ -36,10 +30,6 @@ public class Labelled<T extends Component> extends JBPanel<JBPanel<?>> {
     public void changeLabelText(String newText, LabelKind kind) {
         this.label.setText(newText);
         this.label.setForeground(kind.color);
-    }
-
-    public T component() {
-        return component;
     }
 
     public enum LabelKind {

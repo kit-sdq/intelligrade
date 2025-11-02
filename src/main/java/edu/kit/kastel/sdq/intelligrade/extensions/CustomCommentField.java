@@ -1,19 +1,14 @@
 /* Licensed under EPL-2.0 2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions;
 
-import javax.swing.BorderFactory;
-import javax.swing.JScrollPane;
-
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTextArea;
-import com.intellij.util.ui.JBFont;
+import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import org.jetbrains.annotations.NotNull;
 
-public class CustomCommentField extends Labelled<JScrollPane> {
+public class CustomCommentField extends Labelled {
     private static final String LABEL_PROGRESS_TEMPLATE = "%d/%d";
     private static final double WARNING_THRESHOLD = 0.8;
     private static final double ERROR_THRESHOLD = 1.0;
@@ -24,9 +19,9 @@ public class CustomCommentField extends Labelled<JScrollPane> {
     private static final int MAXIMUM_TEXT_LENGTH = 3500;
     private final JBTextArea commentField;
 
-    private CustomCommentField(JScrollPane scrollPane, JBTextArea commentField, String labelText, LabelKind kind) {
-        super(scrollPane, labelText, kind);
-        this.commentField = commentField;
+    private CustomCommentField(TextBuilder.TextAreaBuilder textAreaBuilder, String labelText, LabelKind kind) {
+        super(textAreaBuilder.component(), labelText, kind);
+        this.commentField = textAreaBuilder.textArea();
     }
 
     public ValidationInfo validator() {
@@ -47,16 +42,12 @@ public class CustomCommentField extends Labelled<JScrollPane> {
     }
 
     public static CustomCommentField with(String initialMessage) {
-        var customMessage = new JBTextArea(initialMessage);
-        customMessage.setFont(JBFont.regular());
-        customMessage.setLineWrap(true);
-        // This adds a bit of padding between the border and the text:
-        customMessage.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(JBColor.border()), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        customMessage.setCaretPosition(initialMessage.length());
-
         return new CustomCommentField(
-                ScrollPaneFactory.createScrollPane(customMessage), customMessage, "?/?", LabelKind.HINT);
+                TextBuilder.textArea(initialMessage)
+                        .updateCaretPosition(area -> area.getText().length())
+                        .maxLines(40),
+                "?/?",
+                LabelKind.HINT);
     }
 
     public void registerValidator(@NotNull Disposable parentDisposable) {

@@ -10,16 +10,14 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JSeparator;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.dsl.builder.components.DslLabel;
-import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.util.ui.JBFont;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -75,13 +73,7 @@ public class SplashDialog extends DialogWrapper {
         return new Action[] {this.myOKAction};
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     private static JComponent createHtmlLabel(String content) {
-        // Using DslLabel since it has proper HTML link support
-        var label = new DslLabel(DslLabelType.LABEL);
-        label.setFont(JBFont.regular().biggerOn(2.0f));
-        label.setText(content);
-        label.setAction(e -> BrowserUtil.browse(e.getURL()));
-        return label;
+        return TextBuilder.html(content).font(JBFont.regular().biggerOn(2.0f)).label();
     }
 }
