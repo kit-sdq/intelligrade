@@ -37,7 +37,7 @@ dependencies {
     testImplementation('com.tngtech.archunit:archunit-junit4:' + ARCHUNIT_VERSION)
 
     intellijPlatform {
-        intellijIdeaCommunity('2025.1.1')
+        intellijIdeaCommunity('2025.1.5')
         pluginVerifier()
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.idea.maven")
