@@ -77,7 +77,7 @@ object AssessmentTracker {
     }
 
     @Throws(ArtemisClientException::class)
-    private suspend fun cloneSubmission(workspacePath: Path?, assessment: Assessment): ClonedProgrammingSubmission? {
+    private suspend fun cloneSubmission(workspacePath: Path, assessment: Assessment): ClonedProgrammingSubmission? {
         // Clone the new submission
         val submission = when (ArtemisSettingsState.getInstance().vcsAccessOption) {
             VCSAccessOption.SSH -> withContext(Dispatchers.IO) {
