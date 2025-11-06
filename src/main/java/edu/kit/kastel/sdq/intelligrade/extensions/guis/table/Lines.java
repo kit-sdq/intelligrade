@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public record Lines(List<LineLocation> locations) implements Comparable<Lines> {
     public static Lines fromLines(List<Lines> lines) {
@@ -22,7 +22,7 @@ public record Lines(List<LineLocation> locations) implements Comparable<Lines> {
     }
 
     @Override
-    public int compareTo(@NotNull Lines other) {
+    public int compareTo(@NonNull Lines other) {
         var left = locations.stream().sorted().toList();
         var right = other.locations.stream().sorted().toList();
 

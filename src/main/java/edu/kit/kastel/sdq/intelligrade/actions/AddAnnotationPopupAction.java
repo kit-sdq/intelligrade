@@ -22,18 +22,18 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import edu.kit.kastel.sdq.artemis4j.grading.penalty.MistakeType;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public class AddAnnotationPopupAction extends AnAction {
     private static final Locale LOCALE = DynamicBundle.getLocale();
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
+    public @NonNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.BGT;
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) {
+    public void update(@NonNull AnActionEvent e) {
         Caret caret = e.getData(CommonDataKeys.CARET);
 
         // if no exercise config is loaded, we cannot make annotations
@@ -43,7 +43,7 @@ public class AddAnnotationPopupAction extends AnAction {
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+    public void actionPerformed(@NonNull AnActionEvent e) {
         Caret caret = e.getData(CommonDataKeys.CARET);
 
         // if no exercise config is loaded, we cannot make annotations
@@ -107,7 +107,7 @@ public class AddAnnotationPopupAction extends AnAction {
         }
 
         @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
+        public void actionPerformed(@NonNull AnActionEvent e) {
             boolean withCustomMessage =
                     e.getInputEvent() != null && e.getInputEvent().isControlDown();
             PluginState.getInstance()
@@ -117,7 +117,7 @@ public class AddAnnotationPopupAction extends AnAction {
         }
 
         @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
+        public @NonNull ActionUpdateThread getActionUpdateThread() {
             return ActionUpdateThread.EDT;
         }
 

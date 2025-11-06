@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.autograder;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.AutograderOption;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public class AutograderTask extends Task.Backgroundable {
     private static final Logger LOG = Logger.getInstance(AutograderTask.class);
@@ -45,7 +45,7 @@ public class AutograderTask extends Task.Backgroundable {
         this.onSuccessCallback = onSuccess;
     }
 
-    public void run(@NotNull ProgressIndicator indicator) {
+    public void run(@NonNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
 
         var settings = ArtemisSettingsState.getInstance();

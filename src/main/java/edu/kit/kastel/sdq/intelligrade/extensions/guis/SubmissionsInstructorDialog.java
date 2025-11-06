@@ -35,8 +35,8 @@ import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class SubmissionsInstructorDialog extends DialogWrapper {
     private static final Logger LOG = Logger.getInstance(SubmissionsInstructorDialog.class);
@@ -74,7 +74,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         searchPanel.add(searchField, "growx");
         searchField.addDocumentListener(new DocumentAdapter() {
             @Override
-            protected void textChanged(@NotNull DocumentEvent documentEvent) {
+            protected void textChanged(@NonNull DocumentEvent documentEvent) {
                 updateShownSubmissions();
             }
         });
@@ -106,7 +106,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
     }
 
     @Override
-    protected Action @NotNull [] createActions() {
+    protected Action @NonNull [] createActions() {
         return new Action[] {this.myCancelAction};
     }
 

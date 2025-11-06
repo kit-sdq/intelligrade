@@ -35,7 +35,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public class AnnotationsTreeTable extends TreeTable {
     private static final Logger LOG = Logger.getInstance(AnnotationsTreeTable.class);
@@ -163,7 +163,7 @@ public class AnnotationsTreeTable extends TreeTable {
     private void installDoubleClickListener() {
         new DoubleClickListener() {
             @Override
-            protected boolean onDoubleClick(@NotNull MouseEvent event) {
+            protected boolean onDoubleClick(@NonNull MouseEvent event) {
                 TreePath path = getTree().getLeadSelectionPath();
                 if (path == null) {
                     return true;

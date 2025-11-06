@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.time.Duration;
@@ -21,8 +21,8 @@ import com.intellij.ui.dsl.builder.components.DslLabelType;
 import com.intellij.util.ui.JBFont;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class SplashDialog extends DialogWrapper {
     private static final TemporalAmount SPLASH_INTERVAL = Duration.ofMinutes(60);
@@ -71,7 +71,7 @@ public class SplashDialog extends DialogWrapper {
     }
 
     @Override
-    protected Action @NotNull [] createActions() {
+    protected Action @NonNull [] createActions() {
         return new Action[] {this.myOKAction};
     }
 

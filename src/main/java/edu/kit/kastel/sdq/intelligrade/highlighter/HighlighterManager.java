@@ -38,7 +38,7 @@ import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.icons.ArtemisIcons;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * This class manages the highlights (the colored lines that indicate an annotation) in the editor.
@@ -54,7 +54,7 @@ public class HighlighterManager {
         var messageBus = IntellijUtil.getActiveProject().getMessageBus();
         messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
             @Override
-            public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            public void fileOpened(@NonNull FileEditorManager source, @NonNull VirtualFile file) {
                 var editor = source.getSelectedTextEditor();
 
                 if (PluginState.getInstance().isAssessing() && editor != null) {
@@ -64,7 +64,7 @@ public class HighlighterManager {
             }
 
             @Override
-            public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            public void fileClosed(@NonNull FileEditorManager source, @NonNull VirtualFile file) {
                 var editor = source.getSelectedTextEditor();
                 if (editor == null) {
                     return;
@@ -217,7 +217,7 @@ public class HighlighterManager {
             }
 
             @Override
-            public @NotNull Icon getIcon() {
+            public @NonNull Icon getIcon() {
                 return switch (annotations.size()) {
                     case 1 -> ArtemisIcons.AnnotationsGutter1;
                     case 2 -> ArtemisIcons.AnnotationsGutter2;
@@ -313,7 +313,7 @@ public class HighlighterManager {
 
             group.addAction(new AnActionButton(text) {
                 @Override
-                public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
+                public void actionPerformed(@NonNull AnActionEvent anActionEvent) {
                     AnnotationsListPanel.getPanel().selectAnnotation(annotation);
                 }
 
@@ -323,7 +323,7 @@ public class HighlighterManager {
                 }
 
                 @Override
-                public @NotNull ActionUpdateThread getActionUpdateThread() {
+                public @NonNull ActionUpdateThread getActionUpdateThread() {
                     return ActionUpdateThread.EDT;
                 }
             });

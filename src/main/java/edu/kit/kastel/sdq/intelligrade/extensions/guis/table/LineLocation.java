@@ -4,7 +4,7 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis.table;
 import java.util.Comparator;
 
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public record LineLocation(int startLine, int endLine) implements Comparable<LineLocation> {
     public static LineLocation fromAnnotation(Annotation annotation) {
@@ -17,7 +17,7 @@ public record LineLocation(int startLine, int endLine) implements Comparable<Lin
     }
 
     @Override
-    public int compareTo(@NotNull LineLocation other) {
+    public int compareTo(@NonNull LineLocation other) {
         return Comparator.comparing(LineLocation::startLine)
                 .thenComparing(LineLocation::endLine)
                 .compare(this, other);
