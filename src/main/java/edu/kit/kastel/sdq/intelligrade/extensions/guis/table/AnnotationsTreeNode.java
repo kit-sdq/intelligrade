@@ -23,7 +23,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.ColumnInfo;
 import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
     private static final Locale LOCALE = DynamicBundle.getLocale();
@@ -57,7 +57,7 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
         }
 
         @Override
-        public @NotNull PresentationData getPresentation() {
+        public @NonNull PresentationData getPresentation() {
             this.data.clear();
 
             var attributes = NORMAL_ATTRIBUTES;
@@ -220,15 +220,15 @@ public abstract class AnnotationsTreeNode extends DefaultMutableTreeNode {
     public static class AnnotationNode extends AnnotationsTreeNode {
         // This is transient to make sonar happy, because the parent class is serializable.
         // It should never be serialized, so this solution is fine.
-        private final transient @NotNull Annotation annotation;
+        private final transient @NonNull Annotation annotation;
 
-        public AnnotationNode(@NotNull Annotation annotation) {
+        public AnnotationNode(@NonNull Annotation annotation) {
             super(false);
 
             this.annotation = annotation;
         }
 
-        public @NotNull Annotation getAnnotation() {
+        public @NonNull Annotation getAnnotation() {
             return annotation;
         }
 

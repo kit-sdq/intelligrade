@@ -7,7 +7,7 @@ import java.util.Objects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xmlb.Converter;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * This class represents a color in a format that is supported by the plugin.
@@ -89,7 +89,7 @@ public class ThemeColor {
         private static final int NUMBER_OF_FIELDS = 2;
 
         @Override
-        public ThemeColor fromString(@NotNull String value) {
+        public ThemeColor fromString(@NonNull String value) {
             String[] serializedValues = value.split(SERIALIZED_DELIMITER, -1);
 
             // In previous versions colors were stored as a single int color.
@@ -111,12 +111,12 @@ public class ThemeColor {
             return new ThemeColor(regularColor, darkColor);
         }
 
-        private static @NotNull Color parseColor(String string) {
+        private static @NonNull Color parseColor(String string) {
             return new Color(Integer.parseInt(string), true);
         }
 
         @Override
-        public String toString(@NotNull ThemeColor color) {
+        public String toString(@NonNull ThemeColor color) {
             String[] serializedValues = new String[NUMBER_OF_FIELDS];
 
             serializedValues[REGULAR_COLOR_INDEX] = String.valueOf(color.brightColor.getRGB());

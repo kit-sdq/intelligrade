@@ -2,7 +2,7 @@
 package edu.kit.kastel.sdq.intelligrade.extensions.guis.table;
 
 import com.intellij.util.ui.ColumnInfo;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 class DefaultColumnInfo extends ColumnInfo {
     private final Class<?> columnClass;

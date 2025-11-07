@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.listeners;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,13 +10,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import edu.kit.kastel.sdq.intelligrade.highlighter.HighlighterManager;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class OnStartupCompleted implements ProjectActivity, DumbAware {
     @Nullable
     @Override
-    public Object execute(@NotNull Project project, @NotNull Continuation<? super Unit> continuation) {
+    public Object execute(@NonNull Project project, @NonNull Continuation<? super Unit> continuation) {
         HighlighterManager.initialize();
 
         project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, FileOpener.getInstance());

@@ -22,7 +22,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * This class implements the settings Dialog for this PlugIn.

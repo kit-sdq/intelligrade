@@ -12,8 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * This class persists all required data for the PlugIn.
@@ -86,7 +86,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
      * @see XmlSerializerUtil#copyBean(Object, Object)
      */
     @Override
-    public void loadState(@NotNull InternalState state) {
+    public void loadState(@NonNull InternalState state) {
         XmlSerializerUtil.copyBean(state, this.state);
 
         // The annotation color type was changed from an int to a ThemeColor.

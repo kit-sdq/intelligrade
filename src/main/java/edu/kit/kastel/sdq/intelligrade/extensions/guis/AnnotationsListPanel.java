@@ -29,7 +29,7 @@ import edu.kit.kastel.sdq.intelligrade.extensions.guis.table.AnnotationsTreeTabl
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
     private final AnnotationsTableModel model;
@@ -83,12 +83,12 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
 
         var editButton = new AnActionButton("Edit Custom Message/Score") {
             @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
+            public void actionPerformed(@NonNull AnActionEvent e) {
                 table.editCustomMessageOfSelection();
             }
 
             @Override
-            public @NotNull ActionUpdateThread getActionUpdateThread() {
+            public @NonNull ActionUpdateThread getActionUpdateThread() {
                 return ActionUpdateThread.EDT;
             }
         };
@@ -96,12 +96,12 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
 
         var deleteButton = new AnActionButton("Delete") {
             @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
+            public void actionPerformed(@NonNull AnActionEvent e) {
                 table.deleteSelection();
             }
 
             @Override
-            public @NotNull ActionUpdateThread getActionUpdateThread() {
+            public @NonNull ActionUpdateThread getActionUpdateThread() {
                 return ActionUpdateThread.EDT;
             }
         };
@@ -109,12 +109,12 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
 
         var restoreButton = new AnActionButton("Restore") {
             @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
+            public void actionPerformed(@NonNull AnActionEvent e) {
                 table.restoreSelection();
             }
 
             @Override
-            public @NotNull ActionUpdateThread getActionUpdateThread() {
+            public @NonNull ActionUpdateThread getActionUpdateThread() {
                 return ActionUpdateThread.EDT;
             }
         };
@@ -129,7 +129,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         // emitted the annotation.
         var debugButton = new AnActionButton("Debug Information") {
             @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
+            public void actionPerformed(@NonNull AnActionEvent e) {
                 var annotations = table.getSelectedAnnotations();
                 if (annotations.isEmpty()) {
                     return;
@@ -141,7 +141,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
             }
 
             @Override
-            public @NotNull ActionUpdateThread getActionUpdateThread() {
+            public @NonNull ActionUpdateThread getActionUpdateThread() {
                 return ActionUpdateThread.EDT;
             }
         };

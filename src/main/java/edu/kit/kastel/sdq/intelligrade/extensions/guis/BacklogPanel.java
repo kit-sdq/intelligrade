@@ -24,7 +24,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 public class BacklogPanel extends JPanel {
     private final SearchTextField searchField;
@@ -50,7 +50,7 @@ public class BacklogPanel extends JPanel {
         filterPanel.add(searchField, "growx");
         searchField.addDocumentListener(new DocumentAdapter() {
             @Override
-            protected void textChanged(@NotNull DocumentEvent documentEvent) {
+            protected void textChanged(@NonNull DocumentEvent documentEvent) {
                 updateBacklog();
             }
         });
