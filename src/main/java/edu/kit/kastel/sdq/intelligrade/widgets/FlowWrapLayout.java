@@ -33,17 +33,23 @@ public class FlowWrapLayout implements LayoutManager2 {
     }
 
     private FlowWrapLayout(int maxColumns, boolean isDebug) {
-        this(IntStream.rangeClosed(1, maxColumns)
-                .mapToObj(i -> new MigConstraint(i, "", "", ""))
-                .toList());
+        this(
+                IntStream.rangeClosed(1, maxColumns)
+                        .mapToObj(i -> new MigConstraint(i, "", "", ""))
+                        .toList(),
+                isDebug);
     }
 
     public FlowWrapLayout(Collection<MigConstraint> layouts) {
+        this(layouts, false);
+    }
+
+    public FlowWrapLayout(Collection<MigConstraint> layouts, boolean isDebug) {
         if (layouts.isEmpty()) {
             throw new IllegalArgumentException("Layouts list cannot be empty");
         }
 
-        this.isDebug = false;
+        this.isDebug = isDebug;
         this.layouts = new ArrayList<>(layouts.size());
 
         for (MigConstraint constraint : layouts) {

@@ -312,7 +312,6 @@ public final class TextBuilder {
             if (attr != null) {
                 var res = attr.getAttribute(TextWidget.VERTICAL_ALIGNMENT_ATTR);
                 if (res != null) {
-                    System.out.println("getVerticalAlignment called on alignment " + res);
                     return (int) res;
                 }
             }
