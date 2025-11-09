@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.intellij.openapi.diagnostic.Logger;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -23,6 +24,7 @@ import net.miginfocom.swing.MigLayout;
  * the sizes.
  */
 public class FlowWrapLayout implements LayoutManager2 {
+    private static final Logger LOG = Logger.getInstance(FlowWrapLayout.class);
     private final List<FixedLayout> layouts;
     private final boolean isDebug;
 
@@ -106,11 +108,11 @@ public class FlowWrapLayout implements LayoutManager2 {
         var minDim = this.currentLayout(parent).minimumLayoutSize(parent);
         var oneColumnDim = this.findClosestLayout(1).layout().minimumLayoutSize(parent);
         if (this.isDebug) {
-            System.out.println("components: %d, maxWidth: %d"
+            LOG.info("components: %d, maxWidth: %d"
                     .formatted(
                             parent.getComponentCount(),
                             parent.getWidth() - parent.getInsets().left - parent.getInsets().right));
-            System.out.println("all layouts: [%s]"
+            LOG.info("all layouts: [%s]"
                     .formatted(this.layouts.stream()
                             .map(fixedLayout -> "%d(width=%d, height=%d)"
                                     .formatted(
@@ -118,7 +120,7 @@ public class FlowWrapLayout implements LayoutManager2 {
                                             fixedLayout.layout().minimumLayoutSize(parent).width,
                                             fixedLayout.layout().minimumLayoutSize(parent).height))
                             .collect(Collectors.joining(",\n "))));
-            System.out.println("current minimum layout size: (width=%d, height=%d), actual: (width=%d, height=%d)"
+            LOG.info("current minimum layout size: (width=%d, height=%d), actual: (width=%d, height=%d)"
                     .formatted(minDim.width, minDim.height, oneColumnDim.width, oneColumnDim.height));
         }
 
@@ -238,7 +240,7 @@ public class FlowWrapLayout implements LayoutManager2 {
                                     component.getPreferredSize().width))
                     .collect(Collectors.joining(",\n"));
 
-            System.out.println("[%s]".formatted(text));
+            LOG.info("[%s]".formatted(text));
         }
 
         // Choosing the best layout is a bit more involved, because there are many variables to consider.
@@ -271,9 +273,9 @@ public class FlowWrapLayout implements LayoutManager2 {
                 .orElse(1);
 
         if (this.isDebug) {
-            System.out.println("Choosing layout with %d columns, to best fit in container width %d"
+            LOG.info("Choosing layout with %d columns, to best fit in container width %d"
                     .formatted(targetLayout, maxWidth));
-            System.out.println("-------------");
+            LOG.info("-------------");
         }
         return targetLayout;
     }

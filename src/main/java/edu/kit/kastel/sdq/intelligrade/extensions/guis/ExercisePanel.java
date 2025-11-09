@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 
@@ -149,7 +150,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         content.add(backlogPanel, "spanx 2, growx");
 
         setContent(new JScrollPane(
-                content, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+                content,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
         exerciseSelector.addItemListener(this::handleExerciseSelected);
 

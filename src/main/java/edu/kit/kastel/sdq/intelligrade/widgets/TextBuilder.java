@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
@@ -128,8 +129,8 @@ public final class TextBuilder {
          * @param positionFunction a function that takes the text area and returns the new caret position
          * @return the builder
          */
-        public BaseTextBuilder updateCaretPosition(Function<? super JTextComponent, Integer> positionFunction) {
-            this.text.setCaretPosition(positionFunction.apply(this.text));
+        public BaseTextBuilder updateCaretPosition(ToIntFunction<? super JTextComponent> positionFunction) {
+            this.text.setCaretPosition(positionFunction.applyAsInt(this.text));
             return this;
         }
 
@@ -319,6 +320,7 @@ public final class TextBuilder {
             return StyleConstants.ALIGN_CENTER;
         }
 
+        @Override
         protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
             super.layoutMajorAxis(targetSpan, axis, offsets, spans);
             int textBlockHeight = Arrays.stream(spans).sum();
@@ -481,14 +483,14 @@ public final class TextBuilder {
         CENTER(StyleConstants.ALIGN_CENTER),
         RIGHT(StyleConstants.ALIGN_RIGHT);
 
-        private final int alignment;
+        private final int value;
 
-        Alignment(int alignment) {
-            this.alignment = alignment;
+        Alignment(int value) {
+            this.value = value;
         }
 
         private int getStyleAlignment() {
-            return this.alignment;
+            return this.value;
         }
     }
 }
