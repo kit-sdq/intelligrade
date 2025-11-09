@@ -166,7 +166,6 @@ public final class TextBuilder {
             throw new IllegalStateException("The text component does not support colored text.");
         }
 
-
         public BaseTextBuilder addText(String text) {
             this.text.setText(this.text().getText() + text);
             return this;

@@ -36,7 +36,6 @@ public class FlowWrapLayout implements LayoutManager2 {
         this(maxColumns, layoutConstraints, false);
     }
 
-
     private FlowWrapLayout(int maxColumns, String layoutConstraints, boolean isDebug) {
         this(
                 IntStream.rangeClosed(1, maxColumns)

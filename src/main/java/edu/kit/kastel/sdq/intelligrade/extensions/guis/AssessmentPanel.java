@@ -63,7 +63,10 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
         super(true, true);
 
         content = new ScrollablePanel(new MigLayout("wrap 1", "[grow]"));
-        setContent(ScrollPaneFactory.createScrollPane(content, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+        setContent(ScrollPaneFactory.createScrollPane(
+                content,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
         pointsLabel = new JBLabel();
 
@@ -75,7 +78,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
             var infoLabel = TextBuilder.immutable("Hold ")
                     .foreground(JBColor.GRAY)
-                    .addColoredText(KeyPress.of(KeyEvent.VK_CONTROL).toString(), JBUI.CurrentTheme.Link.Foreground.ENABLED)
+                    .addColoredText(
+                            KeyPress.of(KeyEvent.VK_CONTROL).toString(), JBUI.CurrentTheme.Link.Foreground.ENABLED)
                     .addText(", while pressing a button, to add a custom message")
                     .horizontalAlignment(TextBuilder.Alignment.CENTER)
                     .text();
@@ -104,7 +108,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
         var panel = new JBPanel<>(new FlowWrapLayout(5, "fill, gap 0"));
         for (var mistakeType : mistakeTypes) {
-            var button = ExercisePanel.createWrappingButton(mistakeType.getButtonText().translateTo(LOCALE));
+            var button = ExercisePanel.createWrappingButton(
+                    mistakeType.getButtonText().translateTo(LOCALE));
 
             // no tooltip for custom comment
             if (!mistakeType.isCustomAnnotation()) {
