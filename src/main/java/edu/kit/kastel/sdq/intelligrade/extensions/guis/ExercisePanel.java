@@ -244,7 +244,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         statisticsPanel.add(userStatisticsLabel);
     }
 
-    private static JButton createWrappingButton(String text) {
+    public static JButton createWrappingButton(String text) {
         return new JButton("<html><body style='text-align: center;'>" + text + "</body></html>");
     }
 

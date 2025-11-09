@@ -46,7 +46,6 @@ public class ArtemisSettings implements Configurable {
     private JBRadioButton autograderSkipButton;
 
     private JBCheckBox autoOpenMainClassCheckBox;
-    private JBIntSpinner columnsPerRatingGroupSpinner;
     private ThemeColorPanel highlighterColorChooser;
     private ThemeColorPanel activeAssessmentButtonColorChooser;
     private ThemeColorPanel finishedAssessmentButtonColorChooser;
@@ -203,10 +202,6 @@ public class ArtemisSettings implements Configurable {
         autoOpenMainClassCheckBox = new JBCheckBox("Auto-open main class");
         contentPanel.add(autoOpenMainClassCheckBox, "span 2, growx");
 
-        contentPanel.add(new JBLabel("Columns per rating group:"));
-        columnsPerRatingGroupSpinner = new JBIntSpinner(3, 1, 50);
-        contentPanel.add(columnsPerRatingGroupSpinner, "growx");
-
         contentPanel.add(new JBLabel("Highlighter color:"));
         highlighterColorChooser = new ThemeColorPanel();
         contentPanel.add(highlighterColorChooser, "growx");
@@ -240,7 +235,6 @@ public class ArtemisSettings implements Configurable {
         boolean modified = !new String(passwordField.getPassword()).equals(credentials.getArtemisPassword());
         modified |= !usernameField.getText().equals(settings.getUsername());
         modified |= !artemisURLField.getText().equals(settings.getArtemisInstanceUrl());
-        modified |= !columnsPerRatingGroupSpinner.getValue().equals(settings.getColumnsPerRatingGroup());
         modified |= !Objects.equals(highlighterColorChooser.getSelectedColor(), settings.getAnnotationColor());
         modified |= useTokenLoginButton.isSelected() != settings.isUseTokenLogin();
         modified |= getSelectedAutograderOption() != settings.getAutograderOption();
@@ -276,8 +270,6 @@ public class ArtemisSettings implements Configurable {
         settings.setAutograderPath(autograderPathField.getText());
 
         settings.setAutoOpenMainClass(autoOpenMainClassCheckBox.isSelected());
-        settings.setColumnsPerRatingGroup(
-                Integer.parseInt(columnsPerRatingGroupSpinner.getValue().toString()));
         settings.setAnnotationColor(highlighterColorChooser.getSelectedColor());
         settings.setActiveAssessmentButtonColor(activeAssessmentButtonColorChooser.getSelectedColor());
         settings.setFinishedAssessmentButtonColor(finishedAssessmentButtonColorChooser.getSelectedColor());
@@ -313,7 +305,6 @@ public class ArtemisSettings implements Configurable {
         autograderPathField.setText(settings.getAutograderPath());
 
         autoOpenMainClassCheckBox.setSelected(settings.isAutoOpenMainClass());
-        columnsPerRatingGroupSpinner.setValue(settings.getColumnsPerRatingGroup());
         highlighterColorChooser.setSelectedColor(settings.getAnnotationColor());
         activeAssessmentButtonColorChooser.setSelectedColor(settings.getActiveAssessmentButtonColor());
         finishedAssessmentButtonColorChooser.setSelectedColor(settings.getFinishedAssessmentButtonColor());

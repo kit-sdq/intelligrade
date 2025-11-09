@@ -16,8 +16,10 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.border.Border;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.BoxView;
 import javax.swing.text.ComponentView;
+import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.IconView;
 import javax.swing.text.JTextComponent;
@@ -160,6 +162,16 @@ public final class TextBuilder {
             return this;
         }
 
+        public BaseTextBuilder addColoredText(String text, Color color) {
+            throw new IllegalStateException("The text component does not support colored text.");
+        }
+
+
+        public BaseTextBuilder addText(String text) {
+            this.text.setText(this.text().getText() + text);
+            return this;
+        }
+
         /**
          * Sets the maximum number of lines before a scrollbar should appear.
          * <br>
@@ -289,16 +301,24 @@ public final class TextBuilder {
             this.updateAlignmentAttrs();
         }
 
+        private void updateAlignmentAttrs() {
+            StyledDocument doc = this.getStyledDocument();
+            doc.setParagraphAttributes(0, doc.getLength() - 1, this.attributes, false);
+        }
+
         @Override
         public void setText(String text) {
             super.setText(text);
-
             this.updateAlignmentAttrs();
         }
 
-        private void updateAlignmentAttrs() {
-            StyledDocument doc = (StyledDocument) this.getDocument();
-            doc.setParagraphAttributes(0, doc.getLength() - 1, this.attributes, false);
+        public void appendText(String text, AttributeSet attributes) {
+            try {
+                Document doc = this.getDocument();
+                doc.insertString(doc.getLength(), text, attributes);
+            } catch (BadLocationException e) {
+                throw new IllegalStateException("Failed to append text", e);
+            }
         }
     }
 
@@ -352,6 +372,24 @@ public final class TextBuilder {
             super.horizontalAlignment(alignment);
 
             this.text().setAlignment(this.horizontalAlignment, Alignment.CENTER);
+            return this;
+        }
+
+        @Override
+        public RegularTextBuilder addColoredText(String text, Color color) {
+            var attributes = new SimpleAttributeSet();
+            StyleConstants.setForeground(attributes, color);
+
+            this.text().appendText(text, attributes);
+
+            return this;
+        }
+
+        @Override
+        public RegularTextBuilder addText(String text) {
+            // setText removes all attributes -> it is overwritten here
+            this.text().appendText(text, null);
+
             return this;
         }
 

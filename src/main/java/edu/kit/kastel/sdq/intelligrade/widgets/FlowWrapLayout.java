@@ -29,13 +29,18 @@ public class FlowWrapLayout implements LayoutManager2 {
     private final boolean isDebug;
 
     public FlowWrapLayout(int maxColumns) {
-        this(maxColumns, false);
+        this(maxColumns, "");
     }
 
-    private FlowWrapLayout(int maxColumns, boolean isDebug) {
+    public FlowWrapLayout(int maxColumns, String layoutConstraints) {
+        this(maxColumns, layoutConstraints, false);
+    }
+
+
+    private FlowWrapLayout(int maxColumns, String layoutConstraints, boolean isDebug) {
         this(
                 IntStream.rangeClosed(1, maxColumns)
-                        .mapToObj(i -> new MigConstraint(i, "", "", ""))
+                        .mapToObj(i -> new MigConstraint(i, layoutConstraints, "", ""))
                         .toList(),
                 isDebug);
     }
