@@ -2,8 +2,13 @@
 package edu.kit.kastel.sdq.intelligrade.autograder;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +17,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
+import de.firemage.autograder.api.FailureInformation;
 import de.firemage.autograder.api.loader.AutograderLoader;
 import edu.kit.kastel.sdq.artemis4j.grading.Assessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission;
@@ -21,9 +29,12 @@ import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.AutograderOption;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
-import org.jspecify.annotations.NonNull;
+import edu.kit.kastel.sdq.intelligrade.widgets.MessageUtils;
+import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
+import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.NotNull;
 
-public class AutograderTask extends Task.Backgroundable {
+public final class AutograderTask extends Task.Backgroundable {
     private static final Logger LOG = Logger.getInstance(AutograderTask.class);
 
     private final Assessment assessment;
@@ -45,7 +56,7 @@ public class AutograderTask extends Task.Backgroundable {
         this.onSuccessCallback = onSuccess;
     }
 
-    public void run(@NonNull ProgressIndicator indicator) {
+    public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
 
         var settings = ArtemisSettingsState.getInstance();
@@ -57,21 +68,50 @@ public class AutograderTask extends Task.Backgroundable {
         }
 
         try {
+            List<FailureInformation> failures = new ArrayList<>();
             Consumer<String> statusConsumer = status -> indicator.setText("Autograder: " + status);
 
-            var stats = AutograderRunner.runAutograder(assessment, clonedSubmission, Locale.GERMANY, 2, statusConsumer);
+            var stats = AutograderRunner.runAutograderFallible(
+                    assessment, clonedSubmission, Locale.GERMANY, 2, statusConsumer, failures::add);
 
             String message = "Autograder made %d annotation(s). Please double-check all of them for false-positives!"
                     .formatted(stats.annotationsMade());
-            ApplicationManager.getApplication()
-                    .invokeLater(
-                            () -> Messages.showMessageDialog(message, "Autograder Completed", AllIcons.Status.Success));
 
+            ApplicationManager.getApplication().invokeLater(() -> {
+                if (failures.isEmpty()) {
+                    Messages.showMessageDialog(message, "Autograder Completed", AllIcons.Status.Success);
+                } else {
+                    showAutograderErrorPopup(stats.annotationsMade(), failures);
+                }
+            });
             ApplicationManager.getApplication().invokeLater(this.onSuccessCallback);
         } catch (AutograderFailedException e) {
             LOG.warn(e);
             ArtemisUtils.displayGenericErrorBalloon("Autograder Failed", e.getMessage());
         }
+    }
+
+    private static void showAutograderErrorPopup(int annotationsMade, Iterable<FailureInformation> failures) {
+        var mainPanel = new JBPanel<>(new MigLayout("wrap", "[grow]", "[][][grow]"));
+        mainPanel.add(new JBLabel("Autograder made %d annotation(s).".formatted(annotationsMade)), "growx");
+        mainPanel.add(new JBLabel("However, the following failures occurred during execution:"), "growx");
+
+        StringJoiner result = new StringJoiner(System.lineSeparator());
+        for (var failure : failures) {
+            StringWriter stringWriter = new StringWriter();
+            failure.exception().printStackTrace(new PrintWriter(stringWriter));
+
+            result.add(stringWriter.toString());
+        }
+
+        mainPanel.add(
+                TextBuilder.textBox(result.toString())
+                        .editable(false)
+                        .maxLines(20)
+                        .updateCaretPosition(area -> 0)
+                        .component(),
+                "grow");
+        MessageUtils.showWarning("Autograder Completed with Failures", mainPanel);
     }
 
     private boolean loadAutograderFromFile(ArtemisSettingsState settings, ProgressIndicator indicator) {

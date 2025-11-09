@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.font.TextAttribute;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -20,9 +21,11 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLayer;
 import javax.swing.JPanel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.plaf.LayerUI;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -43,6 +46,9 @@ import edu.kit.kastel.sdq.intelligrade.extensions.settings.ThemeColor;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.utils.KeyPress;
+import edu.kit.kastel.sdq.intelligrade.widgets.FlowWrapLayout;
+import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 
 public class AssessmentPanel extends SimpleToolWindowPanel {
@@ -56,8 +62,11 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     public AssessmentPanel() {
         super(true, true);
 
-        content = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
-        setContent(ScrollPaneFactory.createScrollPane(content));
+        content = new ScrollablePanel(new MigLayout("wrap 1", "[grow]"));
+        setContent(ScrollPaneFactory.createScrollPane(
+                content,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
 
         pointsLabel = new JBLabel();
 
@@ -67,8 +76,13 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
 
             content.add(pointsLabel, "alignx center");
 
-            var infoLabel = new JBLabel("Hold Ctrl to add a custom message");
-            infoLabel.setForeground(JBColor.GRAY);
+            var infoLabel = TextBuilder.immutable("Hold ")
+                    .foreground(JBColor.GRAY)
+                    .addColoredText(
+                            KeyPress.of(KeyEvent.VK_CONTROL).toString(), JBUI.CurrentTheme.Link.Foreground.ENABLED)
+                    .addText(", while pressing a button, to add a custom message")
+                    .horizontalAlignment(TextBuilder.Alignment.CENTER)
+                    .text();
             content.add(infoLabel, "alignx center");
 
             assessment.registerAnnotationsUpdatedListener(annotations -> {
@@ -86,15 +100,16 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     }
 
     private Component addGroupPanel(
-            ActiveAssessment assessment, RatingGroup ratingGroup, List<MistakeType> mistakeTypes, int buttonsPerRow) {
+            ActiveAssessment assessment, RatingGroup ratingGroup, List<MistakeType> mistakeTypes) {
         var separator = new TitledSeparator(getRatingGroupTitle(assessment.getAssessment(), ratingGroup));
         separator.setTitleFont(JBFont.h3().asBold());
         this.ratingGroupBorders.put(ratingGroup, separator);
         this.content.add(separator, "growx");
 
-        var panel = new JBPanel<>(new MigLayout("fill, gap 0, wrap " + buttonsPerRow));
+        var panel = new JBPanel<>(new FlowWrapLayout(5, "fill, gap 0"));
         for (var mistakeType : mistakeTypes) {
-            var button = new JButton(mistakeType.getButtonText().translateTo(LOCALE));
+            var button = ExercisePanel.createWrappingButton(
+                    mistakeType.getButtonText().translateTo(LOCALE));
 
             // no tooltip for custom comment
             if (!mistakeType.isCustomAnnotation()) {
@@ -111,8 +126,8 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                 }
             };
             JPanel buttonPanel = new JPanel(new MigLayout("fill, insets 0"));
-            buttonPanel.add(button, "growx");
-            panel.add(new JLayer<>(buttonPanel, layer), "growx, sizegroup main");
+            buttonPanel.add(button, "grow");
+            panel.add(new JLayer<>(buttonPanel, layer), "grow, sizegroup main");
 
             button.addActionListener(a -> assessment.addAnnotationAtCaret(
                     mistakeType, (a.getModifiers() & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK));
@@ -148,7 +163,6 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
     }
 
     private void createMistakeButtons(ActiveAssessment assessment) {
-        int buttonsPerRow = ArtemisSettingsState.getInstance().getColumnsPerRatingGroup();
         for (var ratingGroup : assessment.getGradingConfig().getRatingGroups()) {
             if (ratingGroup.getAllMistakeTypes().isEmpty()) {
                 continue;
@@ -160,7 +174,7 @@ public class AssessmentPanel extends SimpleToolWindowPanel {
                     continue;
                 }
 
-                var panel = addGroupPanel(assessment, group, mistakeTypes, buttonsPerRow);
+                var panel = addGroupPanel(assessment, group, mistakeTypes);
                 this.content.add(panel, "growx");
             }
         }

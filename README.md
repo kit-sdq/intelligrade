@@ -39,6 +39,16 @@ of paper icon to the bottom left is the annotations list.
     - on Linux: `./gradlew runIde --refresh-dependencies`
   This will download IntelliJ Community Edition (may take several minutes) and run it with Intelligrade installed.
 
+## Compilation failures because of cached snapshots
+
+This project depends on snapshot versions of `artemis4j`, and sometimes a cached version is not updated.
+Symptoms for this are compilation failures, even though the CI is green.
+
+To fix this, you should try the following:
+1. Close IntelliJ
+2. Delete the folders ~/.gradle/.tmp ~/gradle/caches/ and ~/.m2/repository/*
+3. Then rerun with --refresh-dependencies
+
 ## Features
 
 ## Contributing

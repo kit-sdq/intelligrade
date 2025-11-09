@@ -6,6 +6,7 @@ import java.awt.event.InputEvent;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.swing.JButton;
@@ -24,6 +25,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
+import edu.kit.kastel.sdq.artemis4j.grading.User;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.table.AnnotationsTableModel;
 import edu.kit.kastel.sdq.intelligrade.extensions.guis.table.AnnotationsTreeTable;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
@@ -34,6 +36,7 @@ import org.jspecify.annotations.NonNull;
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
     private final AnnotationsTableModel model;
     private final AnnotationsTreeTable table;
+    private AnActionButton restoreButton;
 
     public static AnnotationsListPanel getPanel() {
         var toolWindow =
@@ -107,7 +110,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         };
         group.addAction(deleteButton);
 
-        var restoreButton = new AnActionButton("Restore") {
+        this.restoreButton = new AnActionButton("Restore") {
             @Override
             public void actionPerformed(@NonNull AnActionEvent e) {
                 table.restoreSelection();
@@ -118,9 +121,14 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 return ActionUpdateThread.EDT;
             }
         };
-        group.addAction(restoreButton);
-        PluginState.getInstance()
-                .registerAssessmentStartedListener(assessment -> restoreButton.setEnabled(assessment.isReview()));
+        // only show the restore button in review mode
+        PluginState.getInstance().registerAssessmentStartedListener(assessment -> {
+            if (assessment.isReview()) {
+                group.addAction(restoreButton);
+            } else {
+                group.remove(restoreButton);
+            }
+        });
 
         // Adds a debug button to the right-click menu in the table.
         //
@@ -150,6 +158,18 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         PopupHandler.installPopupMenu(table, group, "popup@AnnotationsListPanel");
     }
 
+    private String mapAssessorId(Long id) {
+        return Optional.ofNullable(id)
+                .map(aLong -> "%s (%d)"
+                        .formatted(
+                                PluginState.getInstance()
+                                        .resolveAssessorId(aLong)
+                                        .map(User::getLogin)
+                                        .orElse("?"),
+                                aLong))
+                .orElse("?");
+    }
+
     private void showDebugDialog(Annotation annotation) {
         var panel = new JBPanel<>(new MigLayout("wrap 2", "[] [grow]"));
 
@@ -165,13 +185,11 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 Map.entry("Path", location.filePath()),
                 Map.entry("Start", location.start().toString()),
                 Map.entry("End", location.end().toString()),
-                Map.entry(
-                        "Created By",
-                        annotation.getCreatorId().map(Object::toString).orElse("?")),
+                Map.entry("Created By", mapAssessorId(annotation.getCreatorId().orElse(null))),
                 Map.entry("Suppressed", annotation.isSuppressed() ? "Yes" : "No"),
                 Map.entry(
                         "Suppressed By",
-                        annotation.getSuppressorId().map(Object::toString).orElse("?")),
+                        mapAssessorId(annotation.getSuppressorId().orElse(null))),
                 Map.entry("Classifiers", annotation.getClassifiers().toString()));
 
         for (var entry : data) {

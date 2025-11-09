@@ -40,7 +40,6 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         public String autograderPath = null;
         public boolean autoOpenMainClass = true;
         public String selectedGradingConfigPath;
-        public int columnsPerRatingGroup = 3;
 
         public Date jwtExpiry = new Date(Long.MAX_VALUE);
 
@@ -136,14 +135,6 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
 
     public void setSelectedGradingConfigPath(@Nullable String selectedGradingConfigPath) {
         state.selectedGradingConfigPath = selectedGradingConfigPath;
-    }
-
-    public int getColumnsPerRatingGroup() {
-        return state.columnsPerRatingGroup;
-    }
-
-    public void setColumnsPerRatingGroup(int columnsPerRatingGroup) {
-        state.columnsPerRatingGroup = columnsPerRatingGroup;
     }
 
     public ThemeColor getAnnotationColor() {

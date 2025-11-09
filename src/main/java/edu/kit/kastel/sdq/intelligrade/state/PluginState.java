@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -49,6 +51,7 @@ public class PluginState {
     private final List<Runnable> assessmentClosedListeners = new ArrayList<>();
     private final List<Consumer<GradingConfig.GradingConfigDTO>> gradingConfigChangedListeners = new ArrayList<>();
     private final List<Runnable> missingGradingConfigListeners = new ArrayList<>();
+    private final Map<Long, User> knownAssessors = new HashMap<>();
 
     private ArtemisConnection connection;
     private ProgrammingExercise activeExercise;
@@ -438,5 +441,41 @@ public class PluginState {
             ArtemisUtils.displayGenericErrorBalloon("Invalid grading config", e.getMessage());
             return Optional.empty();
         }
+    }
+
+    public Optional<User> resolveAssessorId(long userId) {
+        var exercise = this.getActiveExercise().orElse(null);
+        if (exercise == null) {
+            return Optional.empty();
+        }
+
+        if (knownAssessors.containsKey(userId)) {
+            return Optional.of(knownAssessors.get(userId));
+        }
+
+        // Start by adding your own id:
+        try {
+            var thisAssessor = this.connection.getAssessor();
+            knownAssessors.putIfAbsent(thisAssessor.getId(), thisAssessor);
+
+            for (var submission : exercise.fetchAllSubmissions()) {
+                var firstRound = submission.getFirstRoundAssessment();
+                if (firstRound != null) {
+                    var assessor = firstRound.getAssessor();
+                    knownAssessors.putIfAbsent(assessor.getId(), assessor);
+                }
+
+                var secondRound = submission.getSecondRoundAssessment();
+                if (secondRound != null) {
+                    var assessor = secondRound.getAssessor();
+                    knownAssessors.putIfAbsent(assessor.getId(), assessor);
+                }
+            }
+        } catch (ArtemisNetworkException exception) {
+            LOG.warn(exception);
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(knownAssessors.get(userId));
     }
 }
