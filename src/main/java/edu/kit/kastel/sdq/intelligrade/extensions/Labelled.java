@@ -4,15 +4,15 @@ package edu.kit.kastel.sdq.intelligrade.extensions;
 import java.awt.Color;
 
 import javax.swing.JComponent;
+import javax.swing.text.JTextComponent;
 
 import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ui.JBUI;
 import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 
 public class Labelled extends JBPanel<JBPanel<?>> {
-    private final JBTextArea label;
+    private final JTextComponent label;
 
     public Labelled(JComponent component, String labelText, LabelKind kind) {
         super(new MigLayout("wrap 1", "[grow]", "[grow][]"));
@@ -20,11 +20,8 @@ public class Labelled extends JBPanel<JBPanel<?>> {
         this.add(component, "grow");
 
         // Effectively a JLabel, but works with multi-line text
-        this.label = TextBuilder.immutable(labelText).foreground(kind.color).textArea();
-
-        // Without the explicit width and hmin constraints, the text area would not shrink
-        // properly/and or ignore the border
-        this.add(this.label, "grow, width 10:10, hmin 1");
+        this.label = TextBuilder.immutable(labelText).foreground(kind.color).text();
+        this.add(this.label, "grow");
     }
 
     public void changeLabelText(String newText, LabelKind kind) {

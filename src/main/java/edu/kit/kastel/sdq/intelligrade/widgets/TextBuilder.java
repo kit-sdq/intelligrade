@@ -7,10 +7,28 @@ import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.Border;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BoxView;
+import javax.swing.text.ComponentView;
+import javax.swing.text.Element;
+import javax.swing.text.IconView;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.LabelView;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.ParagraphView;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.StyledEditorKit;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.Disposable;
@@ -48,42 +66,26 @@ public final class TextBuilder {
         return new HtmlTextBuilder(spanText(text, color), color);
     }
 
-    public static TextAreaBuilder immutable(String text) {
-        return TextBuilder.immutable(text, 0);
+    public static BaseTextBuilder immutable(String text) {
+        return TextBuilder.text(text).editable(false).border(false).focusable(false);
     }
 
-    public static TextAreaBuilder immutable(String text, int width) {
-        return TextBuilder.textArea(text, 0, width)
-                .editable(false)
-                .border(false)
-                .focusable(false);
+    public static BaseTextBuilder textBox(String text) {
+        return new TextBoxBuilder(text, 0, 0);
     }
 
-    public static TextAreaBuilder textArea(String initialText) {
-        return textArea(initialText, 0, 0);
+    public static BaseTextBuilder text(String initialText) {
+        return new RegularTextBuilder(initialText).editable(true);
     }
 
-    public static TextAreaBuilder textArea(String initialText, int rows, int columns) {
-        return new TextAreaBuilder(initialText, rows, columns).editable(true).shouldWrapLines(true);
-    }
-
-    public static class TextAreaBuilder {
-        private final JBTextArea textArea;
+    public abstract static class BaseTextBuilder {
+        private final JTextComponent text;
         private int maxLines;
+        protected Alignment horizontalAlignment;
 
-        private TextAreaBuilder(String text, int rows, int columns) {
-            this.textArea = new JBTextArea(text, rows, columns);
-            this.maxLines = 0;
-
-            this.textArea.setFont(JBFont.regular());
-            // Wrap text to the next line:
-            this.textArea.setLineWrap(true);
-            // Wrap full words and not just letters:
-            this.textArea.setWrapStyleWord(true);
-
-            this.textArea.setEditable(true);
-
-            this.border(true);
+        protected BaseTextBuilder(JTextComponent text, int maxLines) {
+            this.text = text;
+            this.maxLines = maxLines;
         }
 
         /**
@@ -94,28 +96,28 @@ public final class TextBuilder {
          * @param hasBorder true if it should have a border, false otherwise
          * @return the builder
          */
-        public TextAreaBuilder border(boolean hasBorder) {
+        public BaseTextBuilder border(boolean hasBorder) {
             if (hasBorder) {
                 Border border = JBUI.Borders.empty(6, 12);
-                this.textArea.setBorder(border);
+                this.text.setBorder(border);
             } else {
-                this.textArea.setBorder(JBUI.Borders.empty());
+                this.text.setBorder(JBUI.Borders.empty());
             }
 
             return this;
         }
 
-        public TextAreaBuilder installValidator(
-                Disposable parentDisposable, Function<? super JBTextArea, ? extends ValidationInfo> validator) {
+        public BaseTextBuilder installValidator(
+                Disposable parentDisposable, Function<? super JTextComponent, ? extends ValidationInfo> validator) {
             // A ComponentValidator needs to be disposed of when the parent component in which `this` is,
             // is disposed of, otherwise intellij will complain about a memory leak/invalid parent.
             new ComponentValidator(parentDisposable)
-                    .withValidator(() -> validator.apply(this.textArea))
-                    .andRegisterOnDocumentListener(this.textArea)
-                    .installOn(this.textArea);
+                    .withValidator(() -> validator.apply(this.text))
+                    .andRegisterOnDocumentListener(this.text)
+                    .installOn(this.text);
 
             // trigger the validation of the initialMessage:
-            ComponentValidator.getInstance(this.textArea).ifPresent(ComponentValidator::revalidate);
+            ComponentValidator.getInstance(this.text).ifPresent(ComponentValidator::revalidate);
 
             return this;
         }
@@ -126,8 +128,8 @@ public final class TextBuilder {
          * @param positionFunction a function that takes the text area and returns the new caret position
          * @return the builder
          */
-        public TextAreaBuilder updateCaretPosition(Function<JBTextArea, Integer> positionFunction) {
-            this.textArea.setCaretPosition(positionFunction.apply(this.textArea));
+        public BaseTextBuilder updateCaretPosition(Function<? super JTextComponent, Integer> positionFunction) {
+            this.text.setCaretPosition(positionFunction.apply(this.text));
             return this;
         }
 
@@ -139,8 +141,21 @@ public final class TextBuilder {
          * @param isEditable true if it should be editable, false otherwise
          * @return the builder
          */
-        public TextAreaBuilder editable(boolean isEditable) {
-            this.textArea.setEditable(isEditable);
+        public BaseTextBuilder editable(boolean isEditable) {
+            this.text.setEditable(isEditable);
+            return this;
+        }
+
+        /**
+         * Sets the horizontal alignment of the text.
+         * <br>
+         * If the text component does not support alignment, this is ignored.
+         *
+         * @param alignment the alignment to set
+         * @return the builder
+         */
+        public BaseTextBuilder horizontalAlignment(Alignment alignment) {
+            this.horizontalAlignment = alignment;
             return this;
         }
 
@@ -153,7 +168,7 @@ public final class TextBuilder {
          * @param maxLines the maximum number of lines
          * @return the builder
          */
-        public TextAreaBuilder maxLines(int maxLines) {
+        public BaseTextBuilder maxLines(int maxLines) {
             this.maxLines = maxLines;
             return this;
         }
@@ -166,8 +181,8 @@ public final class TextBuilder {
          * @param isFocusable true if it should be focusable, false otherwise
          * @return the builder
          */
-        public TextAreaBuilder focusable(boolean isFocusable) {
-            this.textArea.setFocusable(isFocusable);
+        public BaseTextBuilder focusable(boolean isFocusable) {
+            this.text.setFocusable(isFocusable);
             return this;
         }
 
@@ -179,34 +194,26 @@ public final class TextBuilder {
          * @param color the color to set
          * @return the builder
          */
-        public TextAreaBuilder foreground(Color color) {
-            this.textArea.setForeground(color);
-            return this;
-        }
-
-        /**
-         * Sets whether the text area should wrap lines.
-         * <br>
-         * By default, this is true.
-         *
-         * @param shouldWrap true if lines should be wrapped, false otherwise
-         * @return the builder
-         */
-        public TextAreaBuilder shouldWrapLines(boolean shouldWrap) {
-            this.textArea.setLineWrap(shouldWrap);
+        public BaseTextBuilder foreground(Color color) {
+            this.text.setForeground(color);
             return this;
         }
 
         public JComponent component() {
             if (this.maxLines > 0) {
-                return wrapScrollPane(this.textArea, maxLines);
+                return wrapScrollPane(this.text, maxLines);
             }
 
-            return this.textArea;
+            return this.text;
         }
 
-        public JBTextArea textArea() {
-            return this.textArea;
+        public BaseTextBuilder debugBorder(Color color) {
+            this.text.setBorder(BorderFactory.createLineBorder(color, 2));
+            return this;
+        }
+
+        public JTextComponent text() {
+            return this.text;
         }
 
         /**
@@ -237,6 +244,169 @@ public final class TextBuilder {
             }
             scrollPane.setPreferredSize(preferredSize);
             return scrollPane;
+        }
+    }
+
+    public static class TextWidget extends JTextPane {
+        private static final String VERTICAL_ALIGNMENT_ATTR = "VerticalAlignment";
+        private final MutableAttributeSet attributes = new SimpleAttributeSet();
+
+        TextWidget(String text) {
+            super();
+
+            this.setContentType(UIUtil.HTML_MIME);
+            this.setEditorKit(new StyledEditorKit() {
+                @Override
+                public ViewFactory getViewFactory() {
+                    return elem -> {
+                        // Copy-paste from default StyledEditorKit.ViewFactory, which is of course not public...
+                        // (Adjusted the awful code a bit for readability)
+
+                        String kind = elem.getName();
+                        if (kind == null) {
+                            // default to text display
+                            return new LabelView(elem);
+                        }
+
+                        return switch (kind) {
+                            case AbstractDocument.ParagraphElementName -> new ParagraphView(elem);
+                            case AbstractDocument.SectionElementName -> new AlignedBoxView(elem, View.Y_AXIS);
+                            case StyleConstants.ComponentElementName -> new ComponentView(elem);
+                            case StyleConstants.IconElementName -> new IconView(elem);
+                            default -> new LabelView(elem);
+                        };
+                    };
+                }
+            });
+            this.setText(text);
+        }
+
+        void setAlignment(Alignment horizontalAlignment, Alignment verticalAlignment) {
+            this.attributes.addAttribute(VERTICAL_ALIGNMENT_ATTR, verticalAlignment.getStyleAlignment());
+
+            StyleConstants.setAlignment(this.attributes, horizontalAlignment.getStyleAlignment());
+            this.updateAlignmentAttrs();
+        }
+
+        @Override
+        public void setText(String text) {
+            super.setText(text);
+
+            this.updateAlignmentAttrs();
+        }
+
+        private void updateAlignmentAttrs() {
+            StyledDocument doc = (StyledDocument) this.getDocument();
+            doc.setParagraphAttributes(0, doc.getLength() - 1, this.attributes, false);
+        }
+    }
+
+    private static class AlignedBoxView extends BoxView {
+        public AlignedBoxView(Element elem, int axis) {
+            super(elem, axis);
+        }
+
+        private int getVerticalAlignment() {
+            AttributeSet attr = getAttributes();
+            if (attr != null) {
+                var res = attr.getAttribute(TextWidget.VERTICAL_ALIGNMENT_ATTR);
+                if (res != null) {
+                    System.out.println("getVerticalAlignment called on alignment " + res);
+                    return (int) res;
+                }
+            }
+
+            return StyleConstants.ALIGN_CENTER;
+        }
+
+        protected void layoutMajorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
+            super.layoutMajorAxis(targetSpan, axis, offsets, spans);
+            int textBlockHeight = Arrays.stream(spans).sum();
+
+            int offset =
+                    switch (getVerticalAlignment()) {
+                        case StyleConstants.ALIGN_CENTER -> (targetSpan - textBlockHeight) / 2;
+                        case StyleConstants.ALIGN_LEFT -> 0;
+                        case StyleConstants.ALIGN_RIGHT -> targetSpan - textBlockHeight;
+                        default -> throw new IllegalStateException("Unknown alignment: " + getVerticalAlignment());
+                    };
+
+            for (int i = 0; i < offsets.length; i++) {
+                offsets[i] += offset;
+            }
+        }
+    }
+
+    public static class RegularTextBuilder extends BaseTextBuilder {
+        private RegularTextBuilder(String text) {
+            super(new TextWidget(text), 0);
+
+            this.text().setFont(JBFont.regular());
+            this.text().setEditable(true);
+            this.border(true);
+        }
+
+        @Override
+        public RegularTextBuilder horizontalAlignment(Alignment alignment) {
+            super.horizontalAlignment(alignment);
+
+            this.text().setAlignment(this.horizontalAlignment, Alignment.CENTER);
+            return this;
+        }
+
+        @Override
+        public TextWidget text() {
+            return (TextWidget) super.text();
+        }
+    }
+
+    private static final class TextBoxBuilder extends BaseTextBuilder {
+        private TextBoxBuilder(String text, int rows, int columns) {
+            super(createText(text, rows, columns), 0);
+
+            this.border(true);
+        }
+
+        private static JTextComponent createText(String text, int rows, int columns) {
+            var result = new JBTextArea(text, rows, columns) {
+                @Override
+                public Dimension getMinimumSize() {
+                    // For some reason the minimum size is not computed correctly by the parent.
+                    //
+                    // For example the preferred size is (343, 17) and the minimum size is
+                    // reported as (565, 17)...
+                    //
+                    // I think this is, because JBTextArea (which extends JTextArea) overrides
+                    // getPreferredSize but not getMinimumSize.
+                    //
+                    // -> we override it here to set it to a sensible value.
+                    //
+                    // While trying to set something other than (0, 0) here, I noticed that the minimum size
+                    // will influence the layout and preferred size calculations in weird ways.
+                    //
+                    // For example, when you set the minimum size to the height of one line and the width to
+                    // a single character, the preferred height becomes the height of text.length() * lineHeight
+                    // (as if every character is on its own line), but it will use the full width anyway, resulting
+                    // in a very tall window, with a lot of empty space.
+                    if (isMinimumSizeSet()) {
+                        return super.getMinimumSize();
+                    }
+
+                    return new Dimension(0, 0);
+                }
+            };
+
+            result.setText(text);
+
+            result.setFont(JBFont.regular());
+            // Wrap text to the next line:
+            result.setLineWrap(true);
+            // Wrap full words and not just letters:
+            result.setWrapStyleWord(true);
+
+            result.setEditable(true);
+
+            return result;
         }
     }
 
@@ -303,6 +473,22 @@ public final class TextBuilder {
         public HtmlTextBuilder limitPreferredSize(boolean shouldLimit) {
             this.label.setLimitPreferredSize(shouldLimit);
             return this;
+        }
+    }
+
+    public enum Alignment {
+        LEFT(StyleConstants.ALIGN_LEFT),
+        CENTER(StyleConstants.ALIGN_CENTER),
+        RIGHT(StyleConstants.ALIGN_RIGHT);
+
+        private final int alignment;
+
+        Alignment(int alignment) {
+            this.alignment = alignment;
+        }
+
+        private int getStyleAlignment() {
+            return this.alignment;
         }
     }
 }

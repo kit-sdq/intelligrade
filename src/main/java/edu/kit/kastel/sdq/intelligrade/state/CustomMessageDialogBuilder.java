@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import javax.swing.JButton;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.text.BadLocationException;
 
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -63,7 +64,13 @@ public class CustomMessageDialogBuilder {
 
                 if (event.isControlDown()) {
                     // Enter will be used as a short-cut for ok, Ctrl+Enter is used to insert a new line:
-                    field.commentField().insert("\n", field.commentField().getCaretPosition());
+                    try {
+                        field.commentField()
+                                .getDocument()
+                                .insertString(field.commentField().getCaretPosition(), "\n", null);
+                    } catch (BadLocationException e) {
+                        throw new IllegalArgumentException(e);
+                    }
                 } else if (popup != null && canExit()) {
                     popup.closeOk((InputEvent) EventQueue.getCurrentEvent());
                 }

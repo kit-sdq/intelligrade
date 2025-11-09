@@ -1,14 +1,15 @@
 /* Licensed under EPL-2.0 2025. */
 package edu.kit.kastel.sdq.intelligrade.extensions;
 
+import javax.swing.text.JTextComponent;
+
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.ui.components.JBTextArea;
 import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import org.jetbrains.annotations.NotNull;
 
-public class CustomCommentField extends Labelled {
+public final class CustomCommentField extends Labelled {
     private static final String LABEL_PROGRESS_TEMPLATE = "%d/%d";
     private static final double WARNING_THRESHOLD = 0.8;
     private static final double ERROR_THRESHOLD = 1.0;
@@ -17,11 +18,11 @@ public class CustomCommentField extends Labelled {
     //
     // This should be sufficient for most cases:
     private static final int MAXIMUM_TEXT_LENGTH = 3500;
-    private final JBTextArea commentField;
+    private final JTextComponent commentField;
 
-    private CustomCommentField(TextBuilder.TextAreaBuilder textAreaBuilder, String labelText, LabelKind kind) {
-        super(textAreaBuilder.component(), labelText, kind);
-        this.commentField = textAreaBuilder.textArea();
+    private CustomCommentField(TextBuilder.BaseTextBuilder customTextBuilder, String labelText, LabelKind kind) {
+        super(customTextBuilder.component(), labelText, kind);
+        this.commentField = customTextBuilder.text();
     }
 
     public ValidationInfo validator() {
@@ -43,7 +44,7 @@ public class CustomCommentField extends Labelled {
 
     public static CustomCommentField with(String initialMessage) {
         return new CustomCommentField(
-                TextBuilder.textArea(initialMessage)
+                TextBuilder.textBox(initialMessage)
                         .updateCaretPosition(area -> area.getText().length())
                         .maxLines(40),
                 "?/?",
@@ -62,7 +63,7 @@ public class CustomCommentField extends Labelled {
         ComponentValidator.getInstance(this.commentField).ifPresent(ComponentValidator::revalidate);
     }
 
-    public JBTextArea commentField() {
+    public JTextComponent commentField() {
         return commentField;
     }
 

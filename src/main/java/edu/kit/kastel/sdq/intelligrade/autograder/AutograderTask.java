@@ -1,7 +1,6 @@
 /* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.autograder;
 
-import java.awt.BorderLayout;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -12,18 +11,12 @@ import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-
-import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import de.firemage.autograder.api.FailureInformation;
@@ -36,11 +29,12 @@ import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.AutograderOption;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.widgets.MessageUtils;
 import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
-public class AutograderTask extends Task.Backgroundable {
+public final class AutograderTask extends Task.Backgroundable {
     private static final Logger LOG = Logger.getInstance(AutograderTask.class);
 
     private final Assessment assessment;
@@ -97,7 +91,7 @@ public class AutograderTask extends Task.Backgroundable {
         }
     }
 
-    public static void showAutograderErrorPopup(int annotationsMade, List<FailureInformation> failures) {
+    private static void showAutograderErrorPopup(int annotationsMade, Iterable<FailureInformation> failures) {
         var mainPanel = new JBPanel<>(new MigLayout("wrap", "[grow]", "[][][grow]"));
         mainPanel.add(new JBLabel("Autograder made %d annotation(s).".formatted(annotationsMade)), "growx");
         mainPanel.add(new JBLabel("However, the following failures occurred during execution:"), "growx");
@@ -111,46 +105,13 @@ public class AutograderTask extends Task.Backgroundable {
         }
 
         mainPanel.add(
-                TextBuilder.textArea(result.toString())
+                TextBuilder.textBox(result.toString())
                         .editable(false)
                         .maxLines(20)
+                        .updateCaretPosition(area -> 0)
                         .component(),
                 "grow");
-        new WarningDialog(IntellijUtil.getActiveProject(), "Autograder Completed with Failures", mainPanel).show();
-    }
-
-    private static class WarningDialog extends MessageDialog {
-        private final JComponent content;
-
-        public WarningDialog(Project project, String title, JComponent content) {
-            super(
-                    project,
-                    null,
-                    "",
-                    title,
-                    new String[] {CommonBundle.getOkButtonText()},
-                    0,
-                    0,
-                    AllIcons.General.WarningDialog,
-                    null,
-                    true);
-
-            this.content = content;
-            this.init();
-        }
-
-        @Override
-        protected JComponent doCreateCenterPanel() {
-            JPanel panel = createIconPanel();
-
-            // This might be called while this.content is still null
-            if (this.content != null) {
-                // panel.add(Messages.wrapToScrollPaneIfNeeded(this.content, 50, 20), BorderLayout.CENTER);
-                panel.add(this.content, BorderLayout.CENTER);
-            }
-
-            return panel;
-        }
+        MessageUtils.showWarning("Autograder Completed with Failures", mainPanel);
     }
 
     private boolean loadAutograderFromFile(ArtemisSettingsState settings, ProgressIndicator indicator) {

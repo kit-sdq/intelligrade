@@ -8,11 +8,14 @@ import java.util.function.Predicate;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.JTextComponent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -25,7 +28,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
@@ -45,6 +47,8 @@ import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.PluginState;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
 import edu.kit.kastel.sdq.intelligrade.utils.IntellijUtil;
+import edu.kit.kastel.sdq.intelligrade.widgets.FlowWrapLayout;
+import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 import org.jspecify.annotations.NonNull;
 
@@ -52,7 +56,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private static final Logger LOG = Logger.getInstance(ExercisePanel.class);
 
     private final ToolWindow parentToolWindow;
-    private final JBLabel connectedLabel;
+    private final JTextComponent connectedLabel;
 
     private final ComboBox<Course> courseSelector;
     private final ComboBox<OptionalExam> examSelector;
@@ -66,8 +70,8 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private TextFieldWithBrowseButton gradingConfigPathInput;
 
     private JPanel statisticsPanel;
-    private JBLabel totalStatisticsLabel;
-    private JBLabel userStatisticsLabel;
+    private JTextComponent totalStatisticsLabel;
+    private JTextComponent userStatisticsLabel;
 
     private JPanel assessmentOrReviewPanel;
 
@@ -84,25 +88,46 @@ public class ExercisePanel extends SimpleToolWindowPanel {
 
     private final BacklogPanel backlogPanel;
 
+    /**
+     * Returns a {@link ComboBox} that resizes with the parent window.
+     * <br>
+     * The default stops resizing at a relatively large size.
+     *
+     * @return the combo box
+     * @param <T> the type of the combo box items
+     */
+    private static <T> ComboBox<T> createWrappingComboBox() {
+        return new ComboBox<>(0);
+    }
+
     public ExercisePanel(ToolWindow toolWindow) {
         super(true, true);
 
         this.parentToolWindow = toolWindow;
 
-        connectedLabel = new JBLabel();
-        JPanel content = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
-        content.add(connectedLabel, "span 2, alignx center");
+        connectedLabel = TextBuilder.immutable("")
+                .horizontalAlignment(TextBuilder.Alignment.CENTER)
+                .text();
+
+        // Why must this be wrapped in a ScrollablePanel?
+        // The content panel is later wrapped in a JScrollPane, to support scrolling when the window is too small.
+        // By default, the JScrollPane does not allow to shrink components below their preferred size,
+        // but this is necessary for the components to shrink properly (much better than having to use a scroll bar).
+        //
+        // -> If your component is not shrinking properly, it is likely because of a JScrollPane
+        JPanel content = new ScrollablePanel(new MigLayout("wrap 2", "[][grow]"));
+        content.add(connectedLabel, "span 2, grow");
 
         content.add(new JBLabel("Course:"));
-        courseSelector = new ComboBox<>();
+        courseSelector = createWrappingComboBox();
         content.add(courseSelector, "growx");
 
         content.add(new JBLabel("Exam:"));
-        examSelector = new ComboBox<>();
+        examSelector = createWrappingComboBox();
         content.add(examSelector, "growx");
 
         content.add(new JBLabel("Exercise:"));
-        exerciseSelector = new ComboBox<>();
+        exerciseSelector = createWrappingComboBox();
         content.add(exerciseSelector, "growx");
 
         createStatisticsPanel();
@@ -116,14 +141,15 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         createAssessmentPanel();
         createReviewPanel();
         content.add(new TitledSeparator("Assessment"), "spanx 2, growx");
-        content.add(assessmentOrReviewPanel, "span 2, growx");
+        content.add(assessmentOrReviewPanel, "spanx 2, growx");
 
         content.add(new TitledSeparator("Backlog"), "spanx 2, growx");
         backlogPanel = new BacklogPanel();
         backlogPanel.addBacklogUpdateListener(this::updateBacklogAndStats);
-        content.add(backlogPanel, "span 2, growx");
+        content.add(backlogPanel, "spanx 2, growx");
 
-        setContent(ScrollPaneFactory.createScrollPane(content));
+        setContent(new JScrollPane(
+                content, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
 
         exerciseSelector.addItemListener(this::handleExerciseSelected);
 
@@ -149,23 +175,23 @@ public class ExercisePanel extends SimpleToolWindowPanel {
         modeInfoLabel.setFont(JBFont.h3().asBold());
         generalPanel.add(modeInfoLabel, "align center");
 
-        startGradingRound1Button = new JButton("Start Grading Round 1");
+        startGradingRound1Button = createWrappingButton("Start Grading Round 1");
         startGradingRound1Button.setForeground(JBColor.GREEN);
         startGradingRound1Button.addActionListener(
                 a -> PluginState.getInstance().startNextAssessment(CorrectionRound.FIRST));
-        generalPanel.add(startGradingRound1Button, "growx");
+        generalPanel.add(startGradingRound1Button, "grow");
 
-        startGradingRound2Button = new JButton("Start Grading Round 2");
+        startGradingRound2Button = createWrappingButton("Start Grading Round 2");
         startGradingRound2Button.setForeground(JBColor.GREEN);
         startGradingRound2Button.addActionListener(
                 a -> PluginState.getInstance().startNextAssessment(CorrectionRound.SECOND));
-        generalPanel.add(startGradingRound2Button, "growx");
+        generalPanel.add(startGradingRound2Button, "grow");
 
-        openInstructorDialog = new JButton("Show All Submissions");
+        openInstructorDialog = createWrappingButton("Show All Submissions");
         openInstructorDialog.setForeground(JBColor.GREEN);
         openInstructorDialog.addActionListener(a -> SubmissionsInstructorDialog.showDialog());
         openInstructorDialog.setVisible(false);
-        generalPanel.add(openInstructorDialog, "growx");
+        generalPanel.add(openInstructorDialog, "grow");
 
         gradingConfigPathInput = new TextFieldWithBrowseButton();
         new ComponentValidator(this.parentToolWindow.getDisposable())
@@ -195,7 +221,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 updateAvailableActions();
             }
         });
-        generalPanel.add(gradingConfigPathInput, "growx");
+        generalPanel.add(gradingConfigPathInput, "grow");
 
         var innerTextField = (JBTextField) gradingConfigPathInput.getTextField();
         innerTextField.getEmptyText().setText("Path to grading config");
@@ -206,24 +232,28 @@ public class ExercisePanel extends SimpleToolWindowPanel {
     private void createStatisticsPanel() {
         statisticsPanel = new JBPanel<>(new MigLayout("wrap 2", "[][grow]"));
 
-        statisticsPanel.add(new JBLabel("Submissions:"));
-        totalStatisticsLabel = new JBLabel();
+        statisticsPanel.add(TextBuilder.immutable("Submissions:").text());
+        totalStatisticsLabel = TextBuilder.immutable("").text();
         statisticsPanel.add(totalStatisticsLabel);
 
-        statisticsPanel.add(new JBLabel("Your Assessments:"));
-        userStatisticsLabel = new JBLabel();
+        statisticsPanel.add(TextBuilder.immutable("Your Assessments:").text());
+        userStatisticsLabel = TextBuilder.immutable("").text();
         statisticsPanel.add(userStatisticsLabel);
     }
 
-    private void createAssessmentPanel() {
-        assessmentPanel = new JBPanel<>(new MigLayout("wrap 2", "[grow][grow]"));
+    private static JButton createWrappingButton(String text) {
+        return new JButton("<html><body style='text-align: center;'>" + text + "</body></html>");
+    }
 
-        submitAssessmentButton = new JButton("Submit Assessment");
+    private void createAssessmentPanel() {
+        assessmentPanel = new JBPanel<>(new FlowWrapLayout(2));
+
+        submitAssessmentButton = createWrappingButton("Submit Assessment");
         submitAssessmentButton.setForeground(JBColor.GREEN);
         submitAssessmentButton.addActionListener(a -> PluginState.getInstance().submitAssessment());
-        assessmentPanel.add(submitAssessmentButton, "growx");
+        assessmentPanel.add(submitAssessmentButton, "grow");
 
-        cancelAssessmentButton = new JButton("Cancel Assessment");
+        cancelAssessmentButton = createWrappingButton("Cancel Assessment");
         cancelAssessmentButton.setEnabled(false);
         cancelAssessmentButton.addActionListener(a -> {
             var confirmed = MessageDialogBuilder.okCancel(
@@ -234,13 +264,13 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 PluginState.getInstance().cancelAssessment();
             }
         });
-        assessmentPanel.add(cancelAssessmentButton, "growx");
+        assessmentPanel.add(cancelAssessmentButton, "grow");
 
-        saveAssessmentButton = new JButton("Save Assessment");
+        saveAssessmentButton = createWrappingButton("Save Assessment");
         saveAssessmentButton.addActionListener(a -> PluginState.getInstance().saveAssessment());
-        assessmentPanel.add(saveAssessmentButton, "growx");
+        assessmentPanel.add(saveAssessmentButton, "grow");
 
-        closeAssessmentButton = new JButton("Close Assessment");
+        closeAssessmentButton = createWrappingButton("Close Assessment");
         closeAssessmentButton.addActionListener(a -> {
             var confirmed = MessageDialogBuilder.okCancel(
                             "Close Assessment?", "Your will loose any unsaved progress, but you will keep the lock.")
@@ -250,9 +280,9 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 PluginState.getInstance().closeAssessment();
             }
         });
-        assessmentPanel.add(closeAssessmentButton, "growx");
+        assessmentPanel.add(closeAssessmentButton, "grow");
 
-        reRunAutograder = new JButton("Re-run Autograder");
+        reRunAutograder = createWrappingButton("Re-run Autograder");
         reRunAutograder.addActionListener(a -> {
             var confirmed = MessageDialogBuilder.okCancel(
                             "Re-Run Autograder?", "This may create duplicate annotations!")
@@ -262,18 +292,19 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 PluginState.getInstance().getActiveAssessment().orElseThrow().runAutograder();
             }
         });
-        assessmentPanel.add(reRunAutograder, "spanx 2, growx");
+
+        assessmentPanel.add(reRunAutograder, "spanx 2, grow");
     }
 
     private void createReviewPanel() {
         reviewPanel = new JBPanel<>(new MigLayout("wrap 1", "[grow]"));
 
-        submitReviewButton = new JButton("Submit Review");
+        submitReviewButton = createWrappingButton("Submit Review");
         submitReviewButton.setForeground(JBColor.GREEN);
         submitReviewButton.addActionListener(a -> PluginState.getInstance().submitAssessment());
-        reviewPanel.add(submitReviewButton, "growx");
+        reviewPanel.add(submitReviewButton, "grow");
 
-        cancelReviewButton = new JButton("Cancel Review");
+        cancelReviewButton = createWrappingButton("Cancel Review");
         cancelReviewButton.addActionListener(a -> {
             var confirmed = MessageDialogBuilder.okCancel("Cancel Review?", "Your review will be discarded.")
                     .guessWindowAndAsk();
@@ -282,7 +313,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
                 PluginState.getInstance().closeAssessment();
             }
         });
-        reviewPanel.add(cancelReviewButton, "growx");
+        reviewPanel.add(cancelReviewButton, "grow");
     }
 
     private void updateAvailableActions() {
