@@ -18,6 +18,10 @@ kotlin {
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
+    // See https://kotlinlang.org/docs/java-interop.html#nullability-annotations
+    compilerOptions {
+        freeCompilerArgs.add("-Xnullability-annotations=@org.jspecify.annotations:warn")
+    }
 }
 
 repositories {
