@@ -41,16 +41,21 @@ dependencies {
     testImplementation('com.tngtech.archunit:archunit-junit4:' + ARCHUNIT_VERSION)
 
     intellijPlatform {
-        intellijIdeaCommunity('2025.1.5')
+        def localIdea = System.getenv("LOCAL_IDEA")
+        if (localIdea != null) {
+            local(localIdea)
+        } else {
+            intellijIdeaCommunity('2025.1.5')
+            def localJbr = System.getenv("LOCAL_JBR")
+            if (localJbr != null) {
+                jetbrainsRuntimeLocal(localJbr)
+            }
+        }
         pluginVerifier()
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.idea.maven")
         bundledPlugin("Git4Idea")
         instrumentationTools()
-        def localJbr = System.getenv("LOCAL_JBR")
-        if (localJbr != null) {
-            jetbrainsRuntimeLocal(localJbr)
-        }
     }
 
     implementation('edu.kit.kastel.sdq:artemis4j:8.5.0')
