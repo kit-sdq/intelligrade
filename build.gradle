@@ -1,6 +1,6 @@
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 plugins {
-    id("org.jetbrains.intellij.platform") version "2.10.4"
+    id("org.jetbrains.intellij.platform") version "2.10.5"
     id('java')
     id('com.diffplug.spotless') version '8.0.0'
     id('org.jetbrains.kotlin.jvm') version '2.2.0'
