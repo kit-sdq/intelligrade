@@ -36,7 +36,6 @@ import org.jspecify.annotations.NonNull;
 public class AnnotationsListPanel extends SimpleToolWindowPanel {
     private final AnnotationsTableModel model;
     private final AnnotationsTreeTable table;
-    private AnActionButton restoreButton;
 
     public static AnnotationsListPanel getPanel() {
         var toolWindow =
@@ -82,6 +81,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
     }
 
     private void addPopupMenu() {
+        AnActionButton restoreButton;
         var group = new DefaultActionGroup();
 
         var editButton = new AnActionButton("Edit Custom Message/Score") {
@@ -110,7 +110,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         };
         group.addAction(deleteButton);
 
-        this.restoreButton = new AnActionButton("Restore") {
+        restoreButton = new AnActionButton("Restore") {
             @Override
             public void actionPerformed(@NonNull AnActionEvent e) {
                 table.restoreSelection();

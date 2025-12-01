@@ -576,9 +576,7 @@ public class ExercisePanel extends SimpleToolWindowPanel {
             } catch (ArtemisNetworkException ex) {
                 LOG.warn(ex);
                 ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch backlog or statistics", ex);
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    backlogPanel.clear();
-                });
+                ApplicationManager.getApplication().invokeLater(backlogPanel::clear);
                 return;
             }
 

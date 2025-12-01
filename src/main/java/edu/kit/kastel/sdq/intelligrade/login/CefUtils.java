@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.login;
 
 import java.util.concurrent.CompletableFuture;
@@ -41,9 +41,8 @@ public final class CefUtils {
                 .build();
 
         // clear cookies
-        CefApp.getInstance().onInitialization(state -> {
-            browser.getJBCefCookieManager().deleteCookies(null, null);
-        });
+        CefApp.getInstance()
+                .onInitialization(state -> browser.getJBCefCookieManager().deleteCookies(null, null));
         browser.dispose();
     }
 

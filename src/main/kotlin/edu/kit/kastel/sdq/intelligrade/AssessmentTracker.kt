@@ -157,7 +157,7 @@ object AssessmentTracker {
         IntellijUtil.getVcsManager().fireDirectoryMappingsChanged()
 
         val repositoryManager = VcsRepositoryManager.getInstance(project)
-        if (!repositoryManager.getRepositories().isEmpty()) {
+        if (repositoryManager.getRepositories().isNotEmpty()) {
             // When deleting the .git folder, the git4idea plugin will throw an exception when the .git/HEAD file
             // is deleted.
             //

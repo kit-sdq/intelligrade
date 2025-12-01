@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2025. */
 package edu.kit.kastel.sdq.intelligrade.login;
 
 import javax.swing.SwingUtilities;
@@ -35,7 +35,7 @@ public class JwtRetriever extends CefLoadHandlerAdapter {
         }
     }
 
-    public JBCefCookie getJwtCookie() throws Exception {
+    public JBCefCookie getJwtCookie() throws InterruptedException {
         var settings = ArtemisSettingsState.getInstance();
         var credentials = ArtemisCredentialsProvider.getInstance();
 

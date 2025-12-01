@@ -22,7 +22,7 @@ import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
  */
 public class AnnotationsTableModel extends ListTreeTableModel {
     private final List<Annotation> annotations = new ArrayList<>();
-    private final AnnotationsTreeNode root;
+    private final AnnotationsTreeNode annotationRoot;
 
     private static MutableTreeNode createNode(List<Annotation> annotations) {
         if (annotations.size() == 1) {
@@ -110,14 +110,14 @@ public class AnnotationsTableModel extends ListTreeTableModel {
 
     public AnnotationsTableModel() {
         super(storeRootNode(new AnnotationsTreeNode.RootNode()), AnnotationsTreeNode.columns());
-        this.root = tempRootNode;
+        this.annotationRoot = tempRootNode;
     }
 
     private void refreshNodes() {
-        this.root.removeAllChildren();
+        this.annotationRoot.removeAllChildren();
 
         for (var child : groupAnnotations(this.annotations)) {
-            this.root.add(child);
+            this.annotationRoot.add(child);
         }
 
         this.sort(AnnotationsTreeTable.DEFAULT_NODE_COMPARATOR);
@@ -129,7 +129,7 @@ public class AnnotationsTableModel extends ListTreeTableModel {
         // and then rebuild the tree, but this would destroy the tree structure
         // and invalidate all the TreePaths.
 
-        this.root.sort(comparator);
+        this.annotationRoot.sort(comparator);
         this.reload();
     }
 
@@ -189,17 +189,17 @@ public class AnnotationsTableModel extends ListTreeTableModel {
     }
 
     private void removeAnnotations(List<Annotation> annotations) {
-        this.root.removeIf(annotations::contains);
+        this.annotationRoot.removeIf(annotations::contains);
     }
 
     private void addAnnotations(List<Annotation> annotations) {
         for (var annotation : annotations) {
-            this.root.add(createNode(List.of(annotation)));
+            this.annotationRoot.add(createNode(List.of(annotation)));
         }
     }
 
     public TreePath getTreePathFor(Predicate<AnnotationsTreeNode> isMatching) {
-        Queue<AnnotationsTreeNode> queue = new LinkedList<>(List.of(this.root));
+        Queue<AnnotationsTreeNode> queue = new LinkedList<>(List.of(this.annotationRoot));
 
         while (!queue.isEmpty()) {
             var node = queue.poll();
