@@ -85,10 +85,8 @@ public class CustomMessageDialogBuilder {
     }
 
     public CustomMessageDialogBuilder onSubmit(Consumer<MessageWithPoints> onSubmit) {
-        this.builder.setOkHandler(() -> {
-            onSubmit.accept(new MessageWithPoints(
-                    this.field.text(), this.customScore == null ? 0.0 : (Double) this.customScore.getValue()));
-        });
+        this.builder.setOkHandler(() -> onSubmit.accept(new MessageWithPoints(
+                this.field.text(), this.customScore == null ? 0.0 : (Double) this.customScore.getValue())));
 
         return this;
     }

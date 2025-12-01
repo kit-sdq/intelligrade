@@ -305,9 +305,9 @@ public class HighlighterManager {
         var group = new DefaultActionGroup();
         for (Annotation annotation : annotations) {
             String text = annotation.getMistakeType().getButtonText().translateTo(DynamicBundle.getLocale());
-            if (annotation.getCustomMessage().isPresent()) {
-                String displayMsg =
-                        shortenAndEscape(annotation.getCustomMessage().get());
+            var customMessageOptional = annotation.getCustomMessage();
+            if (customMessageOptional.isPresent()) {
+                String displayMsg = shortenAndEscape(customMessageOptional.get());
                 text += ": " + displayMsg;
             }
 

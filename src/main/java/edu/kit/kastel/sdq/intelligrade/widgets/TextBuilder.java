@@ -111,7 +111,7 @@ public final class TextBuilder {
         }
 
         public BaseTextBuilder installValidator(
-                Disposable parentDisposable, Function<? super JTextComponent, ? extends ValidationInfo> validator) {
+                Disposable parentDisposable, Function<? super JTextComponent, ValidationInfo> validator) {
             // A ComponentValidator needs to be disposed of when the parent component in which `this` is,
             // is disposed of, otherwise intellij will complain about a memory leak/invalid parent.
             new ComponentValidator(parentDisposable)

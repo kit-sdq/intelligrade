@@ -139,20 +139,19 @@ public class AnnotationsTreeTable extends TreeTable {
 
         // if the class is not Object, this `Comparator` is used that will
         // delegate to the `compareTo` method of the column values:
-        return (left, right) -> {
-            // The Objects.compare takes care of null values
-            return Objects.compare(left.getValueAt(columnIdx), right.getValueAt(columnIdx), (a, b) -> {
-                if (a instanceof Comparable<?> comparable) {
-                    // the code should be able to assume that a column value implements Comparable,
-                    // so that it can be compared with other values of the same column.
-                    //
-                    // If this is not the case, the code will crash here, indicating an implementation error.
-                    return ((Comparable<Object>) comparable).compareTo(b);
-                } else {
-                    return a.toString().compareTo(b.toString());
-                }
-            });
-        };
+        return (left, right) ->
+                // The Objects.compare takes care of null values
+                Objects.compare(left.getValueAt(columnIdx), right.getValueAt(columnIdx), (a, b) -> {
+                    if (a instanceof Comparable<?> comparable) {
+                        // the code should be able to assume that a column value implements Comparable,
+                        // so that it can be compared with other values of the same column.
+                        //
+                        // If this is not the case, the code will crash here, indicating an implementation error.
+                        return ((Comparable<Object>) comparable).compareTo(b);
+                    } else {
+                        return a.toString().compareTo(b.toString());
+                    }
+                });
     }
 
     private void installListeners() {

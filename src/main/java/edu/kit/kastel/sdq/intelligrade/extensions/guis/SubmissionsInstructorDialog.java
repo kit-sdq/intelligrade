@@ -14,7 +14,6 @@ import javax.swing.table.AbstractTableModel;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
@@ -39,8 +38,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class SubmissionsInstructorDialog extends DialogWrapper {
-    private static final Logger LOG = Logger.getInstance(SubmissionsInstructorDialog.class);
-
     private JPanel statusPanel;
     private SearchTextField searchField;
     private JBLabel shownSubmissionsLabel;

@@ -4,7 +4,7 @@ package edu.kit.kastel.sdq.intelligrade.extensions.guis.table;
 import com.intellij.util.ui.ColumnInfo;
 import org.jspecify.annotations.Nullable;
 
-class DefaultColumnInfo extends ColumnInfo {
+class DefaultColumnInfo extends ColumnInfo<Object, Object> {
     private final Class<?> columnClass;
 
     public DefaultColumnInfo(String name, Class<?> columnClass) {
@@ -19,7 +19,7 @@ class DefaultColumnInfo extends ColumnInfo {
     }
 
     @Override
-    public java.lang.Class<?> getColumnClass() {
+    public Class<?> getColumnClass() {
         return this.columnClass;
     }
 }
