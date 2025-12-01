@@ -16,6 +16,20 @@ git pull
 ./gradlew runIde --refresh-dependencies
 ```
 
+### Nix
+
+1. Enter dev shell using direnv or manually with `nix develop`
+
+2. Run the plugin
+   - Using a local IntellIJ Platform from nixpkgs
+     ```sh
+     run-ide
+     ```
+   - Using the IntellIJ Platform dependency from Gradle
+     ```sh
+     run-ide-non-local
+     ```
+
 ## Setup
 
 If the Welcome to IntelliJ IDEA screen pops up, simply create a new empty project and open it.
