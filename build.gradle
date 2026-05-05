@@ -58,7 +58,7 @@ dependencies {
         instrumentationTools()
     }
 
-    implementation('edu.kit.kastel.sdq:artemis4j:8.7.4')
+    implementation('edu.kit.kastel.sdq:artemis4j:9.1.2')
 }
 
 intellijPlatform {
