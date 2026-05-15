@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportProgressScope
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise
@@ -35,7 +35,15 @@ class StartAssessmentService(private val project: Project, private val cs: Corou
         cs.launch {
             withModalProgress(project, "Starting assessment") {
                 // A size of 100 = 100% progress
-                reportProgress(100) { reporter -> run(reporter, correctionRound, gradingConfig, activeExercise, submission) }
+                reportProgressScope(100) { reporter ->
+                    run(
+                        reporter,
+                        correctionRound,
+                        gradingConfig,
+                        activeExercise,
+                        submission
+                    )
+                }
             }
         }
     }

@@ -6,7 +6,6 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -153,7 +152,7 @@ object AssessmentTracker {
         // when the .git directory is deleted.
 
         // Indicate to the VCS that we are about to delete the project directory
-        IntellijUtil.getVcsManager().directoryMappings = mutableListOf<VcsDirectoryMapping?>()
+        IntellijUtil.getVcsManager().setDirectoryMappings(mutableListOf())
         IntellijUtil.getVcsManager().fireDirectoryMappingsChanged()
 
         val repositoryManager = VcsRepositoryManager.getInstance(project)

@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -154,7 +155,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             var instant: TimeMark? = null
             val projectRoot = ProjectUtil.getProjectRootVirtualFile(project) ?: return@launch
             while (!isFinished()) {
-                delay(500) // Wait a bit before checking again
+                delay(500.milliseconds) // Wait a bit before checking again
 
                 // in some cases the initialization with maven does not work, either isInitialized or isResolved
                 // will then be false.
@@ -188,7 +189,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             // project is not fully initialized yet.
             //
             // As a stopgap solution, this timer exists, which should hopefully resolve some of the issues.
-            delay(2000) // Wait a bit to ensure everything is loaded
+            delay(2000.milliseconds) // Wait a bit to ensure everything is loaded
 
             notifyListeners()
         }

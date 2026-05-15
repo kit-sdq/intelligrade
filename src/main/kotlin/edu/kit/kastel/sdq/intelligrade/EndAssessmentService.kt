@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportProgressScope
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.grading.metajson.AnnotationMappingException
 import edu.kit.kastel.sdq.intelligrade.AssessmentTracker.cleanupAssessment
@@ -48,7 +48,7 @@ class EndAssessmentService(private val project: Project, private val cs: Corouti
         cs.launch {
             withBackgroundProgress(project, "$action assessment") {
                 // A size of 100 = 100% progress
-                reportProgress(100) { reporter -> run(reporter, action) }
+                reportProgressScope(100) { reporter -> run(reporter, action) }
             }
         }
     }
