@@ -22,25 +22,26 @@ enum class SubmitAction {
     SUBMIT,
     SAVE,
     CANCEL,
-    CLOSE;
+    CLOSE,
+    ;
 
-    override fun toString(): String {
-        return when (this) {
+    override fun toString(): String =
+        when (this) {
             SUBMIT -> "Submitting"
             SAVE -> "Saving"
             CANCEL -> "Cancelling"
             CLOSE -> "Closing"
         }
-    }
 }
 
 @Service(Service.Level.PROJECT)
-class EndAssessmentService(private val project: Project, private val cs: CoroutineScope) {
+class EndAssessmentService(
+    private val project: Project,
+    private val cs: CoroutineScope,
+) {
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): EndAssessmentService {
-            return project.service<EndAssessmentService>()
-        }
+        fun getInstance(project: Project): EndAssessmentService = project.service<EndAssessmentService>()
     }
 
     fun queue(action: SubmitAction) {
@@ -53,21 +54,27 @@ class EndAssessmentService(private val project: Project, private val cs: Corouti
         }
     }
 
-    suspend fun run(reporter: ProgressReporter, action: SubmitAction) {
+    suspend fun run(
+        reporter: ProgressReporter,
+        action: SubmitAction,
+    ) {
         try {
             // Update the assessment state in artemis:
             reporter.sizedStep(50, "$action...") {
                 when (action) {
-                    SubmitAction.SUBMIT -> withContext(Dispatchers.IO) {
-                        AssessmentTracker.activeAssessment?.assessment?.submit()
-                    }
-                    SubmitAction.SAVE -> withContext(Dispatchers.IO) {
-                        AssessmentTracker.activeAssessment?.assessment?.save()
-                        ArtemisUtils.displayGenericInfoBalloon("Assessment saved", "The assessment has been saved.")
-                    }
-                    SubmitAction.CANCEL -> withContext(Dispatchers.IO) {
-                        AssessmentTracker.activeAssessment?.assessment?.cancel()
-                    }
+                    SubmitAction.SUBMIT ->
+                        withContext(Dispatchers.IO) {
+                            AssessmentTracker.activeAssessment?.assessment?.submit()
+                        }
+                    SubmitAction.SAVE ->
+                        withContext(Dispatchers.IO) {
+                            AssessmentTracker.activeAssessment?.assessment?.save()
+                            ArtemisUtils.displayGenericInfoBalloon("Assessment saved", "The assessment has been saved.")
+                        }
+                    SubmitAction.CANCEL ->
+                        withContext(Dispatchers.IO) {
+                            AssessmentTracker.activeAssessment?.assessment?.cancel()
+                        }
                     SubmitAction.CLOSE -> {
                         // Closing the assessment does not require any action on the server side,
                         // but we still want to clean up the local state.
@@ -87,7 +94,7 @@ class EndAssessmentService(private val project: Project, private val cs: Corouti
             LOG.warn(e)
             ArtemisUtils.displayGenericErrorBalloon(
                 "Could not submit assessment",
-                "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!"
+                "Failed to serialize the assessment. This is a serious bug; please contact the Übungsleitung!",
             )
         }
     }

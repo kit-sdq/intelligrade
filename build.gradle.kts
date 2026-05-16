@@ -1,24 +1,29 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
+// This file is based on https://github.com/JetBrains/intellij-platform-plugin-template
+// it is recommended to look there when updating.
+
+// See https://github.com/JetBrains/intellij-platform-gradle-plugin
 plugins {
-    id("org.jetbrains.intellij.platform")
     id("java")
-    id("com.diffplug.spotless")
-    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.intellij.platform")
+
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.detekt)
 }
 
 group = "edu.kit.kastel.sdq"
 version = "1.0-SNAPSHOT"
 
 java {
-    sourceCompatibility = JavaVersion.toVersion("25")
-    targetCompatibility = JavaVersion.toVersion("25")
+    sourceCompatibility = JavaVersion.toVersion(libs.versions.java.get())
+    targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
 }
 
 kotlin {
     jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
     }
     // See https://kotlinlang.org/docs/java-interop.html#nullability-annotations
     compilerOptions {
@@ -27,12 +32,26 @@ kotlin {
 }
 
 dependencies {
-    // Tests
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("com.tngtech.archunit:archunit-junit4:1.4.2")
+    testImplementation(platform(libs.junit.bom))
+
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+
+    // Note: Plugins should use `testFramework(TestFrameworkType.Platform)` like done below. It seems like IntelliJ
+    // depends on Junit4, which are added here.
+    //
+    // The Junit5 dependencies are added as well to not force us to write Junit4 tests.
+    testRuntimeOnly(libs.junit4)
+
+    testRuntimeOnly(libs.archunit.junit5)
+    testImplementation(libs.archunit.core)
 
     intellijPlatform {
-        intellijIdea("2026.1.1")
+        intellijIdea(
+            libs.versions.intellij.idea
+                .get(),
+        )
         pluginVerifier()
         bundledPlugin("com.intellij.java")
         bundledPlugin("org.jetbrains.idea.maven")
@@ -40,12 +59,12 @@ dependencies {
         testFramework(TestFrameworkType.Platform)
 
         val localJbr = System.getenv("LOCAL_JBR")
-        if (localJbr != null) {
+        localJbr?.let {
             jetbrainsRuntimeLocal(localJbr)
         }
     }
 
-    implementation("edu.kit.kastel.sdq:artemis4j:9.2.0-SNAPSHOT")
+    implementation(libs.artemis4j)
 }
 
 tasks {
@@ -77,20 +96,31 @@ spotless {
     ratchetFrom("origin/main")
 
     format("misc") {
-        // Note: Added *.gradle.kts alongside *.gradle for the new build script
-        target("*.gradle.kts", "*.gradle", ".gitattributes", ".gitignore", "*.md")
+        target("*.gradle", ".gitattributes", ".gitignore", "*.md")
+
         trimTrailingWhitespace()
         leadingTabsToSpaces()
         endWithNewline()
     }
     java {
         toggleOffOn("@formatter:off", "@formatter:on")
-        palantirJavaFormat("2.50.0").formatJavadoc(false)
+        palantirJavaFormat(libs.versions.palantir.get()).formatJavadoc(false)
+        removeUnusedImports()
         licenseHeaderFile("header.txt")
         importOrderFile("spotless.importorder")
     }
+
+    kotlin {
+        ktlint()
+    }
+
+    kotlinGradle {
+        ktlint()
+    }
 }
 
-configurations.configureEach {
-    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+detekt {
+    toolVersion = libs.versions.detekt.get()
+    config.setFrom(file("detekt.yml"))
+    buildUponDefaultConfig = true
 }

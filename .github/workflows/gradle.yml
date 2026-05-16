@@ -18,10 +18,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      # This is used to read the target java version from the gradle files:
+      - name: Read Java Info
+        id: "java_info"
+        uses: YunaBraska/java-info-action@main
+      # which are then used in the setup here.
+      # Note: The action seems to have a fallback version, which is 17 currently.
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: '25'
+          java-version: ${{ steps.java_info.outputs.java_version }}
           distribution: 'temurin'
       - name: Build project with gradle
         uses: gradle/actions/setup-gradle@v6
