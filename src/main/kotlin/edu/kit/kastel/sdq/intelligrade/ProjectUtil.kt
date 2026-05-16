@@ -28,29 +28,30 @@ object ProjectUtil {
         }
     }
 
-    suspend fun forceFilesSync() = coroutineScope {
-        val rootVirtualFile = withContext(Dispatchers.IO) {
-            VfsUtil.findFileByIoFile(IntellijUtil.getProjectRootDirectory().toFile(), true)
-        }
-        if (rootVirtualFile == null) {
-            LOG.warn("Root virtual file is null, cannot force files sync")
-            return@coroutineScope
-        }
+    suspend fun forceFilesSync() =
+        coroutineScope {
+            val rootVirtualFile =
+                withContext(Dispatchers.IO) {
+                    VfsUtil.findFileByIoFile(IntellijUtil.getProjectRootDirectory().toFile(), true)
+                }
+            if (rootVirtualFile == null) {
+                LOG.warn("Root virtual file is null, cannot force files sync")
+                return@coroutineScope
+            }
 
-        launch {
-            withContext(Dispatchers.IO) {
-                // This is necessary to ensure that the file system is up-to-date before we start the sync
-                VfsUtil.markDirtyAndRefresh(false, true, true, rootVirtualFile)
+            launch {
+                withContext(Dispatchers.IO) {
+                    // This is necessary to ensure that the file system is up-to-date before we start the sync
+                    VfsUtil.markDirtyAndRefresh(false, true, true, rootVirtualFile)
+                }
+            }
+
+            launch {
+                withContext(Dispatchers.IO) {
+                    rootVirtualFile.refresh(false, true)
+                }
             }
         }
-
-        launch {
-            withContext(Dispatchers.IO) {
-                rootVirtualFile.refresh(false, true)
-            }
-        }
-    }
-
 
     /**
      * Checks if the active project has a JDK set and if not, it will set a JDK.
@@ -79,10 +80,12 @@ object ProjectUtil {
         }
 
         // they are sorted starting from the latest version
-        val sortedSdks = availableSdks.stream()
-            .filter { sdk: Sdk? -> sdk!!.versionString != null && JavaVersion.tryParse(sdk.versionString) != null }
-            .sorted(Comparator.comparing(Function { sdk: Sdk? -> JavaVersion.parse(sdk!!.versionString!!) }))
-            .toList()
+        val sortedSdks =
+            availableSdks
+                .stream()
+                .filter { sdk: Sdk? -> sdk!!.versionString != null && JavaVersion.tryParse(sdk.versionString) != null }
+                .sorted(Comparator.comparing(Function { sdk: Sdk? -> JavaVersion.parse(sdk!!.versionString!!) }))
+                .toList()
 
         LOG.debug("Available SDKs: $sortedSdks")
         for (availableSdk in availableSdks) {

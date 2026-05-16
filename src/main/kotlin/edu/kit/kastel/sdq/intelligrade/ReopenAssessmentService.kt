@@ -2,8 +2,8 @@ package edu.kit.kastel.sdq.intelligrade
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgressScope
@@ -21,15 +21,19 @@ import kotlinx.coroutines.withContext
 private val LOG = logger<ReopenAssessmentService>()
 
 @Service(Service.Level.PROJECT)
-class ReopenAssessmentService(private val project: Project, private val cs: CoroutineScope) {
+class ReopenAssessmentService(
+    private val project: Project,
+    private val cs: CoroutineScope,
+) {
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): ReopenAssessmentService {
-            return project.service<ReopenAssessmentService>()
-        }
+        fun getInstance(project: Project): ReopenAssessmentService = project.service<ReopenAssessmentService>()
     }
 
-    fun queue(assessment: PackedAssessment, gradingConfig: GradingConfig) {
+    fun queue(
+        assessment: PackedAssessment,
+        gradingConfig: GradingConfig,
+    ) {
         // Launch the coroutine in the given scope with a progress indicator.
         // modal = progress is in the foreground and not in the right bottom corner
         cs.launch {
@@ -40,17 +44,23 @@ class ReopenAssessmentService(private val project: Project, private val cs: Coro
         }
     }
 
-    suspend fun run(reporter: ProgressReporter, packedAssessment: PackedAssessment, gradingConfig: GradingConfig) {
+    suspend fun run(
+        reporter: ProgressReporter,
+        packedAssessment: PackedAssessment,
+        gradingConfig: GradingConfig,
+    ) {
         try {
-            val assessment = reporter.sizedStep(20, "Locking...") {
-                withContext(Dispatchers.IO) {
-                    packedAssessment.lockAndOpen(gradingConfig)
+            val assessment =
+                reporter.sizedStep(20, "Locking...") {
+                    withContext(Dispatchers.IO) {
+                        packedAssessment.lockAndOpen(gradingConfig)
+                    }
                 }
-            }
 
             if (assessment.isEmpty) {
                 ArtemisUtils.displayGenericErrorBalloon(
-                    "Failed to reopen assessment", "Most likely, your lock has been taken by someone else."
+                    "Failed to reopen assessment",
+                    "Most likely, your lock has been taken by someone else.",
                 )
                 return
             }
@@ -65,13 +75,14 @@ class ReopenAssessmentService(private val project: Project, private val cs: Coro
             LOG.warn(e)
             ArtemisUtils.displayGenericErrorBalloon(
                 "Could not parse assessment",
-                "Could not parse previous assessment. This is a serious bug; please contact the "
-                        + "Übungsleitung!"
+                "Could not parse previous assessment. This is a serious bug; please contact the " +
+                    "Übungsleitung!",
             )
         } catch (e: MoreRecentSubmissionException) {
             LOG.warn(e)
             ArtemisUtils.displayGenericErrorBalloon(
-                "Could not reopen assessment", "The student has submitted a newer version of his code."
+                "Could not reopen assessment",
+                "The student has submitted a newer version of his code.",
             )
         }
     }
