@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -31,7 +32,10 @@ import kotlin.time.TimeSource
 private val LOG = logger<MavenProjectInitializer>()
 
 @Service(Service.Level.PROJECT)
-class MavenProjectInitializer(private val project: Project, private val cs: CoroutineScope) {
+class MavenProjectInitializer(
+    private val project: Project,
+    private val cs: CoroutineScope,
+) {
     private val runningJobs: MutableList<Job> = mutableListOf()
     private val listeners: MutableList<suspend CoroutineScope.() -> Unit> = mutableListOf()
     private var isInitialized = false
@@ -48,30 +52,36 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         // These two callbacks are called independently of each other, sometimes one is called when the other is not.
         //
         // A successfully loaded project will call both of them, which is why they are listened for here.
-        MavenProjectsManager.getInstance(project)
-            .addManagerListener(object : MavenProjectsManager.Listener {
-                override fun projectImportCompleted() {
-                    if (expectsInit) {
-                        isInitialized = true
+        MavenProjectsManager
+            .getInstance(project)
+            .addManagerListener(
+                object : MavenProjectsManager.Listener {
+                    override fun projectImportCompleted() {
+                        if (expectsInit) {
+                            isInitialized = true
+                        }
                     }
-                }
-            }, cs.asDisposable())
+                },
+                cs.asDisposable(),
+            )
 
-        MavenProjectsManager.getInstance(project)
-            .addProjectsTreeListener(object: MavenProjectsTree.Listener {
-                override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
-                    if (expectsInit) {
-                        isResolved = true
+        MavenProjectsManager
+            .getInstance(project)
+            .addProjectsTreeListener(
+                object : MavenProjectsTree.Listener {
+                    override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
+                        if (expectsInit) {
+                            isResolved = true
+                        }
                     }
-                }
-            }, cs.asDisposable())
+                },
+                cs.asDisposable(),
+            )
     }
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): MavenProjectInitializer {
-            return project.service<MavenProjectInitializer>()
-        }
+        fun getInstance(project: Project): MavenProjectInitializer = project.service<MavenProjectInitializer>()
     }
 
     /**
@@ -81,9 +91,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         listeners.add(listener)
     }
 
-    fun isFinished(): Boolean {
-        return isInitialized && isResolved
-    }
+    fun isFinished(): Boolean = isInitialized && isResolved
 
     private fun launchMavenProjectInit(): Job {
         // It is important that intellij loads the maven project files, otherwise no files are visible
@@ -102,24 +110,26 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         }
     }
 
-    private suspend fun notifyListeners() = coroutineScope {
-        for (listener in listeners) {
-            listener()
-        }
+    private suspend fun notifyListeners() =
+        coroutineScope {
+            for (listener in listeners) {
+                listener()
+            }
 
-        // This class only has one instance, but the listeners are added in code that is called multiple times
-        // over the lifetime -> would cause duplicate listeners
-        //
-        // So we clear the listeners after they were called
-        listeners.clear()
-    }
+            // This class only has one instance, but the listeners are added in code that is called multiple times
+            // over the lifetime -> would cause duplicate listeners
+            //
+            // So we clear the listeners after they were called
+            listeners.clear()
+        }
 
     private suspend fun closeMavenWindowIfNecessary(projectRoot: VirtualFile) {
         // This fetches the maven tool window (the window on the right side of the IDE with the maven logo)
-        val window = withContext(Dispatchers.EDT) {
-            val manager = ToolWindowManager.getInstance(project)
-            manager.getToolWindow("Maven")
-        }
+        val window =
+            withContext(Dispatchers.EDT) {
+                val manager = ToolWindowManager.getInstance(project)
+                manager.getToolWindow("Maven")
+            }
 
         if (window == null) {
             LOG.warn("Maven tool window is missing")
@@ -154,20 +164,22 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             var instant: TimeMark? = null
             val projectRoot = ProjectUtil.getProjectRootVirtualFile(project) ?: return@launch
             while (!isFinished()) {
-                delay(500) // Wait a bit before checking again
+                delay(500.milliseconds) // Wait a bit before checking again
 
                 // in some cases the initialization with maven does not work, either isInitialized or isResolved
                 // will then be false.
-                if (isInitialized && !isResolved || !isInitialized && isResolved) {
+                if (isInitialized != isResolved) {
                     if (instant == null) {
                         instant = TimeSource.Monotonic.markNow()
                     }
 
                     // It might just be a timing issue, e.g. the variable will become true after a few more seconds.
                     if (instant.elapsedNow() > isFinishedPartialInitTimeout) {
-                        LOG.warn("Maven project initialization is not fully completed after"
-                            + " ${isFinishedPartialInitTimeout.inWholeSeconds} seconds."
-                            + " isInitialized: $isInitialized, isResolved: $isResolved")
+                        LOG.warn(
+                            "Maven project initialization is not fully completed after" +
+                                " ${isFinishedPartialInitTimeout.inWholeSeconds} seconds." +
+                                " isInitialized: $isInitialized, isResolved: $isResolved",
+                        )
                         instant = null
                         // Try to force a new initialization of the maven project files:
                         addMavenProjectFiles(project, projectRoot)
@@ -188,7 +200,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
             // project is not fully initialized yet.
             //
             // As a stopgap solution, this timer exists, which should hopefully resolve some of the issues.
-            delay(2000) // Wait a bit to ensure everything is loaded
+            delay(2000.milliseconds) // Wait a bit to ensure everything is loaded
 
             notifyListeners()
         }
@@ -219,7 +231,10 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
      * This replicates the behavior of the "Add Maven project files" action, which calls
      * the `AddManagedFilesAction`.
      */
-    private suspend fun addMavenProjectFiles(project: Project, projectFile: VirtualFile) {
+    private suspend fun addMavenProjectFiles(
+        project: Project,
+        projectFile: VirtualFile,
+    ) {
         // Reset the state of the global variables that indicate whether the project is initialized or resolved.
         isInitialized = false
         isResolved = false
@@ -241,7 +256,7 @@ class MavenProjectInitializer(private val project: Project, private val cs: Coro
         if (!selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
             ArtemisUtils.displayGenericErrorBalloon(
                 "Failed to find Maven project files",
-                "No project files found in ${projectFile.presentableUrl}"
+                "No project files found in ${projectFile.presentableUrl}",
             )
             return
         }

@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.reportProgress
+import com.intellij.platform.util.progress.reportProgressScope
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise
@@ -21,47 +21,69 @@ import kotlinx.coroutines.launch
 private val LOG = logger<StartAssessmentService>()
 
 @Service(Service.Level.PROJECT)
-class StartAssessmentService(private val project: Project, private val cs: CoroutineScope) {
+class StartAssessmentService(
+    private val project: Project,
+    private val cs: CoroutineScope,
+) {
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): StartAssessmentService {
-            return project.service<StartAssessmentService>()
-        }
+        fun getInstance(project: Project): StartAssessmentService = project.service<StartAssessmentService>()
     }
 
-    fun queue(correctionRound: CorrectionRound, gradingConfig: GradingConfig, activeExercise: ProgrammingExercise, submission: ProgrammingSubmission?) {
+    fun queue(
+        correctionRound: CorrectionRound,
+        gradingConfig: GradingConfig,
+        activeExercise: ProgrammingExercise,
+        submission: ProgrammingSubmission?,
+    ) {
         // Launch the coroutine in the given scope with a progress indicator.
         // modal = progress is in the foreground and not in the right bottom corner
         cs.launch {
             withModalProgress(project, "Starting assessment") {
                 // A size of 100 = 100% progress
-                reportProgress(100) { reporter -> run(reporter, correctionRound, gradingConfig, activeExercise, submission) }
+                reportProgressScope(100) { reporter ->
+                    run(
+                        reporter,
+                        correctionRound,
+                        gradingConfig,
+                        activeExercise,
+                        submission,
+                    )
+                }
             }
         }
     }
 
-    suspend fun run(reporter: ProgressReporter, correctionRound: CorrectionRound, gradingConfig: GradingConfig, activeExercise: ProgrammingExercise, submission: ProgrammingSubmission?) {
+    suspend fun run(
+        reporter: ProgressReporter,
+        correctionRound: CorrectionRound,
+        gradingConfig: GradingConfig,
+        activeExercise: ProgrammingExercise,
+        submission: ProgrammingSubmission?,
+    ) {
         try {
-            val nextAssessment = reporter.sizedStep(20, "Locking...") {
-                if (submission == null) {
-                    activeExercise.tryLockNextSubmission(correctionRound, gradingConfig)
-                } else {
-                    activeExercise.tryLockSubmission(submission.id, correctionRound, gradingConfig)
+            val nextAssessment =
+                reporter.sizedStep(20, "Locking...") {
+                    if (submission == null) {
+                        activeExercise.tryLockNextSubmission(correctionRound, gradingConfig)
+                    } else {
+                        activeExercise.tryLockSubmission(submission.id, correctionRound, gradingConfig)
+                    }
                 }
-            }
 
             if (nextAssessment.isEmpty) {
                 ArtemisUtils.displayGenericInfoBalloon(
                     "Could not start assessment",
-                    "There are no more submissions to assess. Thanks for your work :)"
+                    "There are no more submissions to assess. Thanks for your work :)",
                 )
 
                 return
             }
 
-            val activeAssessment = reporter.sizedStep(80, "Cloning...") {
-                AssessmentTracker.initializeAssessment(nextAssessment.get())
-            }
+            val activeAssessment =
+                reporter.sizedStep(80, "Cloning...") {
+                    AssessmentTracker.initializeAssessment(nextAssessment.get())
+                }
 
             if (activeAssessment == null) {
                 return
@@ -75,14 +97,14 @@ class StartAssessmentService(private val project: Project, private val cs: Corou
             } else {
                 ArtemisUtils.displayGenericInfoBalloon(
                     "Skipping Autograder",
-                    "The submission already has annotations. Skipping the Autograder."
+                    "The submission already has annotations. Skipping the Autograder.",
                 )
             }
 
             ArtemisUtils.displayGenericInfoBalloon(
                 "Assessment started",
-                "You can now grade the submission. Please make sure you are familiar with all "
-                        + "grading guidelines."
+                "You can now grade the submission. Please make sure you are familiar with all " +
+                    "grading guidelines.",
             )
         } catch (e: ArtemisNetworkException) {
             LOG.warn(e)
@@ -91,8 +113,8 @@ class StartAssessmentService(private val project: Project, private val cs: Corou
             LOG.warn(e)
             ArtemisUtils.displayGenericErrorBalloon(
                 "Could not parse assessment",
-                "Could not parse previous assessment. This is a serious bug; please contact the "
-                        + "Übungsleitung!"
+                "Could not parse previous assessment. This is a serious bug; please contact the " +
+                    "Übungsleitung!",
             )
         }
     }

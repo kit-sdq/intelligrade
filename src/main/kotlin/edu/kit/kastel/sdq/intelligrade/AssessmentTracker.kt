@@ -6,15 +6,14 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import edu.kit.kastel.sdq.artemis4j.ArtemisClientException
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException
 import edu.kit.kastel.sdq.artemis4j.client.AnnotationSource
-import edu.kit.kastel.sdq.artemis4j.grading.Assessment
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation
+import edu.kit.kastel.sdq.artemis4j.grading.Assessment
 import edu.kit.kastel.sdq.artemis4j.grading.ClonedProgrammingSubmission
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState
@@ -77,18 +76,24 @@ object AssessmentTracker {
     }
 
     @Throws(ArtemisClientException::class)
-    private suspend fun cloneSubmission(workspacePath: Path, assessment: Assessment): ClonedProgrammingSubmission? {
+    private suspend fun cloneSubmission(
+        workspacePath: Path,
+        assessment: Assessment,
+    ): ClonedProgrammingSubmission? {
         // Clone the new submission
-        val submission = when (ArtemisSettingsState.getInstance().vcsAccessOption) {
-            VCSAccessOption.SSH -> withContext(Dispatchers.IO) {
-                ArtemisUtils.cloneViaSSH(assessment, workspacePath)
+        val submission =
+            when (ArtemisSettingsState.getInstance().vcsAccessOption) {
+                VCSAccessOption.SSH ->
+                    withContext(Dispatchers.IO) {
+                        ArtemisUtils.cloneViaSSH(assessment, workspacePath)
+                    }
+                VCSAccessOption.TOKEN ->
+                    withContext(Dispatchers.IO) {
+                        assessment
+                            .submission
+                            .cloneViaVCSTokenInto(workspacePath, null)
+                    }
             }
-            VCSAccessOption.TOKEN -> withContext(Dispatchers.IO) {
-                assessment
-                    .submission
-                    .cloneViaVCSTokenInto(workspacePath, null)
-            }
-        }
 
         // Force a file sync to ensure the VFS knows about the new files:
         ProjectUtil.forceFilesSync()
@@ -127,13 +132,16 @@ object AssessmentTracker {
 
             // Cancel the assessment to prevent spurious locks
             // but only if the assessment does not have any user-made annotations yet (non autograder annotations):
-            val hasUserAnnotations = assessment.getAnnotations(true).stream()
-                .anyMatch { annotation: Annotation? ->
-                    assessment.correctionRound == CorrectionRound.FIRST
-                            && annotation!!.source == AnnotationSource.MANUAL_FIRST_ROUND
-                            || assessment.correctionRound == CorrectionRound.SECOND
-                            && annotation!!.source == AnnotationSource.MANUAL_SECOND_ROUND
-                }
+            val hasUserAnnotations =
+                assessment
+                    .getAnnotations(true)
+                    .stream()
+                    .anyMatch { annotation: Annotation? ->
+                        assessment.correctionRound == CorrectionRound.FIRST &&
+                            annotation!!.source == AnnotationSource.MANUAL_FIRST_ROUND ||
+                            assessment.correctionRound == CorrectionRound.SECOND &&
+                            annotation!!.source == AnnotationSource.MANUAL_SECOND_ROUND
+                    }
 
             try {
                 if (!hasUserAnnotations) {
@@ -153,7 +161,7 @@ object AssessmentTracker {
         // when the .git directory is deleted.
 
         // Indicate to the VCS that we are about to delete the project directory
-        IntellijUtil.getVcsManager().directoryMappings = mutableListOf<VcsDirectoryMapping?>()
+        IntellijUtil.getVcsManager().setDirectoryMappings(mutableListOf())
         IntellijUtil.getVcsManager().fireDirectoryMappingsChanged()
 
         val repositoryManager = VcsRepositoryManager.getInstance(project)
@@ -186,7 +194,6 @@ object AssessmentTracker {
             RepositoryCache.clear()
             WindowCacheConfig().install()
         }
-
     }
 
     suspend fun cleanupProjectDirectory() {
@@ -210,23 +217,26 @@ object AssessmentTracker {
         // Delete all directory contents, but not the directory itself
         val deletionQueue = mutableListOf<VirtualFile>()
         withContext(Dispatchers.IO) {
-            VfsUtil.visitChildrenRecursively(rootFile, object : VirtualFileVisitor<Unit?>() {
-                override fun visitFile(file: VirtualFile): Boolean {
-                    if (!file.isDirectory) {
-                        deletionQueue.add(file)
-                        return false
+            VfsUtil.visitChildrenRecursively(
+                rootFile,
+                object : VirtualFileVisitor<Unit?>() {
+                    override fun visitFile(file: VirtualFile): Boolean {
+                        if (!file.isDirectory) {
+                            deletionQueue.add(file)
+                            return false
+                        }
+
+                        return true
                     }
 
-                    return true
-                }
-
-                override fun afterChildrenVisited(file: VirtualFile) {
-                    // delete empty directories
-                    if (file.isDirectory && deletionQueue.containsAll(file.children.asList()) && file != rootFile) {
-                        deletionQueue.add(file)
+                    override fun afterChildrenVisited(file: VirtualFile) {
+                        // delete empty directories
+                        if (file.isDirectory && deletionQueue.containsAll(file.children.asList()) && file != rootFile) {
+                            deletionQueue.add(file)
+                        }
                     }
-                }
-            })
+                },
+            )
         }
 
         for (file in deletionQueue) {
