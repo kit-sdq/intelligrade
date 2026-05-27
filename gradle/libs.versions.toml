@@ -10,7 +10,7 @@ junit = "6.1.0"
 junit4 = "4.13.2"
 archunit = "1.4.2"
 
-spotless = "8.5.1"
+spotless = "8.6.0"
 palantir = "2.90.0"
 detekt = "2.0.0-alpha.3"
 
