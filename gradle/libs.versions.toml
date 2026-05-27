@@ -1,6 +1,6 @@
 [versions]
 java = "25"
-kotlin = "2.4.0-RC"
+kotlin = "2.4.0-RC2"
 
 intellij-idea = "2026.1.2"
 
