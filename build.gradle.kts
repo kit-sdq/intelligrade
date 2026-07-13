@@ -89,6 +89,10 @@ tasks {
 
     runIde {
         autoReload = true
+        jvmArgumentProviders +=
+            CommandLineArgumentProvider {
+                listOf("--enable-native-access=jcef")
+            }
     }
 }
 

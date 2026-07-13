@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024-2025. */
+/* Licensed under EPL-2.0 2024-2026. */
 package edu.kit.kastel.sdq.intelligrade.extensions.guis;
 
 import java.awt.Color;
@@ -23,9 +23,8 @@ import edu.kit.kastel.sdq.intelligrade.utils.KeyPress;
 import edu.kit.kastel.sdq.intelligrade.widgets.TextBuilder;
 import net.miginfocom.swing.MigLayout;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
-public class SplashDialog extends DialogWrapper {
+public final class SplashDialog extends DialogWrapper {
     private static final Color SUBTEXT_COLOR = JBUI.CurrentTheme.ContextHelp.FOREGROUND;
     private static final TemporalAmount SPLASH_INTERVAL = Duration.ofMinutes(60);
 
@@ -72,7 +71,7 @@ public class SplashDialog extends DialogWrapper {
     }
 
     @Override
-    protected @Nullable JComponent createCenterPanel() {
+    protected @NonNull JComponent createCenterPanel() {
         var panel = new JBPanel<>(new MigLayout("wrap 1, fill, gapy 15", "[grow]"));
 
         for (var line : REMINDER_LINES) {

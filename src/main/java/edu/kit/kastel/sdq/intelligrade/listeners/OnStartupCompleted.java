@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.ProjectActivity;
 import com.intellij.openapi.wm.ToolWindowManager;
 import edu.kit.kastel.sdq.intelligrade.highlighter.HighlighterManager;
+import edu.kit.kastel.sdq.intelligrade.state.ArtemisConnectionService;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import org.jspecify.annotations.NonNull;
@@ -17,6 +18,8 @@ public class OnStartupCompleted implements ProjectActivity, DumbAware {
     @Nullable
     @Override
     public Object execute(@NonNull Project project, @NonNull Continuation<? super Unit> continuation) {
+        ArtemisConnectionService.getInstance(project).onProjectLoad();
+
         var highlighterManager = HighlighterManager.initialize(project);
 
         project.getMessageBus()

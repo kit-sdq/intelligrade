@@ -1,8 +1,9 @@
-/* Licensed under EPL-2.0 2024-2025. */
+/* Licensed under EPL-2.0 2024-2026. */
 package edu.kit.kastel.sdq.intelligrade.extensions.settings;
 
 import java.awt.*;
-import java.util.Date;
+import java.time.Instant;
+import java.util.Objects;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUrlValidator;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -41,7 +43,7 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         public boolean autoOpenMainClass = true;
         public String selectedGradingConfigPath;
 
-        public Date jwtExpiry = new Date(Long.MAX_VALUE);
+        public Long jwtExpiryEpochMillis = null;
 
         @OptionTag(converter = ThemeColor.ThemeColorConverter.class)
         public ThemeColor annotationColor = DEFAULT_ANNOTATION_COLOR;
@@ -119,14 +121,19 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         state.username = username;
     }
 
-    public String getArtemisInstanceUrl() {
+    public @Nullable String getArtemisInstanceUrl() {
         return state.artemisInstanceUrl;
     }
 
     public void setArtemisInstanceUrl(String artemisInstanceUrl) {
-        // invalidate JWT if URL changed
-        ArtemisCredentialsProvider.getInstance().setJwt("");
-        state.artemisInstanceUrl = artemisInstanceUrl;
+        var previousUrl = ArtemisUrlValidator.normalize(state.artemisInstanceUrl);
+        var newUrl = ArtemisUrlValidator.normalize(artemisInstanceUrl);
+
+        state.artemisInstanceUrl = newUrl;
+        if (!Objects.equals(previousUrl, newUrl)) {
+            ArtemisCredentialsProvider.getInstance().setJwt(null);
+            state.jwtExpiryEpochMillis = null;
+        }
     }
 
     public @Nullable String getSelectedGradingConfigPath() {
@@ -145,12 +152,12 @@ public class ArtemisSettingsState implements PersistentStateComponent<ArtemisSet
         state.annotationColor = annotationColor;
     }
 
-    public Date getJwtExpiry() {
-        return state.jwtExpiry;
+    public Instant getJwtExpiry() {
+        return state.jwtExpiryEpochMillis == null ? null : Instant.ofEpochMilli(state.jwtExpiryEpochMillis);
     }
 
-    public void setJwtExpiry(Date jwtExpiry) {
-        state.jwtExpiry = jwtExpiry;
+    public void setJwtExpiry(Instant jwtExpiry) {
+        state.jwtExpiryEpochMillis = jwtExpiry == null ? null : jwtExpiry.toEpochMilli();
     }
 
     public AutograderOption getAutograderOption() {

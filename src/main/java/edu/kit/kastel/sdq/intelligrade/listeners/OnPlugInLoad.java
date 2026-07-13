@@ -4,23 +4,18 @@ package edu.kit.kastel.sdq.intelligrade.listeners;
 import java.util.List;
 
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.openapi.application.ApplicationManager;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisCredentialsProvider;
-import edu.kit.kastel.sdq.intelligrade.state.ArtemisConnectionService;
 import org.jspecify.annotations.NonNull;
 
 /**
- * Class that handles the events called if the PlugIn is loaded
- * such as creating a new Artemis Client.
+ * Will be called when the plugin is loaded to do initialization.
  */
 public class OnPlugInLoad implements AppLifecycleListener {
 
     @Override
     public void appFrameCreated(@NonNull List<String> commandLineArgs) {
         AppLifecycleListener.super.appFrameCreated(commandLineArgs);
+        // Fetching the credentials seems to be slow, therefore this is done on plugin load to reduce delays.
         ArtemisCredentialsProvider.getInstance().initialize();
-        ApplicationManager.getApplication()
-                .getService(ArtemisConnectionService.class)
-                .connect();
     }
 }

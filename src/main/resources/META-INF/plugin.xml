@@ -12,6 +12,7 @@
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
+    <depends>com.intellij.modules.jcef</depends>
     <depends>org.jetbrains.idea.maven</depends>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -21,7 +22,8 @@
                 id="edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettings"
                 displayName="Artemis (IntelliGrade)"/>
         <applicationService
-                serviceImplementation="edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState"/>
+                serviceImplementation="edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState"
+                client="all"/>
         <toolWindow id="Artemis" secondary="true" anchor="right" icon="AllIcons.Actions.Edit"
                     factoryClass="edu.kit.kastel.sdq.intelligrade.extensions.tool_windows.MainToolWindowFactory"/>
         <toolWindow factoryClass="edu.kit.kastel.sdq.intelligrade.extensions.tool_windows.AnnotationsToolWindowFactory" id="Annotations"

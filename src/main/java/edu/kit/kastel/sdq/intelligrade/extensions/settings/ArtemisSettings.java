@@ -5,7 +5,6 @@ import java.util.Objects;
 
 import javax.swing.*;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
@@ -17,10 +16,8 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBPasswordField;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
-import edu.kit.kastel.sdq.intelligrade.state.ArtemisConnectionService;
 import net.miginfocom.swing.MigLayout;
 import org.jspecify.annotations.Nullable;
 
@@ -31,12 +28,6 @@ import org.jspecify.annotations.Nullable;
 public class ArtemisSettings implements Configurable {
     private JBTextField artemisURLField;
 
-    private JBLabel usernameLabel;
-    private JBRadioButton useTokenLoginButton;
-    private JBLabel passwordLabel;
-    private JBRadioButton usePasswordLoginButton;
-    private JBTextField usernameField;
-    private JBPasswordField passwordField;
     private JBRadioButton useVcsSSH;
     private JBRadioButton useVcsToken;
 
@@ -50,12 +41,6 @@ public class ArtemisSettings implements Configurable {
     private ThemeColorPanel activeAssessmentButtonColorChooser;
     private ThemeColorPanel finishedAssessmentButtonColorChooser;
     private ThemeColorPanel reportingAssessmentButtonColorChooser;
-
-    private final ArtemisConnectionService connectionService;
-
-    public ArtemisSettings() {
-        this.connectionService = ApplicationManager.getApplication().getService(ArtemisConnectionService.class);
-    }
 
     /**
      * This class is a color picker that changes the color to select based on the current theme.
@@ -123,48 +108,6 @@ public class ArtemisSettings implements Configurable {
         contentPanel.add(new JBLabel("Artemis URL:"));
         artemisURLField = new JBTextField();
         contentPanel.add(artemisURLField, "growx");
-
-        var loginButton = new JButton("(Re-)Connect");
-        loginButton.addActionListener(a -> {
-            ArtemisCredentialsProvider.getInstance().setJwt(null);
-            ArtemisSettingsState.getInstance().setJwtExpiry(null);
-            this.apply();
-            this.connectionService.connect();
-        });
-        contentPanel.add(loginButton, "span 1, growx");
-
-        // Button to log out of artemis
-        var logoutButton = new JButton("Logout");
-        logoutButton.addActionListener(a -> {
-            // request a logout
-            this.connectionService.logout();
-            this.apply();
-        });
-        contentPanel.add(logoutButton, "span 1, growx");
-
-        // Login options
-        contentPanel.add(new TitledSeparator("Login Options"), "span 2, growx");
-        var loginButtonGroup = new ButtonGroup();
-
-        useTokenLoginButton = new JBRadioButton("Token Login (Preferred)");
-        useTokenLoginButton.addActionListener(a -> updateLoginType());
-        loginButtonGroup.add(useTokenLoginButton);
-        contentPanel.add(useTokenLoginButton, "span 2, growx");
-
-        usePasswordLoginButton = new JBRadioButton("Password Login");
-        usePasswordLoginButton.addActionListener(a -> updateLoginType());
-        loginButtonGroup.add(usePasswordLoginButton);
-        contentPanel.add(usePasswordLoginButton, "span 2, growx");
-
-        usernameLabel = new JBLabel("Username:");
-        contentPanel.add(usernameLabel, "pad 0 40 0 0, growx");
-        usernameField = new JBTextField();
-        contentPanel.add(usernameField, "growx");
-
-        passwordLabel = new JBLabel("Password:");
-        contentPanel.add(passwordLabel, "pad 0 40 0 0, growx");
-        passwordField = new JBPasswordField();
-        contentPanel.add(passwordField, "growx");
 
         // VCS Access
         contentPanel.add(new TitledSeparator("VCS Access"), "span 2, grow x");
@@ -236,13 +179,9 @@ public class ArtemisSettings implements Configurable {
     @Override
     public boolean isModified() {
         var settings = ArtemisSettingsState.getInstance();
-        var credentials = ArtemisCredentialsProvider.getInstance();
 
-        boolean modified = !new String(passwordField.getPassword()).equals(credentials.getArtemisPassword());
-        modified |= !usernameField.getText().equals(settings.getUsername());
-        modified |= !artemisURLField.getText().equals(settings.getArtemisInstanceUrl());
+        boolean modified = !artemisURLField.getText().equals(settings.getArtemisInstanceUrl());
         modified |= !Objects.equals(highlighterColorChooser.getSelectedColor(), settings.getAnnotationColor());
-        modified |= useTokenLoginButton.isSelected() != settings.isUseTokenLogin();
         modified |= getSelectedAutograderOption() != settings.getAutograderOption();
         modified |= autoOpenMainClassCheckBox.isSelected() != settings.isAutoOpenMainClass();
         modified |= getSelectedVcsOption() != settings.getVcsAccessOption();
@@ -262,13 +201,8 @@ public class ArtemisSettings implements Configurable {
     @Override
     public void apply() {
         var settings = ArtemisSettingsState.getInstance();
-        var credentials = ArtemisCredentialsProvider.getInstance();
 
         settings.setArtemisInstanceUrl(artemisURLField.getText());
-
-        settings.setUseTokenLogin(useTokenLoginButton.isSelected());
-        settings.setUsername(usernameField.getText());
-        credentials.setArtemisPassword(new String(passwordField.getPassword()));
 
         settings.setVcsAccessOption(getSelectedVcsOption());
 
@@ -289,14 +223,8 @@ public class ArtemisSettings implements Configurable {
     @Override
     public void reset() {
         var settings = ArtemisSettingsState.getInstance();
-        var credentials = ArtemisCredentialsProvider.getInstance();
 
         artemisURLField.setText(settings.getArtemisInstanceUrl());
-
-        useTokenLoginButton.setSelected(settings.isUseTokenLogin());
-        usePasswordLoginButton.setSelected(!settings.isUseTokenLogin());
-        usernameField.setText(settings.getUsername());
-        passwordField.setText(credentials.getArtemisPassword());
 
         switch (settings.getVcsAccessOption()) {
             case SSH -> useVcsSSH.setSelected(true);
@@ -316,16 +244,7 @@ public class ArtemisSettings implements Configurable {
         finishedAssessmentButtonColorChooser.setSelectedColor(settings.getFinishedAssessmentButtonColor());
         reportingAssessmentButtonColorChooser.setSelectedColor(settings.getReportingAssessmentButtonColor());
 
-        updateLoginType();
         updateAutograderOptions();
-    }
-
-    private void updateLoginType() {
-        var useToken = useTokenLoginButton.isSelected();
-        usernameLabel.setEnabled(!useToken);
-        passwordLabel.setEnabled(!useToken);
-        usernameField.setEnabled(!useToken);
-        passwordField.setEnabled(!useToken);
     }
 
     private void updateAutograderOptions() {

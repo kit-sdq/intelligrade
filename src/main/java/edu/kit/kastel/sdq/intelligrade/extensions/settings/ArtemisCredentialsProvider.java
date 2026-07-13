@@ -1,4 +1,4 @@
-/* Licensed under EPL-2.0 2024. */
+/* Licensed under EPL-2.0 2024-2026. */
 package edu.kit.kastel.sdq.intelligrade.extensions.settings;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -13,7 +13,7 @@ public final class ArtemisCredentialsProvider {
     private static final String PASSWORD_STORE_KEY = "artemisPassword";
     private static final String JWT_STORE_KEY = "artemisAuthJWT";
 
-    private boolean initialized = false;
+    private boolean initialized;
     private String artemisPassword;
     private String jwt;
 
@@ -41,8 +41,9 @@ public final class ArtemisCredentialsProvider {
 
     public void setArtemisPassword(String artemisPassword) {
         this.artemisPassword = artemisPassword;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> PasswordSafe.getInstance()
-                .setPassword(createCredentialAttributes(PASSWORD_STORE_KEY), artemisPassword));
+        ApplicationManager.getApplication()
+                .executeOnPooledThread(() -> PasswordSafe.getInstance()
+                        .setPassword(createCredentialAttributes(PASSWORD_STORE_KEY), artemisPassword));
     }
 
     public String getJwt() {
@@ -52,11 +53,12 @@ public final class ArtemisCredentialsProvider {
 
     public void setJwt(String jwt) {
         this.jwt = jwt;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> PasswordSafe.getInstance()
-                .setPassword(createCredentialAttributes(JWT_STORE_KEY), jwt));
+        ApplicationManager.getApplication()
+                .executeOnPooledThread(
+                        () -> PasswordSafe.getInstance().setPassword(createCredentialAttributes(JWT_STORE_KEY), jwt));
     }
 
-    private CredentialAttributes createCredentialAttributes(String key) {
+    private static CredentialAttributes createCredentialAttributes(String key) {
         return new CredentialAttributes(CredentialAttributesKt.generateServiceName(CREDENTIALS_PATH, key));
     }
 

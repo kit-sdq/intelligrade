@@ -26,6 +26,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.grading.Annotation;
 import edu.kit.kastel.sdq.artemis4j.grading.ArtemisConnectionHolder;
@@ -37,6 +38,7 @@ import edu.kit.kastel.sdq.intelligrade.listeners.AssessmentStateListener;
 import edu.kit.kastel.sdq.intelligrade.state.ActiveAssessment;
 import edu.kit.kastel.sdq.intelligrade.state.AnnotationSelectionService;
 import edu.kit.kastel.sdq.intelligrade.state.ProjectState;
+import edu.kit.kastel.sdq.intelligrade.utils.LatestRequestRunner;
 import net.miginfocom.swing.MigLayout;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -45,7 +47,8 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
     private static final Logger LOG = Logger.getInstance(AnnotationsListPanel.class);
 
     private final Project project;
-    private final ProjectState projectState;
+    private final LatestRequestRunner requestRunner;
+
     private final AnnotationsTableModel model;
     private final AnnotationsTreeTable table;
 
@@ -55,7 +58,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         super(true, true);
         AnnotationSelectionService.getInstance(project).registerPanel(this, parentDisposable);
         this.project = project;
-        this.projectState = ProjectState.getInstance(project);
+        this.requestRunner = new LatestRequestRunner(project);
         this.parentDisposable = parentDisposable;
 
         this.model = new AnnotationsTableModel();
@@ -164,6 +167,8 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         // like what exact location the annotation refers to or which problem type in the autograder
         // emitted the annotation.
         var debugButton = new AnActionButton("Debug Information") {
+            private record AnnotationUsers(String creator, String suppressor) {}
+
             @Override
             public void actionPerformed(@NonNull AnActionEvent e) {
                 var annotations = table.getSelectedAnnotations();
@@ -173,7 +178,17 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
 
                 // we only emit information about the first selected annotation
                 var annotation = annotations.getFirst();
-                showDebugDialog(annotation);
+                requestRunner
+                        .fetchArtemis(() -> {
+                            String creator = mapAssessor(annotation.getCreator().orElse(null));
+                            String suppressor =
+                                    mapAssessor(annotation.getSuppressor().orElse(null));
+
+                            return new AnnotationUsers(creator, suppressor);
+                        })
+                        .thenIf(() -> true, data -> {
+                            showDebugDialog(annotation, data.creator(), data.suppressor());
+                        });
             }
 
             @Override
@@ -186,11 +201,12 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
         PopupHandler.installPopupMenu(table, group, "popup@AnnotationsListPanel");
     }
 
+    @RequiresBackgroundThread
     private String mapAssessor(UserIdentifier id) {
         return Optional.ofNullable(id)
                 .map(uid -> {
                     try {
-                        var connection = projectState
+                        var connection = ProjectState.getInstance(project)
                                 .getActiveExercise()
                                 .map(ArtemisConnectionHolder::getConnection)
                                 .orElse(null);
@@ -212,7 +228,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 .orElse("?");
     }
 
-    private void showDebugDialog(Annotation annotation) {
+    private void showDebugDialog(Annotation annotation, String creator, String suppressor) {
         var panel = new JBPanel<>(new MigLayout("wrap 2", "[] [grow]"));
 
         var location = annotation.getLocation();
@@ -227,10 +243,9 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 Map.entry("Path", location.filePath()),
                 Map.entry("Start", location.start().toString()),
                 Map.entry("End", location.end().toString()),
-                Map.entry("Created By", mapAssessor(annotation.getCreator().orElse(null))),
+                Map.entry("Created By", creator),
                 Map.entry("Suppressed", annotation.isSuppressed() ? "Yes" : "No"),
-                Map.entry(
-                        "Suppressed By", mapAssessor(annotation.getSuppressor().orElse(null))),
+                Map.entry("Suppressed By", suppressor),
                 Map.entry("Classifiers", annotation.getClassifiers().toString()));
 
         for (var entry : data) {
@@ -255,7 +270,7 @@ public class AnnotationsListPanel extends SimpleToolWindowPanel {
                 .setNormalWindowLevel(true)
                 .createPopup();
 
-        okButton.addActionListener(a -> popup.closeOk((InputEvent) EventQueue.getCurrentEvent()));
+        okButton.addActionListener(_ -> popup.closeOk((InputEvent) EventQueue.getCurrentEvent()));
 
         popup.showCenteredInCurrentWindow(project);
     }

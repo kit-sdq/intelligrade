@@ -35,24 +35,70 @@ import edu.kit.kastel.sdq.intelligrade.SubmitAction;
 import edu.kit.kastel.sdq.intelligrade.extensions.settings.ArtemisSettingsState;
 import edu.kit.kastel.sdq.intelligrade.listeners.ExerciseListener;
 import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
+import org.jspecify.annotations.Nullable;
 
 @Service(Service.Level.PROJECT)
-public final class ProjectState {
+public final class ProjectState implements Disposable {
     private static final Logger LOG = Logger.getInstance(ProjectState.class);
 
     private final Project project;
-    private ProgrammingExercise activeExercise;
-    private GradingConfig.GradingConfigDTO cachedGradingConfigDTO;
+    private volatile ProgrammingExercise activeExercise;
+    private volatile GradingConfig.GradingConfigDTO cachedGradingConfigDTO;
 
     public ProjectState(Project project) {
         this.project = project;
 
-        // Try to parse the grading config once from storage
-        getGradingConfigDTO(false);
+        // Try to parse the grading config once from storage.
+        // Subscribers receive this cached value via subscribe(...); no bus event is needed during service construction.
+        getGradingConfigDTO(false, false);
+
+        this.subscribe(this, new ExerciseListener() {
+            @Override
+            public void exerciseChanged(@Nullable ProgrammingExercise exercise) {
+                ProjectState.this.activeExercise = exercise;
+            }
+        });
     }
 
     public static ProjectState getInstance(Project project) {
         return project.getService(ProjectState.class);
+    }
+
+    public void setSelectedGradingConfigPath(@Nullable String gradingConfigPath) {
+        if (Objects.equals(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath(), gradingConfigPath)) {
+            return;
+        }
+
+        var hadLoadedConfig = cachedGradingConfigDTO != null;
+        cachedGradingConfigDTO = null;
+        ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(gradingConfigPath);
+
+        if (hadLoadedConfig) {
+            notifyGradingConfigChanged(null);
+        }
+    }
+
+    public boolean hasDifferentSelectedGradingConfigPath(String gradingConfigPath) {
+        return !Objects.equals(ArtemisSettingsState.getInstance().getSelectedGradingConfigPath(), gradingConfigPath);
+    }
+
+    public boolean setLoadedGradingConfig(String gradingConfigPath, GradingConfig.GradingConfigDTO gradingConfigDTO) {
+        if (hasDifferentSelectedGradingConfigPath(gradingConfigPath)) {
+            return false;
+        }
+
+        cachedGradingConfigDTO = gradingConfigDTO;
+        notifyGradingConfigChanged(gradingConfigDTO);
+        return true;
+    }
+
+    public void clearLoadedGradingConfig(String gradingConfigPath) {
+        if (hasDifferentSelectedGradingConfigPath(gradingConfigPath) || cachedGradingConfigDTO == null) {
+            return;
+        }
+
+        cachedGradingConfigDTO = null;
+        notifyGradingConfigChanged(null);
     }
 
     public void clearProjectSessionState() {
@@ -71,12 +117,18 @@ public final class ProjectState {
     public void subscribe(Disposable parentDisposable, ExerciseListener listener) {
         project.getMessageBus().connect(parentDisposable).subscribe(ExerciseListener.TOPIC, listener);
 
-        if (this.cachedGradingConfigDTO != null) {
-            // If the grading config is already loaded, call the listener immediately
-            listener.configChanged(this.cachedGradingConfigDTO);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            if (project.isDisposed()) {
+                return;
+            }
 
-        listener.exerciseChanged(this.activeExercise);
+            if (this.cachedGradingConfigDTO != null) {
+                // If the grading config is already loaded, call the listener immediately
+                listener.configChanged(this.cachedGradingConfigDTO);
+            }
+
+            listener.exerciseChanged(this.activeExercise);
+        });
     }
 
     // TODO: This should move to AssessmentTracker
@@ -144,13 +196,7 @@ public final class ProjectState {
         EndAssessmentService.getInstance(project).queue(action);
     }
 
-    public void setSelectedGradingConfigPath(String path) {
-        ArtemisSettingsState.getInstance().setSelectedGradingConfigPath(path);
-        this.cachedGradingConfigDTO = null;
-    }
-
-    private void notifyGradingConfigChanged() {
-        var gradingConfigDTO = this.cachedGradingConfigDTO;
+    private void notifyGradingConfigChanged(GradingConfig.@Nullable GradingConfigDTO gradingConfigDTO) {
         ApplicationManager.getApplication().invokeLater(() -> {
             if (project.isDisposed()) {
                 return;
@@ -165,23 +211,11 @@ public final class ProjectState {
         });
     }
 
-    private void notifyExerciseChanged() {
-        var exercise = this.activeExercise;
-        ApplicationManager.getApplication().invokeLater(() -> {
-            if (project.isDisposed()) {
-                return;
-            }
-
-            // Skip outdated notifications
-            if (exercise != this.activeExercise) {
-                return;
-            }
-
-            project.getMessageBus().syncPublisher(ExerciseListener.TOPIC).exerciseChanged(exercise);
-        });
+    private Optional<GradingConfig.GradingConfigDTO> getGradingConfigDTO(boolean required) {
+        return getGradingConfigDTO(required, true);
     }
 
-    public Optional<GradingConfig.GradingConfigDTO> getGradingConfigDTO(boolean required) {
+    private Optional<GradingConfig.GradingConfigDTO> getGradingConfigDTO(boolean required, boolean notify) {
         if (this.cachedGradingConfigDTO == null) {
             var gradingConfigPath = ArtemisSettingsState.getInstance().getSelectedGradingConfigPath();
             if (gradingConfigPath == null) {
@@ -201,7 +235,9 @@ public final class ProjectState {
                 var fileContent = VfsUtilCore.loadText(gradingConfigFile);
                 this.cachedGradingConfigDTO = GradingConfig.readDTOFromString(fileContent);
 
-                this.notifyGradingConfigChanged();
+                if (notify) {
+                    this.notifyGradingConfigChanged(this.cachedGradingConfigDTO);
+                }
             } catch (IOException | InvalidGradingConfigException e) {
                 if (required) {
                     LOG.warn(e);
@@ -213,19 +249,22 @@ public final class ProjectState {
         return Optional.of(cachedGradingConfigDTO);
     }
 
-    public boolean hasReviewConfig() {
-        return this.getGradingConfigDTO(false)
+    public boolean hasLoadedReviewConfig() {
+        return this.getLoadedGradingConfigDTO()
                 .map(GradingConfig.GradingConfigDTO::review)
                 .orElse(false);
     }
 
-    public Optional<ProgrammingExercise> getActiveExercise() {
-        return Optional.ofNullable(activeExercise);
+    public boolean hasLoadedGradingConfig() {
+        return this.cachedGradingConfigDTO != null;
     }
 
-    public void setActiveExercise(ProgrammingExercise exercise) {
-        this.activeExercise = exercise;
-        this.notifyExerciseChanged();
+    public Optional<GradingConfig.GradingConfigDTO> getLoadedGradingConfigDTO() {
+        return Optional.ofNullable(this.cachedGradingConfigDTO);
+    }
+
+    public Optional<ProgrammingExercise> getActiveExercise() {
+        return Optional.ofNullable(this.activeExercise);
     }
 
     private void onInvalidGradingConfig(String message) {
@@ -296,7 +335,7 @@ public final class ProjectState {
     }
 
     public Optional<VirtualFile> findAnnotationVirtualFile(Annotation annotation) {
-        var baseDirectory = ProjectUtil.guessProjectDir(project);
+        var baseDirectory = ProjectUtil.guessProjectDir(this.project);
         if (baseDirectory == null) {
             return Optional.empty();
         }
@@ -308,5 +347,10 @@ public final class ProjectState {
 
     public static String colorToCSS(Color color) {
         return "rgb(%d, %d, %d)".formatted(color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    @Override
+    public void dispose() {
+        // Nothing to dispose, but necessary because of subscription to the message bus
     }
 }

@@ -1,8 +1,6 @@
 /* Licensed under EPL-2.0 2024-2026. */
 package edu.kit.kastel.sdq.intelligrade.utils;
 
-import java.net.HttpURLConnection;
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 
@@ -22,15 +20,6 @@ public final class ArtemisUtils {
     public static final DateTimeFormatter DATE_TIME_PATTERN = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     private ArtemisUtils() {}
-
-    public static boolean doesUrlExist(String url) {
-        try {
-            var connection = (HttpURLConnection) new URI(url).toURL().openConnection();
-            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
 
     public static ClonedProgrammingSubmission cloneViaSSH(
             Assessment assessment, Path workspacePath, ProjectState projectState) throws ArtemisClientException {

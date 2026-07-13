@@ -14,6 +14,7 @@ import javax.swing.table.AbstractTableModel;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
@@ -23,8 +24,8 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBFont;
-import edu.kit.kastel.sdq.artemis4j.ArtemisNetworkException;
 import edu.kit.kastel.sdq.artemis4j.grading.CorrectionRound;
 import edu.kit.kastel.sdq.artemis4j.grading.PackedAssessment;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingExercise;
@@ -32,19 +33,20 @@ import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmission;
 import edu.kit.kastel.sdq.artemis4j.grading.ProgrammingSubmissionWithResults;
 import edu.kit.kastel.sdq.intelligrade.listeners.ExerciseListener;
 import edu.kit.kastel.sdq.intelligrade.state.ProjectState;
-import edu.kit.kastel.sdq.intelligrade.utils.ArtemisUtils;
+import edu.kit.kastel.sdq.intelligrade.utils.LatestRequestRunner;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nls;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class SubmissionsInstructorDialog extends DialogWrapper {
+public final class SubmissionsInstructorDialog extends DialogWrapper {
+    private final Project project;
+    private final LatestRequestRunner latestRequestRunner;
+
     private JPanel statusPanel;
     private SearchTextField searchField;
     private JBLabel shownSubmissionsLabel;
     private JBTable studentsTable;
-
-    private final ProjectState projectState;
 
     private List<ProgrammingSubmissionWithResults> allSubmissions = new ArrayList<>();
 
@@ -52,14 +54,16 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(() -> new SubmissionsInstructorDialog(project).show());
     }
 
-    public SubmissionsInstructorDialog(Project project) {
+    private SubmissionsInstructorDialog(Project project) {
         super(project);
+        this.project = project;
+        this.latestRequestRunner = new LatestRequestRunner(project);
 
         this.setTitle("All Submissions");
         this.setModal(false);
         this.init();
-        this.projectState = ProjectState.getInstance(project);
-        this.projectState.subscribe(getDisposable(), new ExerciseListener() {
+
+        ProjectState.getInstance(project).subscribe(getDisposable(), new ExerciseListener() {
             @Override
             public void exerciseChanged(@Nullable ProgrammingExercise exercise) {
                 fetchSubmissions(exercise);
@@ -68,7 +72,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
     }
 
     @Override
-    protected @Nullable JComponent createCenterPanel() {
+    protected @NonNull JComponent createCenterPanel() {
         var panel = new JBPanel<>(new MigLayout("wrap 1, fill", "[400px:400px]", "[] 20px [] [200px:null, grow]"));
 
         statusPanel = new JBPanel<>(new MigLayout("wrap 3", "[grow][grow][grow]", "[50px:50px] [] [80:80px]"));
@@ -89,8 +93,8 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         searchPanel.add(shownSubmissionsLabel, "");
 
         var refreshButton = new JButton(AllIcons.Actions.Refresh);
-        refreshButton.addActionListener(
-                a -> fetchSubmissions(this.projectState.getActiveExercise().orElse(null)));
+        refreshButton.addActionListener(_ -> fetchSubmissions(
+                ProjectState.getInstance(project).getActiveExercise().orElse(null)));
         searchPanel.add(refreshButton);
 
         panel.add(searchPanel, "growx");
@@ -98,7 +102,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         this.studentsTable = new JBTable(new SubmissionsTableModel(List.of()));
         // this.studentsTable.setDefaultRenderer(Object.class, new SubmissionTableCellRenderer());
         studentsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        studentsTable.getSelectionModel().addListSelectionListener(listSelectionEvent -> {
+        studentsTable.getSelectionModel().addListSelectionListener(_ -> {
             var selectedRow = studentsTable.getSelectedRow();
             if (selectedRow >= 0) {
                 var selectedSubmission =
@@ -117,21 +121,24 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
     }
 
     private void fetchSubmissions(@Nullable ProgrammingExercise exercise) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            if (exercise != null) {
-                try {
-                    this.allSubmissions = exercise.fetchAllSubmissions();
-                } catch (ArtemisNetworkException e) {
-                    ArtemisUtils.displayNetworkErrorBalloon("Failed to fetch assessments", e);
-                }
-            } else {
-                this.allSubmissions = List.of();
-            }
-
-            ApplicationManager.getApplication().invokeLater(this::updateShownSubmissions);
-        });
+        this.latestRequestRunner
+                .fetchArtemis(() -> exercise == null
+                        ? new ArrayList<ProgrammingSubmissionWithResults>()
+                        : exercise.fetchAllSubmissions())
+                .withErrorNotification("Failed to fetch assessments")
+                .withModalityState(ModalityState.stateForComponent(getRootPane()))
+                .thenIf(
+                        () -> ProjectState.getInstance(project)
+                                        .getActiveExercise()
+                                        .orElse(null)
+                                == exercise,
+                        submissions -> {
+                            this.allSubmissions = submissions;
+                            updateShownSubmissions();
+                        });
     }
 
+    @RequiresEdt
     private void updateShownSubmissions() {
         var submissions = this.allSubmissions.stream()
                 .filter(submission -> {
@@ -154,6 +161,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         this.setSelectedSubmission(null);
     }
 
+    @RequiresEdt
     private void setSelectedSubmission(ProgrammingSubmissionWithResults submission) {
         statusPanel.removeAll();
 
@@ -184,9 +192,9 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         statusPanel.add(studentPanel, "spanx 3, growx");
 
         // action button
-        boolean review = this.projectState.hasReviewConfig();
+        boolean hasReviewConfig = ProjectState.getInstance(project).hasLoadedReviewConfig();
         JBLabel configInfo = new JBLabel();
-        if (review) {
+        if (hasReviewConfig) {
             configInfo.setText("You have a review config");
         } else {
             configInfo.setText("You have a regular config");
@@ -196,7 +204,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         // correction rounds
         JPanel roundsPanel = new JBPanel<>(new MigLayout("wrap 3", "[grow, sg] [grow, sg] [grow, sg]", "[top, 250px]"));
 
-        boolean allowFirstRoundEdit = !review && !submission.isSecondRoundStarted();
+        boolean allowFirstRoundEdit = !hasReviewConfig && !submission.isSecondRoundStarted();
         roundsPanel.add(
                 buildRoundPanel(
                         submission.getFirstRoundAssessment(),
@@ -205,7 +213,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
                         submission.getSubmission()),
                 "grow");
         if (submission.getSubmission().getExercise().hasSecondCorrectionRound()) {
-            boolean allowSecondRoundEdit = !review && submission.isFirstRoundFinished();
+            boolean allowSecondRoundEdit = !hasReviewConfig && submission.isFirstRoundFinished();
             roundsPanel.add(
                     buildRoundPanel(
                             submission.getSecondRoundAssessment(),
@@ -214,7 +222,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
                             submission.getSubmission()),
                     "grow");
 
-            boolean allowReviewEdit = review && submission.isSecondRoundFinished();
+            boolean allowReviewEdit = hasReviewConfig && submission.isSecondRoundFinished();
             roundsPanel.add(
                     buildRoundPanel(
                             submission.getReviewAssessment(),
@@ -252,28 +260,29 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
             // TODO Also, we maybe don't want to show this confidential information to students in the review session
 
             // Action button
-            if (round != CorrectionRound.REVIEW) {
-                if (assessment.isSubmitted()) {
-                    actionButton = new JButton("Reopen");
-                    actionButton.setForeground(JBColor.GREEN);
-                } else {
-                    actionButton = new JButton("Continue");
-                    actionButton.setForeground(JBColor.ORANGE);
-                }
-            } else {
-                actionButton = new JButton("Review");
-                actionButton.setForeground(JBColor.GREEN);
+            String buttonName = "Continue";
+            var buttonColor = JBColor.ORANGE;
+
+            if (round == CorrectionRound.REVIEW) {
+                buttonName = "Review";
+                buttonColor = JBColor.GREEN;
+            } else if (assessment.isSubmitted()) {
+                buttonName = "Reopen";
+                buttonColor = JBColor.GREEN;
             }
-            actionButton.addActionListener(a -> {
+
+            actionButton = new JButton(buttonName);
+            actionButton.setForeground(buttonColor);
+            actionButton.addActionListener(_ -> {
                 this.close(OK_EXIT_CODE);
-                this.projectState.reopenAssessment(assessment);
+                ProjectState.getInstance(project).reopenAssessment(assessment);
             });
         } else {
             actionButton = new JButton("Start");
             actionButton.setForeground(JBColor.GREEN);
-            actionButton.addActionListener(a -> {
+            actionButton.addActionListener(_ -> {
                 this.close(OK_EXIT_CODE);
-                this.projectState.startAssessment(submission, round);
+                ProjectState.getInstance(project).startAssessment(submission, round);
             });
         }
         actionButton.setEnabled(allowEdit);
@@ -288,10 +297,10 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
         this.repaint();
     }
 
-    private static class SubmissionsTableModel extends AbstractTableModel {
-        private List<ProgrammingSubmissionWithResults> submissions;
+    private static final class SubmissionsTableModel extends AbstractTableModel {
+        private List<? extends ProgrammingSubmissionWithResults> submissions;
 
-        public SubmissionsTableModel(List<ProgrammingSubmissionWithResults> submissions) {
+        private SubmissionsTableModel(List<? extends ProgrammingSubmissionWithResults> submissions) {
             this.submissions = submissions;
         }
 
@@ -320,7 +329,7 @@ public class SubmissionsInstructorDialog extends DialogWrapper {
             return submissions.get(i).getSubmission().getStudent().get().getLogin();
         }
 
-        public void setSubmissions(List<ProgrammingSubmissionWithResults> submissions) {
+        private void setSubmissions(List<? extends ProgrammingSubmissionWithResults> submissions) {
             this.submissions = submissions;
             fireTableDataChanged();
         }

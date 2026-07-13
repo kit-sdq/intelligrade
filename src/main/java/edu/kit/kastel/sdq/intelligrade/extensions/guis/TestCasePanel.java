@@ -56,7 +56,7 @@ public class TestCasePanel extends SimpleToolWindowPanel {
                     HelpTooltipKt.setToolTipText(testName, HtmlChunk.text(tooltip));
                     content.add(testName);
 
-                    String points = result.getPoints() != 0.0 ? String.format("%.3fP", result.getPoints()) : "";
+                    String points = result.getPoints() == 0.0 ? "" : String.format("%.3fP", result.getPoints());
                     content.add(new JBLabel(points));
                 }
                 updateUI();
