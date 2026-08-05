@@ -12,7 +12,7 @@ archunit = "1.4.2"
 
 spotless = "8.5.1"
 palantir = "2.90.0"
-detekt = "2.0.0-alpha.3"
+detekt = "2.0.0-alpha.6"
 
 [libraries]
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
