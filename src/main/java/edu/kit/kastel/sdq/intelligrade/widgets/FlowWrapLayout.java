@@ -312,14 +312,14 @@ public class FlowWrapLayout implements LayoutManager2 {
                 this.componentCount += 1;
             }
         }
-    }
 
-    private static int effectiveMinimumWidth(Component component, int minimumWrappedComponentWidth) {
-        if (minimumWrappedComponentWidth == Integer.MAX_VALUE) {
-            return component.getMinimumSize().width;
+        private static int effectiveMinimumWidth(Component component, int minimumWrappedComponentWidth) {
+            if (minimumWrappedComponentWidth == Integer.MAX_VALUE) {
+                return component.getMinimumSize().width;
+            }
+
+            return minimumWrappedComponentWidth;
         }
-
-        return minimumWrappedComponentWidth;
     }
 
     private int getTargetLayout(Component[] components, int maxWidth) {
