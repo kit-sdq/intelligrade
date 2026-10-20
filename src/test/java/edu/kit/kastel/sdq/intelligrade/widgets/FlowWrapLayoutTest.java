@@ -43,7 +43,7 @@ class FlowWrapLayoutTest {
     @Test
     void singleComponentUsesFullWidth() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
-            var panel = new JPanel(new FlowWrapLayout(5, "fill, gap 0"));
+            var panel = new JPanel(new FlowWrapLayout(5, "fill, gap 0, insets 0"));
             panel.add(new ResizableComponent(), "grow");
 
             panel.setSize(220, 100);
@@ -269,7 +269,7 @@ class FlowWrapLayoutTest {
         }
 
         var insets = button.getInsets();
-        htmlRenderer.setSize(button.getWidth() - insets.left - insets.right, 0);
+        htmlRenderer.setSize((float) (button.getWidth() - insets.left - insets.right), 0);
         int requiredHeight = (int) Math.ceil(htmlRenderer.getPreferredSpan(View.Y_AXIS)) + insets.top + insets.bottom;
         assertTrue(requiredHeight <= button.getHeight());
     }

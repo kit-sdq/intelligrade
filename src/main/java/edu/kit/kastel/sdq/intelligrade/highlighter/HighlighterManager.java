@@ -88,7 +88,7 @@ public final class HighlighterManager implements Disposable {
             return;
         }
 
-        project.getService(HighlighterManager.class).onMouseMoved(event);
+        project.getService(HighlighterManager.class).onMouseMoved();
     }
 
     private void initialize() {
@@ -145,7 +145,7 @@ public final class HighlighterManager implements Disposable {
         cancelLastPopup();
     }
 
-    private void onMouseMoved(EditorMouseEvent e) {
+    private void onMouseMoved() {
         // TODO Later implement feature
         // var highlighters = highlightersPerEditor.get(e.getEditor());
         // if (highlighters == null) {

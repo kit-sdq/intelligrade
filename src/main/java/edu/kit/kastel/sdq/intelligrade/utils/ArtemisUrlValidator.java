@@ -74,11 +74,10 @@ public final class ArtemisUrlValidator {
      */
     public static @NonNull Result checkReachability(String url) {
         Result validation = validate(url);
-        if (validation instanceof Result.Invalid) {
+        if (!(validation instanceof Result.Valid validUrl)) {
             return validation;
         }
 
-        var validUrl = (Result.Valid) validation;
         try {
             var connection = (HttpURLConnection) validUrl.uri().toURL().openConnection();
             connection.setConnectTimeout(CONNECTION_TIMEOUT_MILLIS);
