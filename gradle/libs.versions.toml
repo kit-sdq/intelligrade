@@ -4,7 +4,7 @@ kotlin = "2.4.21"
 
 intellij-idea = "2026.1.2"
 
-artemis4j = "9.2.0-SNAPSHOT"
+artemis4j = "9.9.4"
 
 junit = "6.1.3"
 junit4 = "4.13.2"
