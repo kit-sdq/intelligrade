@@ -152,7 +152,7 @@ class AssessmentActionsPanel extends JBPanel<AssessmentActionsPanel> {
                     .guessWindowAndAsk();
 
             if (confirmed) {
-                submitAction(SubmitAction.CANCEL);
+                submitAction(SubmitAction.CLOSE);
             }
         });
         panel.add(cancelReviewButton, "grow");
