@@ -78,7 +78,12 @@ class EndAssessmentService(
 
                     SubmitAction.CANCEL -> {
                         withContext(Dispatchers.IO) {
-                            assessmentTracker.activeAssessment?.assessment?.cancel()
+                            val activeAssessment = assessmentTracker.activeAssessment
+                            if (activeAssessment?.isReview == true) {
+                                LOG.warn("Closing review locally to avoid deleting the second-round assessment.")
+                            } else {
+                                activeAssessment?.assessment?.cancel()
+                            }
                         }
                     }
 
