@@ -56,7 +56,7 @@ public class BacklogPanel extends JPanel {
     private final JTextComponent shownSubmissionsLabel;
     private final JPanel backlogList;
 
-    private List<PackedAssessment> lastFetchedAssessments = new ArrayList<>();
+    private final List<PackedAssessment> lastFetchedAssessments = new ArrayList<>();
     private boolean reviewMode;
 
     BacklogPanel(Disposable parentDisposable, Project project) {
@@ -206,14 +206,14 @@ public class BacklogPanel extends JPanel {
                                 roundToSelect = latestSubmission.round();
                             }
 
-                            this.lastFetchedAssessments = assessments;
+                            this.lastFetchedAssessments.clear();
+                            this.lastFetchedAssessments.addAll(assessments);
                             selectRound(roundToSelect);
 
                             // Notify anyone interested that the assessments in the backlog have changed
                             project.getMessageBus()
                                     .syncPublisher(ExerciseListener.TOPIC)
-                                    .assessmentsChanged(
-                                            exercise, Collections.unmodifiableList(this.lastFetchedAssessments));
+                                    .assessmentsChanged(exercise, Collections.unmodifiableList(assessments));
 
                             this.reloadBacklogUI();
 

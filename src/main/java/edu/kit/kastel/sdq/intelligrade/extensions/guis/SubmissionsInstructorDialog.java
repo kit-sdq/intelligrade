@@ -48,7 +48,7 @@ public final class SubmissionsInstructorDialog extends DialogWrapper {
     private JBLabel shownSubmissionsLabel;
     private JBTable studentsTable;
 
-    private List<ProgrammingSubmissionWithResults> allSubmissions = new ArrayList<>();
+    private final List<ProgrammingSubmissionWithResults> allSubmissions = new ArrayList<>();
 
     public static void showDialog(Project project) {
         ApplicationManager.getApplication().invokeLater(() -> new SubmissionsInstructorDialog(project).show());
@@ -133,7 +133,8 @@ public final class SubmissionsInstructorDialog extends DialogWrapper {
                                         .orElse(null)
                                 == exercise,
                         submissions -> {
-                            this.allSubmissions = submissions;
+                            this.allSubmissions.clear();
+                            this.allSubmissions.addAll(submissions);
                             updateShownSubmissions();
                         });
     }
